@@ -17,6 +17,10 @@ world, characters, art and signature mechanic.
 - Full **Ardor** (5 pips) adds a character's **Finale** card.
 - Keys: `Space` toggles Auto, `Esc` pauses. Tap the last filled Beat to undo.
 
+**Content:** 4 chapters / 32 stages (1-1 is a guided tutorial), 16 Luminaries, 16 kinds of Dimmed
+including 4 bosses. The lobby has an options menu (≡) with the Atlas, Achievements, Notice
+board, Gramophone and profile.
+
 ## Develop
 
 ```sh
@@ -35,5 +39,7 @@ Start with `docs/GAME_BIBLE.md`, then `docs/reference-analysis.md`, `docs/gamepl
 `docs/originality-decisions.md`, `docs/visual-style-guide.md`, `docs/technical-architecture.md`
 and `docs/qa-checklist.md`.
 
-All art is generated in code and all audio is synthesised at runtime. Fonts: Cinzel and Spectral
+All art is generated in code and all audio is synthesised at runtime. Painted art can be dropped
+into `src/assets/art/` to replace it per character, enemy or background — see
+`src/assets/art/README.md` and the prompt list in `docs/higgsfield-art-brief.md`. Fonts: Cinzel and Spectral
 (SIL Open Font License).

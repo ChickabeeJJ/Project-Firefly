@@ -36,8 +36,8 @@ export class StoryScene extends Phaser.Scene {
     new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Lobby') }).setDepth(90);
     CHAPTERS.forEach((ch, i) => {
       const unlocked = isUnlocked(save, STAGES.find((s) => s.chapter === ch.id)!.id);
-      const b = new Button(this, 1500 + i * 230, 70, {
-        w: 210, h: 64, label: `Chapter ${ch.id}`, style: ch.id === this.chapter ? 'gold' : 'dark', size: 24, icon: unlocked ? undefined : 'lock',
+      const b = new Button(this, W - 130 - (CHAPTERS.length - 1 - i) * 210, 70, {
+        w: 200, h: 64, label: `Chapter ${ch.id}`, style: ch.id === this.chapter ? 'gold' : 'dark', size: 21, icon: unlocked ? undefined : 'lock',
         onClick: () => {
           if (!unlocked) {
             audio.sfx('deny');

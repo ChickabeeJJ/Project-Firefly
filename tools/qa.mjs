@@ -33,7 +33,7 @@ for (const s of steps) {
   if (s.drag && s.skip) { const d = await page.evaluate('window.__drag'); s.drag = d; }
   if (s.drag) { const [ax, ay] = await toPage(s.drag[0]); const [bx, by] = await toPage(s.drag[1]); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move((ax + bx) / 2, (ay + by) / 2, { steps: 5 }); await page.mouse.move(bx, by, { steps: 5 }); await page.mouse.up(); }
   if (s.key) await page.keyboard.press(s.key);
-  if (s.eval) { const r = await page.evaluate(s.eval); if (r !== undefined) console.log('eval:', JSON.stringify(r)); }
+  if (s.eval) { const r = await page.evaluate(s.eval); if (r !== undefined) { let o; try { o = JSON.stringify(r); } catch { o = String(r); } console.log('eval:', o); } }
   if (s.shot) await page.screenshot({ path: `${prefix}${s.shot}.png` });
 }
 console.log(logs.filter((l) => !/crazygames|ERR_TUNNEL|ERR_PROXY|Failed to load resource/i.test(l)).join('\n') || 'no console errors');

@@ -3,7 +3,7 @@
 Status key: ✅ verified in the running build · ⚠️ partially verified / known limitation · ⬜ not yet
 verified (needs real hardware or the CrazyGames Preview tool).
 
-Automated checks: `npm test` (25 unit tests), `npm run build`, and Playwright runs with
+Automated checks: `npm test` (26 unit tests), `npm run build`, and Playwright runs with
 `tools/qa.mjs` (screenshots in `qa/screens/`, not committed).
 
 ## Gameplay
@@ -20,13 +20,17 @@ Automated checks: `npm test` (25 unit tests), `npm run build`, and Playwright ru
 | No frame-rate dependent behaviour | ✅ | turn-based logic; real-time pacing fix for slow frames |
 | Drag to move, undo, Lantern Hour, targeting | ✅ | browser runs (layout bug in hover/drag found and fixed) |
 | Auto battle and 2× speed | ✅ | full stages auto-played to victory (1-1, 1-4, 1-8 boss) |
+| Guided tutorial (1-1) | ✅ | Playwright run through every gated step on a fresh save; wrong card refused; lesson ends at R4 |
+| Lobby, options menu, info panels | ✅ | screenshots of lobby, hide-UI, menu carousel, Atlas, Achievements (claim), Notice, Gramophone, Profile |
+| Chapters 3–4 balance | ✅ | sim: starter team 80–100 % except 4-8 boss 45 % (★5 team 65 %) |
+| Drop-in art | ✅ | placeholder PNGs in characters/, enemies/, bg/ replaced lobby, battle sprite, enemy and backdrop |
 
 ## Visuals
 
 | Check | Status | Evidence |
 |---|---|---|
 | Art matches the style guide | ✅ | all scenes screenshotted at 1920×1080 |
-| Silhouettes recognisable | ✅ | 10 Luminaries, 8 Dimfolk previewed side by side |
+| Silhouettes recognisable | ✅ | 16 Luminaries, 16 Dimmed previewed side by side |
 | No clipped sprites / blurry edges | ✅ | fixed: glow clipping on bosses, card portrait framing |
 | Lighting/particles don't hide gameplay | ✅ | dim layer below units, VFX short |
 | UI fits at tested sizes | ⚠️ | 1920×1080, 1280×720, 907×510 ✅; phone landscape 844×390 renders correctly but body text is ≈ 9 CSS px |
@@ -65,3 +69,4 @@ Automated checks: `npm test` (25 unit tests), `npm run build`, and Playwright ru
 3. Profile frame time on a low-end Android device; texture memory can be cut by rendering card
    art at 0.75× if needed.
 4. Audio mix needs a listening pass on real speakers.
+5. Painted (Higgsfield) art: see `docs/higgsfield-art-brief.md`; re-check sizes in Troupe/Rite once real files land.

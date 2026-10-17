@@ -99,7 +99,7 @@ export function openAtlas(scene: Phaser.Scene): void {
     });
     c.add(tile);
   });
-  c.add(text(scene, gx, H / 2 + 420, `${seen.size} / ${ENEMIES.length} recorded`, { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
+  c.add(text(scene, gx + 10, 150, `${seen.size} / ${ENEMIES.length} recorded`, { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
   show(ENEMIES.find((e) => seen.has(e.id))?.id ?? ENEMIES[0].id);
 }
 
@@ -204,7 +204,7 @@ export function openGramophone(scene: Phaser.Scene): void {
     rows.removeAll(true);
     const cur = saves.get().settings.track;
     RECORDS.forEach((r, i) => {
-      const y = 260 + i * 130;
+      const y = 330 + i * 130;
       const on = r.track === cur;
       const row = scene.add.container(W / 2, y);
       row.add(scene.add.nineslice(0, 0, on ? 'ui:paper' : 'ui:dark', undefined, 940, 112, 12, 12, 12, 12).setAlpha(on ? 1 : 0.9));

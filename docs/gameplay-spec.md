@@ -46,6 +46,9 @@ victory (stars, Glimmer, EXP) or defeat (retry) → story timeline → summon / 
   a ★5 is guaranteed by the 40th light (counter shown on the banner).
 - **Duplicates**: +1 Resonance (max 5, +6 % HP/ATK each); beyond max → refund 60 Glimmer.
 - **Levels**: stage EXP to each team member; Lv 1–40; +7 % HP/ATK/DEF per level.
+- **Achievements**: 17 milestones (chapters, stars, rites, roster, levels, Atlas) each pay Glimmer once
+  when claimed (`src/game/systems/achievements.ts`). Lamplighter level = 1 + stars ÷ 2.
+- **Atlas**: enemies are recorded the first time their wave spawns (`save.seen`).
 
 ## Pacing table (targets, to be tuned by playtest)
 
@@ -55,9 +58,23 @@ victory (stars, Glimmer, EXP) or defeat (retry) → story timeline → summon / 
 | Early | 1-3 … 1-5 | 4–7 | enemy intents, Finale, multi-wave |
 | Middle | 1-6 … 2-3 | 5–8 | statuses (Burn, Frail), snuffers, Lantern Hour planning |
 | Advanced | 2-4 … 2-8 | 6–10 | shields + healers, boss Finales, mood counters |
+| Docks | 3-1 … 3-8 | 7–12 | heavy hitters (Rust Stevedore), dazing Fog Siren, boss Keeper Brine |
+| Clockwork | 4-1 … 4-8 | 8–15 | random-hit Cog Spiders, Pendulum Knights, final boss The Hourless King |
 
 ## First-play experience
 
-New players land directly in Stage 1-1 (no title screen, no menus). One hint at a time:
-cast a card → fill the Beats → merge → firefly → Lantern Hour → Finale. Each hint disappears after
-the player performs it and is stored in the save so it never repeats.
+New players land directly in Stage 1-1, "First Light (Tutorial)" — no title screen, no menus.
+Until it has been won once, 1-1 runs a scripted battle (`BattleScript` in the engine) that fields
+the starter trio, doubles enemy HP, and never lets an ally fall. A paper
+bubble gates one action at a time and refuses any other card (Auto, drag and undo are locked
+until the lesson ends):
+
+| Round | Scripted setup | Step |
+|---|---|---|
+| 1 | Hand: Strike, Lullaby, Strike, … | read the enemy intent (tap) → cast Lullaby (the Strikes merge) → cast the ★★ Strike → free cast |
+| 2 | Kindling is lit | cast the firefly-lit Verse |
+| 3 | Wren's Ardor set to 5 | cast her Finale |
+| 4 | Lantern filled to 5 | tap the Lantern for a 4th Beat → "finish the fight your way" |
+
+Winning marks `tutorialDone` (and every per-hint flag). Later stages still show the one-off
+hints for intents (1-2) and moving cards (1-3).
