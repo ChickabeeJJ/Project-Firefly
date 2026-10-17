@@ -26,6 +26,8 @@ export const PORTRAIT_SCALE = 2.4;
 const PAINTED_PORTRAIT_H = 1200;
 /** Battle height of painted characters before the 0.85 field scale. */
 const PAINTED_DOLL_H = 330;
+/** Battle heights of painted enemies that should not stand as tall as a person. */
+const PAINTED_ENEMY_H: Partial<Record<string, number>> = { mothling: 230, lampeater: 280, hound: 270, chimewisp: 360 };
 
 function add(scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement): void {
   if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
@@ -102,8 +104,8 @@ function dimmed(canvas: HTMLCanvasElement): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')!;
   ctx.globalCompositeOperation = 'source-atop';
   const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  g.addColorStop(0, 'rgba(70, 40, 110, 0.10)');
-  g.addColorStop(1, 'rgba(30, 14, 50, 0.38)');
+  g.addColorStop(0, 'rgba(70, 40, 110, 0.04)');
+  g.addColorStop(1, 'rgba(30, 14, 50, 0.22)');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.globalCompositeOperation = 'source-over';
@@ -127,7 +129,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   }
   for (const e of ENEMIES) {
     const painted = dropIn(scene, 'enemies', e.id);
-    add(scene, `enemy:${e.kind}`, painted ? dimmed(fitHeight(scene, painted, e.boss ? 460 : 340)) : enemyCanvas(e.kind, 1));
+    add(scene, `enemy:${e.kind}`, painted ? dimmed(fitHeight(scene, painted, PAINTED_ENEMY_H[e.kind] ?? (e.boss ? 470 : 350))) : enemyCanvas(e.kind, 1));
   }
 }
 

@@ -642,6 +642,47 @@ function portrait(ctx: Ctx, char: CharacterDef, painted?: PaintedSource): void {
   ctx.restore();
 }
 
+/**
+ * Tones the comic backdrop down into a film still: drains most of the saturation, sinks it into
+ * the palette's ink colour, adds a soft key light from the upper right and a heavy vignette.
+ * The caster and the motif are drawn afterwards, so they stay crisp and bright on top.
+ */
+function cinematicGrade(ctx: Ctx, pal: Pal): void {
+  const w = CARD_W;
+  const h = CARD_H;
+  ctx.save();
+  ctx.globalCompositeOperation = 'saturation';
+  ctx.fillStyle = 'rgba(128,128,128,0.62)';
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = 'multiply';
+  const tone = ctx.createLinearGradient(0, 0, 0, h);
+  tone.addColorStop(0, mix(pal.ink, '#6a6070', 0.55));
+  tone.addColorStop(1, mix(pal.ink, '#14121a', 0.4));
+  ctx.fillStyle = tone;
+  ctx.globalAlpha = 0.72;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'screen';
+  const key = ctx.createRadialGradient(w * 0.72, h * 0.18, 10, w * 0.72, h * 0.18, h * 0.6);
+  key.addColorStop(0, rgba(mix(pal.secondary, '#fff2d8', 0.5), 0.32));
+  key.addColorStop(1, rgba('#000000', 0));
+  ctx.fillStyle = key;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = 'source-over';
+  const vig = ctx.createRadialGradient(w / 2, h * 0.45, h * 0.22, w / 2, h * 0.5, h * 0.78);
+  vig.addColorStop(0, rgba('#000000', 0));
+  vig.addColorStop(1, rgba('#05040a', 0.7));
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, w, h);
+  // Letterbox-like falloff at the bottom where the type label sits.
+  const foot = ctx.createLinearGradient(0, h * 0.7, 0, h);
+  foot.addColorStop(0, rgba('#05040a', 0));
+  foot.addColorStop(1, rgba('#05040a', 0.6));
+  ctx.fillStyle = foot;
+  ctx.fillRect(0, h * 0.7, w, h * 0.3);
+  ctx.restore();
+}
+
 export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource): void {
   const pal: Pal = char.palette;
   const rnd = seeded(verse.id.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
@@ -650,6 +691,7 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, pain
   ctx.rect(0, 0, CARD_W, CARD_H);
   ctx.clip();
   background(ctx, verse.art.layout, pal, rnd);
+  cinematicGrade(ctx, pal);
   if (verse.art.portrait) {
     portrait(ctx, char, painted);
     ctx.save();

@@ -26,33 +26,40 @@ Tips
 - Leave a little transparent margin around the figure and don't crop the feet.
 - Large files are fine for art direction, but keep each under ~1.5 MB so the CrazyGames build stays small (WebP helps).
 
-## Current art (imported 2026-10-17)
+## Current art
 
-Two 4×3 sprite sheets were split and cleaned with `tools/art/split_sheet.py` and
-`tools/art/process_sprites.py` (cuts each sheet into cells, drops stray fragments, upscales ×2,
-crops `heads/`, flips enemies to face left, exports WebP).
+Imported with the scripts in `tools/art/`:
 
-| Luminary | Sprite | Dimmed (enemy) | Sprite |
+```sh
+# characters: two 4x3 transparent sheets (optionally with AI-upscaled copies for detail)
+python3 tools/art/import_characters.py sheetA.webp sheetB.webp [--upA sheetA_4x.png --upB sheetB_4x.png]
+# enemies: two 4x2 sheets (A transparent, B on a flat dark backdrop that gets keyed out)
+python3 tools/art/import_enemies.py enemiesA.webp enemiesB.webp [--upA enemiesA_4x.png --upB enemiesB_4x.png]
+```
+
+| Luminary | Sprite | Luminary | Sprite |
 |---|---|---|---|
-| wren | fire mage | usher | hooded lantern-bearer |
-| odile | water mage | mannequin | fox alchemist |
-| bastian | gear-shield knight | siren | fox-girl spear dancer |
-| marigold | blonde paladin | pendulum | sun-staff priest |
-| ichabod | masked rogue | curtaincaller (boss) | red-caped bard |
-| clementine | hooded scholar | gloam (boss) | necromancer |
-| rook | axe barbarian | keeper (boss) | steampunk gunner |
-| nell | fur-collared swordswoman | hourless (boss) | pale crystal mage |
-| ottoline | witch | | |
-| augustin | hourglass sage | | |
-| percival | robed scribe | | |
-| delphine | staff priestess | | |
-| teddy | dwarf smith | | |
-| evangeline | antlered dryad | | |
-| kit | ranger | | |
-| hesper | elven druid | | |
+| wren | fire mage | augustin | hourglass sage |
+| odile | water mage | percival | robed scribe |
+| bastian | gear-shield knight | delphine | staff priestess |
+| marigold | blonde paladin | teddy | dwarf smith |
+| ichabod | masked rogue | evangeline | antlered dryad |
+| clementine | hooded scholar | kit | ranger |
+| rook | axe barbarian | hesper | elven druid |
+| nell | fur-collared swordswoman | ottoline | witch |
+
+| Dimmed | Sprite | Dimmed | Sprite |
+|---|---|---|---|
+| mothling | crescent moth | gullwraith | birdcage bride with gulls |
+| usher | faceless bellhop | stevedore (Bilge Shade) | red-veined shadow |
+| mannequin | porcelain doll | siren | mirror lady |
+| hound | shadow hound | keeper (boss) | logbook golem with lantern |
+| widow | angel statue | cogspider (Torn Hymnal) | hymn-sheet choir girl |
+| lampeater | lamp beetle | pendulum (Pendulum Jester) | marionette jester |
+| curtaincaller (boss) | chandelier ghost | chimewisp | belfry bell-ringer |
+| gloam (boss) | umbrella shroud | hourless (boss) | clockwork gentleman |
 
 Backgrounds: `bg/parlour` (lobby + menu), `bg/street` (Chapter 1), `bg/theatre` (Chapter 2).
-Other enemies (moths, hounds, wisps…) and backgrounds keep their code-drawn art until replaced.
 
 All ground units and the lobby/menu leader are drawn with `LivingSprite`
 (`src/game/ui/LivingSprite.ts`), which slices the image into strips and animates them every frame

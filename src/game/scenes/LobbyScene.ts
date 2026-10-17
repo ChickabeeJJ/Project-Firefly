@@ -15,6 +15,15 @@ import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } 
 
 /** The newest Luminaries, advertised on the lobby banner. */
 const FEATURED = ['delphine', 'evangeline', 'hesper'];
+/** Right-hand column: centre x and shared width. */
+const RIGHT_X = 1620;
+const COL_W = 470;
+
+/** Shrinks a text object so it never runs past `maxWidth` (no cut-off labels). */
+function fit(t: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.Text {
+  if (t.width > maxWidth) t.setScale(maxWidth / t.width);
+  return t;
+}
 
 /**
  * The Lamplighter's parlour, laid out like the reference lobby: profile badge top-left, shortcut
@@ -74,18 +83,24 @@ export class LobbyScene extends Phaser.Scene {
   /** Round icon button with a label underneath (and an optional red notice dot). */
   private iconButton(x: number, y: number, icon: string, label: string, onClick: () => void, size = 84, dot = false): Phaser.GameObjects.Container {
     const c = this.add.container(x, y);
-    const plate = this.add.circle(0, 0, size / 2, 0x0c0e11, 0.6).setStrokeStyle(2, C.gold, 0.55);
-    const ic = this.add.image(0, 0, `icon:${icon}`).setDisplaySize(size * 0.62, size * 0.62);
+    const plate = this.add.circle(0, 0, size / 2, 0x0c0e11, 0.38).setStrokeStyle(1.5, 0xe8dcc0, 0.32);
+    const ic = this.add.image(0, 0, `icon:${icon}`).setDisplaySize(size * 0.56, size * 0.56).setAlpha(0.72);
     c.add([plate, ic]);
-    if (label) c.add(text(this, 0, size / 2 + 18, label, { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 1, shadow: true }).setOrigin(0.5));
+    if (label) c.add(text(this, 0, size / 2 + 14, label, { size: 17, font: 'display', bold: true, color: CSS.creamDim, spacing: 1, shadow: true }).setOrigin(0.5).setAlpha(0.85));
     if (dot) {
       const d = this.add.circle(size * 0.34, -size * 0.34, 10, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
       c.add(d);
       this.dots.push(d);
     }
     c.setSize(size + 20, size + (label ? 40 : 10)).setInteractive({ useHandCursor: true });
-    c.on('pointerover', () => c.setScale(1.07));
-    c.on('pointerout', () => c.setScale(1));
+    c.on('pointerover', () => {
+      c.setScale(1.07);
+      ic.setAlpha(1);
+    });
+    c.on('pointerout', () => {
+      c.setScale(1);
+      ic.setAlpha(0.72);
+    });
     c.on('pointerup', () => {
       audio.sfx('tap');
       onClick();
@@ -126,7 +141,7 @@ export class LobbyScene extends Phaser.Scene {
       ['gramophone', () => openGramophone(this)],
       ['gear', () => this.openSettings()],
     ];
-    row.forEach(([icon, go], i) => this.iconButton(80 + i * 86, 200, icon, '', go, 64));
+    row.forEach(([icon, go], i) => this.iconButton(72 + i * 70, 196, icon, '', go, 52));
   }
 
   private buildLeftColumn(): void {
@@ -136,9 +151,9 @@ export class LobbyScene extends Phaser.Scene {
       ['atlas', 'Atlas', () => openAtlas(this)],
       ['roster', 'Troupe', () => goTo(this, 'Roster')],
     ];
-    items.forEach(([icon, label, go, dot], i) => this.iconButton(86, 330 + i * 128, icon, label, go, 84, !!dot));
-    this.iconButton(220, 330, 'menu', 'Menu', () => goTo(this, 'Menu'), 84);
-    this.iconButton(220, 458, 'eye', 'Hide', () => this.toggleUi(), 84);
+    items.forEach(([icon, label, go, dot], i) => this.iconButton(76, 316 + i * 104, icon, label, go, 64, !!dot));
+    this.iconButton(184, 316, 'menu', 'Menu', () => goTo(this, 'Menu'), 64);
+    this.iconButton(184, 420, 'eye', 'Hide', () => this.toggleUi(), 64);
     this.refreshDotsLater();
   }
 
@@ -161,15 +176,17 @@ export class LobbyScene extends Phaser.Scene {
 
   private buildCurrency(): void {
     const save = saves.get();
+    // Thin currency strip aligned with the right-hand column.
+    const pw = (COL_W - 18) / 2;
     const pill = (x: number, icon: string, value: string, onPlus: () => void) => {
       const c = this.add.container(x, 70);
-      c.add(this.add.nineslice(0, 0, 'ui:dark', undefined, 280, 60, 12, 12, 12, 12).setAlpha(0.85));
-      c.add(this.add.image(-112, 0, `icon:${icon}`).setDisplaySize(44, 44));
-      const t = text(this, -82, 0, value, { size: 28, bold: true, color: CSS.cream }).setOrigin(0, 0.5);
+      c.add(this.add.rectangle(0, 0, pw, 48, 0x0b0c10, 0.5).setStrokeStyle(1.5, 0xe8dcc0, 0.45));
+      c.add(this.add.image(-pw / 2 + 26, 0, `icon:${icon}`).setDisplaySize(34, 34));
+      const t = fit(text(this, -pw / 2 + 50, 0, value, { size: 24, bold: true, color: CSS.cream }).setOrigin(0, 0.5), pw - 100);
       c.add(t);
-      const plus = this.add.container(112, 0);
-      plus.add([this.add.circle(0, 0, 20, C.amber), this.add.image(0, 0, 'icon:plus').setDisplaySize(24, 24)]);
-      plus.setSize(48, 48).setInteractive({ useHandCursor: true });
+      const plus = this.add.container(pw / 2 - 24, 0);
+      plus.add([this.add.circle(0, 0, 15, 0x0b0c10, 0.6).setStrokeStyle(1.5, 0xe8dcc0, 0.6), this.add.image(0, 0, 'icon:plus').setDisplaySize(16, 16)]);
+      plus.setSize(44, 44).setInteractive({ useHandCursor: true });
       plus.on('pointerup', () => {
         audio.sfx('tap');
         onPlus();
@@ -178,8 +195,8 @@ export class LobbyScene extends Phaser.Scene {
       this.ui.add(c);
       return t;
     };
-    pill(1300, 'star4', `${totalStars(save)} / ${STAGES.length * 3}`, () => goTo(this, 'Story'));
-    this.glimmerText = pill(1610, 'glimmer', save.glimmer.toLocaleString('en-US'), () => openAchievements(this, () => this.refreshDots()));
+    pill(RIGHT_X - COL_W / 2 + pw / 2, 'star4', `${totalStars(save)} / ${STAGES.length * 3}`, () => goTo(this, 'Story'));
+    this.glimmerText = pill(RIGHT_X + COL_W / 2 - pw / 2, 'glimmer', save.glimmer.toLocaleString('en-US'), () => openAchievements(this, () => this.refreshDots()));
   }
 
   // ===================================================================== right column
@@ -189,44 +206,52 @@ export class LobbyScene extends Phaser.Scene {
     const stage = frontierStage(save);
     const chapter = CHAPTERS.find((c) => c.id === stage.chapter)!;
     const allClear = Object.keys(save.stars).length >= STAGES.length;
-    const x = 1560;
+    // One column, one width, everything left-aligned to the same edge (as in the reference).
+    const x = RIGHT_X;
+    const left = x - COL_W / 2;
 
-    // Promo banner: the newest Luminaries (or a painted banners/rite image).
-    const promo = this.add.container(x, 236);
+    // Promo banner, tilted like a pasted poster.
+    const promo = this.add.container(x, 222).setAngle(-2.5);
     const painted = dropIn(this, 'banners', 'rite');
     if (painted) {
-      promo.add(this.add.image(0, 0, painted).setDisplaySize(560, 170));
+      promo.add(this.add.image(0, 0, painted).setDisplaySize(COL_W, 132));
     } else {
-      promo.add(this.add.nineslice(0, 0, 'ui:dark', undefined, 560, 170, 12, 12, 12, 12));
-      promo.add(this.add.image(-60, 0, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(520, 200).setAlpha(0.2));
-      FEATURED.forEach((id, i) => promo.add(this.add.image(-210 + i * 64, 6, `head:${id}`).setDisplaySize(92, 92)));
-      promo.add(text(this, -40, -50, 'NEW LUMINARIES', { size: 26, font: 'display', bold: true, color: CSS.firefly, spacing: 2 }));
-      promo.add(text(this, -40, -10, FEATURED.map((id) => getCharacter(id).name.replace(/^(Lady|Sir|Dr\.?|Madame)\s+/, '').split(' ')[0]).join(' · '), { size: 24, color: CSS.cream }));
-      promo.add(text(this, -40, 30, 'now answering the Lantern Rite', { size: 20, italic: true, color: CSS.creamDim }));
+      promo.add(this.add.rectangle(0, 0, COL_W, 132, 0x0b0c10, 0.72));
+      promo.add(this.add.image(-COL_W / 2 + 120, 0, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(320, 170).setAlpha(0.22));
+      FEATURED.forEach((id, i) => {
+        const hx = -COL_W / 2 + 54 + i * 58;
+        promo.add(this.add.circle(hx, 4, 37, 0x0b0c10).setStrokeStyle(2, C.gold, 0.7));
+        promo.add(this.add.image(hx, 4, `head:${id}`).setDisplaySize(70, 70));
+      });
+      const tx = -COL_W / 2 + 222;
+      const room = COL_W / 2 - tx - 16;
+      promo.add(fit(text(this, tx, -40, 'NEW LUMINARIES', { size: 24, font: 'display', bold: true, color: CSS.firefly, spacing: 2 }), room));
+      promo.add(fit(text(this, tx, -6, FEATURED.map((id) => getCharacter(id).name.replace(/^(Lady|Sir|Dr\.?|Madame)\s+/, '').split(' ')[0]).join(' · '), { size: 20, color: CSS.cream }), room));
+      promo.add(fit(text(this, tx, 24, 'answering the Lantern Rite', { size: 18, italic: true, color: CSS.creamDim }), room));
     }
-    promo.add(this.add.rectangle(0, 0, 560, 170).setStrokeStyle(2, C.gold, 0.6));
-    promo.setSize(560, 170).setInteractive({ useHandCursor: true });
+    promo.add(this.add.rectangle(0, 0, COL_W, 132).setStrokeStyle(1.5, 0xe8dcc0, 0.55));
+    promo.setSize(COL_W, 132).setInteractive({ useHandCursor: true });
     promo.on('pointerup', () => {
       audio.sfx('tap');
       goTo(this, 'Summon');
     });
     this.ui.add(promo);
 
-    // Chapter title + ticket.
-    this.ui.add(text(this, x + 270, 360, allClear ? 'EVERY LAMP IS LIT' : `CHAPTER ${stage.chapter}`, { size: 26, font: 'display', bold: true, color: CSS.goldLight, spacing: 6, shadow: true }).setOrigin(1, 0));
-    this.ui.add(text(this, x + 270, 398, chapter.name, { size: 58, font: 'display', bold: true, color: CSS.cream, shadow: true, align: 'right', wrap: 620 }).setOrigin(1, 0));
-    this.ui.add(text(this, x + 270, 476, allClear ? 'Replay any stage from the Story map' : `${stage.id}  ·  ${stage.name}`, { size: 26, italic: true, color: CSS.creamDim, shadow: true }).setOrigin(1, 0));
-    this.ticket(x + 85, 576, allClear ? 'STORY' : 'ENTER THE STAGE', () => (allClear ? goTo(this, 'Story') : goTo(this, 'Formation', { stageId: stage.id })));
+    // Admission ticket: chapter + next stage, with a torn-off "Enter" stub.
+    this.ticket(x, 372, allClear ? 'EVERY LAMP IS LIT' : `CHAPTER ${stage.chapter} · ${chapter.name.toUpperCase()}`,
+      allClear ? 'Replay any stage' : `${stage.id}  ${stage.name}`,
+      () => (allClear ? goTo(this, 'Story') : goTo(this, 'Formation', { stageId: stage.id })));
 
-    // Two small tiles.
+    // Two outlined tiles.
+    const tw = (COL_W - 18) / 2;
     const tile = (tx: number, icon: string, label: string, sub: string, go: () => void) => {
-      const c = this.add.container(tx, 720);
-      c.add(this.add.nineslice(0, 0, 'ui:paper', undefined, 268, 110, 12, 12, 12, 12));
-      c.add(this.add.image(-88, 0, `icon:${icon}`).setDisplaySize(64, 64));
-      c.add(text(this, -44, -16, label, { size: 28, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0, 0.5));
-      c.add(text(this, -44, 20, sub, { size: 20, color: CSS.paperSub }).setOrigin(0, 0.5));
-      c.setSize(268, 110).setInteractive({ useHandCursor: true });
-      c.on('pointerover', () => c.setScale(1.04));
+      const c = this.add.container(tx, 528);
+      c.add(this.add.rectangle(0, 0, tw, 118, 0x0b0c10, 0.5).setStrokeStyle(1.5, 0xe8dcc0, 0.55));
+      c.add(this.add.image(tw / 2 - 52, -6, `icon:${icon}`).setDisplaySize(78, 78).setAlpha(0.28));
+      c.add(text(this, -tw / 2 + 18, 18, label, { size: 30, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5));
+      c.add(text(this, -tw / 2 + 20, -30, sub, { size: 17, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
+      c.setSize(tw, 118).setInteractive({ useHandCursor: true });
+      c.on('pointerover', () => c.setScale(1.03));
       c.on('pointerout', () => c.setScale(1));
       c.on('pointerup', () => {
         audio.sfx('tap');
@@ -234,29 +259,30 @@ export class LobbyScene extends Phaser.Scene {
       });
       this.ui.add(c);
     };
-    tile(x - 146, 'story', 'Story', `${CHAPTERS.length} chapters`, () => goTo(this, 'Story'));
-    tile(x + 146, 'roster', 'Troupe', `${Object.keys(save.roster).length} / ${CHARACTERS.length}`, () => goTo(this, 'Roster'));
+    tile(left + tw / 2, 'story', 'Story', `${CHAPTERS.length} chapters`, () => goTo(this, 'Story'));
+    tile(left + COL_W - tw / 2, 'roster', 'Troupe', `${Object.keys(save.roster).length} / ${CHARACTERS.length} found`, () => goTo(this, 'Roster'));
 
-    // Big Lantern Rite button with a turning wheel.
-    const rite = this.add.container(x, 900);
-    const glow = this.add.image(0, 0, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(640, 260).setAlpha(0.2);
-    this.tweens.add({ targets: glow, alpha: 0.36, duration: 1400, yoyo: true, repeat: -1 });
-    const plate = this.add.nineslice(0, 0, 'ui:dark', undefined, 560, 170, 14, 14, 14, 14);
-    const wheel = this.add.graphics({ x: -190, y: 0 });
-    wheel.lineStyle(4, C.gold, 0.85).strokeCircle(0, 0, 66).strokeCircle(0, 0, 44);
+    // Lantern Rite: wide outlined tile with a turning wheel bleeding off its right edge.
+    const rite = this.add.container(x, 676);
+    const glow = this.add.image(COL_W / 2 - 90, 0, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(300, 200).setAlpha(0.16);
+    this.tweens.add({ targets: glow, alpha: 0.3, duration: 1400, yoyo: true, repeat: -1 });
+    const plate = this.add.rectangle(0, 0, COL_W, 132, 0x0b0c10, 0.55).setStrokeStyle(1.5, 0xe8dcc0, 0.55);
+    const wheel = this.add.graphics({ x: COL_W / 2 - 90, y: 0 });
+    wheel.lineStyle(3, 0xe8dcc0, 0.75).strokeCircle(0, 0, 56).strokeCircle(0, 0, 18);
+    wheel.lineStyle(2, 0xe8dcc0, 0.5).strokeCircle(0, 0, 44);
     for (let i = 0; i < 12; i++) {
       const a = (i * Math.PI) / 6;
-      wheel.lineBetween(Math.cos(a) * 44, Math.sin(a) * 44, Math.cos(a) * 66, Math.sin(a) * 66);
+      wheel.lineBetween(Math.cos(a) * 18, Math.sin(a) * 18, Math.cos(a) * 56, Math.sin(a) * 56);
     }
-    this.tweens.add({ targets: wheel, angle: 360, duration: 16000, repeat: -1 });
-    const icon = this.add.image(-190, 0, 'icon:summon').setDisplaySize(96, 96);
+    this.tweens.add({ targets: wheel, angle: 360, duration: 18000, repeat: -1 });
+    const icon = this.add.image(COL_W / 2 - 90, 0, 'icon:summon').setDisplaySize(44, 44);
     const pulls = Math.floor(save.glimmer / RITE.cost);
     rite.add([glow, plate, wheel, icon,
-      text(this, -100, -34, 'LANTERN RITE', { size: 40, font: 'display', bold: true, color: CSS.firefly, spacing: 3 }).setOrigin(0, 0.5),
-      text(this, -98, 22, pulls > 0 ? `Glimmer for ${pulls} light${pulls > 1 ? 's' : ''}` : 'Clear stages to earn Glimmer', { size: 24, color: CSS.cream }).setOrigin(0, 0.5),
+      text(this, -COL_W / 2 + 22, -18, 'Lantern Rite', { size: 36, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5),
+      text(this, -COL_W / 2 + 24, 26, pulls > 0 ? `Glimmer for ${pulls} light${pulls > 1 ? 's' : ''}` : 'Clear stages to earn Glimmer', { size: 19, italic: true, color: CSS.firefly }).setOrigin(0, 0.5),
     ]);
-    rite.setSize(560, 170).setInteractive({ useHandCursor: true });
-    rite.on('pointerover', () => rite.setScale(1.03));
+    rite.setSize(COL_W, 132).setInteractive({ useHandCursor: true });
+    rite.on('pointerover', () => rite.setScale(1.02));
     rite.on('pointerout', () => rite.setScale(1));
     rite.on('pointerup', () => {
       audio.sfx('tap');
@@ -265,24 +291,26 @@ export class LobbyScene extends Phaser.Scene {
     this.ui.add(rite);
   }
 
-  /** Amber admission ticket with notched ends (the reference's "ENTER THE SHOW"). */
-  private ticket(x: number, y: number, label: string, onClick: () => void): void {
-    const w = 430;
-    const h = 92;
+  /** Cream admission ticket with a perforated "Enter" stub (the reference's "ENTER THE SHOW"). */
+  private ticket(x: number, y: number, head: string, sub: string, onClick: () => void): void {
+    const w = COL_W;
+    const h = 112;
+    const stub = 118;
     const c = this.add.container(x, y);
     const g = this.add.graphics();
-    g.fillStyle(C.amber, 1);
-    g.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
-    g.lineStyle(2, 0xffe6c0, 0.7);
-    g.strokeRoundedRect(-w / 2 + 10, -h / 2 + 8, w - 20, h - 16, 6);
-    // Perforation.
-    for (let i = -3; i <= 3; i++) g.fillStyle(0xffe6c0, 0.6).fillCircle(w / 2 - 70, i * 10, 2);
-    const t = text(this, -34, 0, label, { size: 30, font: 'display', bold: true, color: '#fff4e4', spacing: 3 }).setOrigin(0.5);
-    const arrow = this.add.image(w / 2 - 36, 0, 'icon:back').setDisplaySize(34, 34).setFlipX(true);
-    c.add([g, t, arrow]);
+    g.fillStyle(0xefe6d2, 0.96).fillRect(-w / 2, -h / 2, w, h);
+    g.lineStyle(1.5, 0x2a241c, 0.35).strokeRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16);
+    for (let i = -h / 2 + 10; i < h / 2 - 6; i += 9) g.fillStyle(0x2a241c, 0.4).fillCircle(w / 2 - stub, i, 1.6);
+    const room = w - stub - 44;
+    const k = fit(text(this, -w / 2 + 22, -30, head, { size: 15, font: 'display', bold: true, color: CSS.amber, spacing: 2 }), room);
+    const t = fit(text(this, -w / 2 + 20, -6, 'ENTER THE STAGE', { size: 34, font: 'display', bold: true, color: CSS.paperText }), room);
+    const st = fit(text(this, -w / 2 + 22, 30, sub, { size: 18, italic: true, color: CSS.paperSub }), room);
+    const enter = text(this, w / 2 - stub / 2, -2, 'Enter', { size: 30, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5);
+    const arrow = this.add.image(w / 2 - stub / 2, 30, 'icon:back').setDisplaySize(22, 22).setFlipX(true).setTint(0x2a241c);
+    c.add([g, k, t, st, enter, arrow]);
     c.setSize(w, h).setInteractive({ useHandCursor: true });
-    this.tweens.add({ targets: arrow, x: arrow.x + 6, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    c.on('pointerover', () => c.setScale(1.04));
+    this.tweens.add({ targets: arrow, x: arrow.x + 5, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    c.on('pointerover', () => c.setScale(1.03));
     c.on('pointerout', () => c.setScale(1));
     c.on('pointerup', () => {
       audio.sfx('tap');

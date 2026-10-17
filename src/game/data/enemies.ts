@@ -31,7 +31,7 @@ export const ENEMIES: EnemyDef[] = [
     blurb: 'A faceless usher who still shows the lost to their seats.',
   },
   {
-    id: 'mannequin', name: 'Clockwork Mannequin', mood: 'sun', kind: 'mannequin',
+    id: 'mannequin', name: 'Porcelain Mannequin', mood: 'sun', kind: 'mannequin',
     base: { hp: 1120, atk: 92, def: 80 },
     moves: [
       { id: 'windup', name: 'Wind Up', intent: 'buff', effects: [{ kind: 'status', target: 'self', status: 'might', turns: 2 }] },
@@ -39,7 +39,7 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['windup', 'blow', 'blow'],
     finale: { id: 'snap', name: 'Spring Snap', intent: 'attack', effects: [{ kind: 'damage', target: 'enemy', power: 3.0 }] },
-    blurb: 'A shop-window dummy that learned to walk after closing time.',
+    blurb: 'A porcelain shop-window doll that learned to walk after closing time.',
   },
   {
     id: 'hound', name: 'Ink Hound', mood: 'sun', kind: 'hound',
@@ -86,7 +86,7 @@ export const ENEMIES: EnemyDef[] = [
         { kind: 'status', target: 'allEnemies', status: 'weak', turns: 2 },
       ],
     },
-    blurb: 'She waits in the dress circle for a performance that ended in 1899.',
+    blurb: 'A mourning statue from the theatre garden, still waiting for a performance that ended in 1899.',
   },
   {
     id: 'lampeater', name: 'Lamp-Eater', mood: 'star', kind: 'lampeater',
@@ -103,7 +103,7 @@ export const ENEMIES: EnemyDef[] = [
       id: 'swallow', name: 'Swallow the Light', intent: 'mass',
       effects: [{ kind: 'damage', target: 'allEnemies', power: 1.4 }, { kind: 'snuff', amount: 5 }],
     },
-    blurb: 'A great moth with a gas mantle for a heart. It feeds on fireflies.',
+    blurb: 'A great beetle hauling a stolen gas lamp on its back. It feeds on fireflies.',
   },
   {
     id: 'curtaincaller', name: 'The Curtain-Caller', mood: 'moon', kind: 'curtaincaller', boss: true,
@@ -159,10 +159,10 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['dive', 'scatter', 'dive'],
     finale: { id: 'squall', name: 'Squall', intent: 'mass', effects: [{ kind: 'damage', target: 'allEnemies', power: 1.4 }] },
-    blurb: 'Gulls that followed a ship into the fog and came back as something hungrier.',
+    blurb: 'A drowned bride with a birdcage for a heart. The gulls that followed her ship never left.',
   },
   {
-    id: 'stevedore', name: 'Rust Stevedore', mood: 'sun', kind: 'stevedore',
+    id: 'stevedore', name: 'Bilge Shade', mood: 'sun', kind: 'stevedore',
     base: { hp: 1240, atk: 96, def: 78 },
     moves: [
       { id: 'brace', name: 'Brace the Line', intent: 'shield', effects: [{ kind: 'shield', target: 'allAllies', power: 0.7 }] },
@@ -170,7 +170,7 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['brace', 'hook', 'hook'],
     finale: { id: 'anchor', name: 'Drop Anchor', intent: 'attack', effects: [{ kind: 'damage', target: 'enemy', power: 3.0 }] },
-    blurb: 'A dock worker of riveted iron, still unloading a cargo nobody ordered.',
+    blurb: 'The dark that pooled in a ship’s hold, wearing a torn sail like a cloak.',
   },
   {
     id: 'siren', name: 'Fog Siren', mood: 'star', kind: 'siren',
@@ -188,7 +188,7 @@ export const ENEMIES: EnemyDef[] = [
       id: 'drown', name: 'Drowning Chorus', intent: 'mass',
       effects: [{ kind: 'damage', target: 'allEnemies', power: 1.7 }, { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 }],
     },
-    blurb: 'Her voice sounds exactly like someone you lost. Do not answer it.',
+    blurb: 'She lives in old mirrors. Her voice sounds exactly like someone you lost. Do not answer it.',
   },
   {
     id: 'keeper', name: 'Keeper Brine', mood: 'moon', kind: 'keeper', boss: true,
@@ -206,10 +206,10 @@ export const ENEMIES: EnemyDef[] = [
       id: 'lightsout', name: 'Lighthouse Out', intent: 'mass',
       effects: [{ kind: 'damage', target: 'allEnemies', power: 2.4 }, { kind: 'snuff', amount: 5 }],
     },
-    blurb: 'The lighthouse keeper turned his lamp around. Now it shines darkness out to sea.',
+    blurb: 'The lighthouse keeper’s logbooks, waterlogged and walking, still carrying his lamp. It shines darkness out to sea.',
   },
   {
-    id: 'cogspider', name: 'Cog Spider', mood: 'sun', kind: 'cogspider',
+    id: 'cogspider', name: 'Torn Hymnal', mood: 'sun', kind: 'cogspider',
     base: { hp: 720, atk: 94, def: 50 },
     moves: [
       { id: 'nibble', name: 'Gear Nibble', intent: 'attack', effects: [{ kind: 'damage', target: 'enemy', power: 0.6, hits: 2 }] },
@@ -220,10 +220,10 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['nibble', 'spark', 'nibble'],
     finale: { id: 'shred', name: 'Shredding Wheel', intent: 'attack', effects: [{ kind: 'damage', target: 'enemy', power: 0.8, hits: 4 }] },
-    blurb: 'It spins its webs from mainsprings and catches seconds instead of flies.',
+    blurb: 'A choir girl stitched from hymn sheets, humming the hours the clock forgot.',
   },
   {
-    id: 'pendulum', name: 'Pendulum Knight', mood: 'star', kind: 'pendulum',
+    id: 'pendulum', name: 'Pendulum Jester', mood: 'star', kind: 'pendulum',
     base: { hp: 1180, atk: 104, def: 74 },
     moves: [
       { id: 'tick', name: 'Tick', intent: 'buff', effects: [{ kind: 'status', target: 'self', status: 'might', turns: 2 }] },
@@ -231,7 +231,7 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['tick', 'tock'],
     finale: { id: 'midnightstroke', name: 'Midnight Stroke', intent: 'mass', effects: [{ kind: 'damage', target: 'allEnemies', power: 1.8 }] },
-    blurb: 'A suit of armour that swings exactly once per second, forever.',
+    blurb: 'A marionette hung from the clock weights, swinging exactly once per second, forever.',
   },
   {
     id: 'chimewisp', name: 'Chime Wisp', mood: 'moon', kind: 'chimewisp',
@@ -242,7 +242,7 @@ export const ENEMIES: EnemyDef[] = [
     ],
     pattern: ['hush', 'toll'],
     finale: { id: 'knell', name: 'Death Knell', intent: 'mass', effects: [{ kind: 'damage', target: 'allEnemies', power: 1.3 }] },
-    blurb: 'A loose note from a broken carillon, drifting about looking for a bell.',
+    blurb: 'A tall bell-ringer who walks the belfry, tolling for hours that no longer exist.',
   },
   {
     id: 'hourless', name: 'The Hourless King', mood: 'star', kind: 'hourless', boss: true,
