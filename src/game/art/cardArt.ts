@@ -616,8 +616,24 @@ function background(ctx: Ctx, layout: ArtLayout, pal: Pal, rnd: () => number): v
   }
 }
 
-function portrait(ctx: Ctx, char: CharacterDef): void {
+/** Painted character art to use instead of the code-drawn doll. */
+export interface PaintedSource {
+  img: CanvasImageSource;
+  w: number;
+  h: number;
+}
+
+function portrait(ctx: Ctx, char: CharacterDef, painted?: PaintedSource): void {
   // Comic close-up of the caster in the lower left, partially cropped by the card edge.
+  if (painted) {
+    const s = (CARD_H * 1.05) / painted.h;
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 18;
+    ctx.drawImage(painted.img, CARD_W * 0.36 - (painted.w * s) / 2, CARD_H * 0.16, painted.w * s, painted.h * s);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   ctx.translate(-70, 84);
   ctx.scale(1.6, 1.6);
@@ -626,7 +642,7 @@ function portrait(ctx: Ctx, char: CharacterDef): void {
   ctx.restore();
 }
 
-export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef): void {
+export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource): void {
   const pal: Pal = char.palette;
   const rnd = seeded(verse.id.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
   ctx.save();
@@ -635,7 +651,7 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef): voi
   ctx.clip();
   background(ctx, verse.art.layout, pal, rnd);
   if (verse.art.portrait) {
-    portrait(ctx, char);
+    portrait(ctx, char, painted);
     ctx.save();
     ctx.translate(CARD_W * 0.68, CARD_H * 0.28);
     ctx.scale(0.62, 0.62);
@@ -659,9 +675,9 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef): voi
   grain(ctx, CARD_W, CARD_H, 0.07, verse.id.length * 13);
 }
 
-export function verseArtCanvas(char: CharacterDef, verse: VerseDef): HTMLCanvasElement {
+export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(CARD_W, CARD_H);
-  drawVerseArt(ctx, char, verse);
+  drawVerseArt(ctx, char, verse, painted);
   return canvas;
 }
 

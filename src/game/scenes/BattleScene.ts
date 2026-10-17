@@ -39,7 +39,7 @@ const HAND_DIP = 150;
 const SLOT_Y = 196;
 const SLOT_SCALE = 0.42;
 const SLOT_GAP = 128;
-const ALLY_POS = [{ x: 720, y: 742 }, { x: 500, y: 702 }, { x: 290, y: 754 }];
+const ALLY_POS = [{ x: 760, y: 746 }, { x: 510, y: 700 }, { x: 260, y: 758 }];
 const ENEMY_POS: Record<number, { x: number; y: number }[]> = {
   1: [{ x: 1420, y: 742 }],
   2: [{ x: 1300, y: 738 }, { x: 1570, y: 712 }],
@@ -439,6 +439,7 @@ export class BattleScene extends Phaser.Scene {
     this.showCastBanner(verse.name + (e.rank > 1 ? '  ' + '★'.repeat(e.rank) : ''), describeVerse(verse, e.rank, e.lit), e.finale ? CSS.gold : CSS.goldLight);
     audio.sfx('cast');
     const mood = MOOD_COLOR[char.mood];
+    caster.castPose();
     this.fx.ring(caster.x, caster.y, mood, 320, 600, true);
     this.fx.glowAt(caster.center.x, caster.center.y, mood, 260, 500);
     const hostile = verse.effects.some((fx) => fx.kind === 'damage');
@@ -681,8 +682,8 @@ export class BattleScene extends Phaser.Scene {
   // ===================================================================== unit tooltip
 
   private bindUnitTip(v: UnitView): void {
-    v.sprite.on('pointerover', () => this.showUnitTip(v.unit.uid));
-    v.sprite.on('pointerout', (p: Phaser.Input.Pointer) => {
+    v.hit.on('pointerover', () => this.showUnitTip(v.unit.uid));
+    v.hit.on('pointerout', (p: Phaser.Input.Pointer) => {
       // Lifting a finger counts as "out"; keep the timed tip visible on touch screens.
       if (!p.wasTouch) this.hideUnitTip();
     });

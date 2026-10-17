@@ -43,8 +43,8 @@ export function isDropIn(key: string): boolean {
 }
 
 /** Code-drawn portraits are chibi (short); painted key art is tall, so each gets its own size. */
-export function fitPortrait(img: Phaser.GameObjects.Image, proceduralScale: number, paintedHeight: number): Phaser.GameObjects.Image {
-  if (isDropIn(img.texture.key)) img.setScale(paintedHeight / img.height);
+export function fitPortrait(img: Phaser.GameObjects.Image, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): Phaser.GameObjects.Image {
+  if (isDropIn(img.texture.key)) img.setScale(Math.min(paintedHeight / img.height, maxWidth / img.width));
   else img.setScale(proceduralScale);
   return img;
 }

@@ -5,6 +5,8 @@ import { getEnemy } from '../data/enemies';
 import type { StatusId } from '../data/types';
 import { C, CSS } from '../config/theme';
 import { text } from './kit';
+import { LivingSprite } from './LivingSprite';
+import { dropIn } from '../art/assets';
 
 const FLYERS = new Set(['mothling', 'lampeater']);
 
@@ -17,7 +19,9 @@ export interface UnitLayout {
 /** A combatant on the field: sprite, bars, pips, statuses and (for enemies) the intent chip. */
 export class UnitView {
   readonly root: Phaser.GameObjects.Container;
-  readonly sprite: Phaser.GameObjects.Image;
+  readonly sprite: Phaser.GameObjects.Image | LivingSprite;
+  /** The object that receives taps/hover for this unit. */
+  readonly hit: Phaser.GameObjects.GameObject;
   private shadow: Phaser.GameObjects.Image;
   private hud: Phaser.GameObjects.Container;
   private hpFill: Phaser.GameObjects.Rectangle;
@@ -47,7 +51,17 @@ export class UnitView {
     const key = isEnemy ? `enemy:${kind}` : `doll:${unit.defId}`;
     this.root = scene.add.container(layout.x, layout.y).setDepth(20 + layout.y / 100);
     this.shadow = scene.add.image(0, 0, 'fx:shadow').setDisplaySize(unit.boss ? 420 : 230, unit.boss ? 70 : 46).setAlpha(0.8);
-    this.sprite = scene.add.image(0, this.flyer ? -50 : 4, key).setOrigin(0.5, 1).setScale(layout.scale);
+    if (this.flyer) {
+      this.sprite = scene.add.image(0, -50, key).setOrigin(0.5, 1).setScale(layout.scale);
+      this.hit = this.sprite;
+    } else {
+      // Ground units breathe and sway; painted art gets a little more motion than the chibis.
+      const painted = !!(isEnemy ? dropIn(scene, 'enemies', unit.defId) : dropIn(scene, 'battle', unit.defId) ?? dropIn(scene, 'characters', unit.defId));
+      const ls = new LivingSprite(scene, 0, 4, key, { sway: painted ? 5 : 3, flutter: painted ? 3 : 1.5, speed: isEnemy ? 0.8 : 1 });
+      ls.setScale(layout.scale);
+      this.sprite = ls;
+      this.hit = ls.hit;
+    }
     this.height = this.sprite.displayHeight + (this.flyer ? 50 : 0);
     this.root.add([this.shadow, this.sprite]);
 
@@ -78,8 +92,7 @@ export class UnitView {
 
     this.bob = scene.tweens.add({
       targets: this.sprite,
-      y: this.sprite.y - (this.flyer ? 16 : 5),
-      scaleY: this.sprite.scaleY * (this.flyer ? 1 : 1.012),
+      y: this.sprite.y - (this.flyer ? 16 : 2),
       duration: this.flyer ? 1300 : 1700 + Math.random() * 500,
       yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: Math.random() * 600,
     });
@@ -181,16 +194,25 @@ export class UnitView {
     this.scene.time.delayedCall(70, () => this.sprite.clearTint());
     const dir = this.unit.side === 'ally' ? -1 : 1;
     this.scene.tweens.add({ targets: this.root, x: this.root.x + dir * (strong ? 26 : 14), duration: 60, yoyo: true, ease: 'Quad.easeOut' });
+    if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * (strong ? 40 : 24), -0.05, 70, 60);
   }
 
   lunge(toward: number, distance = 70): Promise<void> {
     return new Promise((resolve) => {
       const dir = Math.sign(toward - this.root.x) || 1;
+      if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * 46, -0.04, 140, 120);
       this.scene.tweens.add({
         targets: this.root, x: this.root.x + dir * distance, duration: 140, yoyo: true, hold: 120, ease: 'Cubic.easeOut',
         onYoyo: () => resolve(),
       });
     });
+  }
+
+  /** Rises onto the toes and leans back: a spell being drawn. */
+  castPose(): void {
+    if (!(this.sprite instanceof LivingSprite)) return;
+    const back = this.unit.side === 'ally' ? -18 : 18;
+    this.sprite.pose(back, 0.05, 180, 160);
   }
 
   die(): Promise<void> {
@@ -204,6 +226,7 @@ export class UnitView {
       } else {
         this.sprite.setTint(0x6a6a7a);
         this.scene.tweens.add({ targets: this.root, alpha: 0.35, duration: 500, onComplete: () => resolve() });
+        if (this.sprite instanceof LivingSprite) this.sprite.lean = -30;
         this.scene.tweens.add({ targets: this.sprite, angle: -8, y: this.sprite.y + 6, duration: 500 });
         this.hud.setAlpha(0.3);
       }
@@ -220,8 +243,8 @@ export class UnitView {
   }
 
   setInteractive(cb: () => void): void {
-    this.sprite.setInteractive({ useHandCursor: true, pixelPerfect: false });
-    this.sprite.on('pointerup', cb);
+    this.hit.setInteractive({ useHandCursor: true });
+    this.hit.on('pointerup', cb);
   }
 
   destroy(): void {

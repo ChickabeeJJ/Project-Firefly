@@ -4,8 +4,8 @@ import { ENEMIES } from '../data/enemies';
 import { dropIn } from './assets';
 import { backgroundCanvas, type BgId } from './backgrounds';
 import { CARD_H, CARD_W, PCARD_H, PCARD_W, portraitCardCanvas, verseArtCanvas } from './cardArt';
-import { DOLL_H, dollCanvas, drawDoll } from './doll';
-import { enemyCanvas, enemySize } from './enemyArt';
+import { dollCanvas, drawDoll } from './doll';
+import { enemyCanvas } from './enemyArt';
 import { iconCanvas, ICON_NAMES } from './icons';
 import { grain, makeCanvas, mix, rgba } from './paint';
 import { uiTextureSpecs } from './uiTextures';
@@ -24,6 +24,8 @@ export const BATTLE_DOLL_SCALE = 1;
 export const PORTRAIT_SCALE = 2.4;
 /** Painted portraits are stored at this height (memory cap). */
 const PAINTED_PORTRAIT_H = 1200;
+/** Battle height of painted characters before the 0.85 field scale. */
+const PAINTED_DOLL_H = 330;
 
 function add(scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement): void {
   if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
@@ -95,21 +97,37 @@ function cardCanvasFromImage(scene: Phaser.Scene, key: string): HTMLCanvasElemen
   return canvas;
 }
 
+/** Painted enemies get a faint violet cast so the Dimmed read as foes next to the troupe. */
+function dimmed(canvas: HTMLCanvasElement): HTMLCanvasElement {
+  const ctx = canvas.getContext('2d')!;
+  ctx.globalCompositeOperation = 'source-atop';
+  const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  g.addColorStop(0, 'rgba(70, 40, 110, 0.10)');
+  g.addColorStop(1, 'rgba(30, 14, 50, 0.38)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.globalCompositeOperation = 'source-over';
+  return canvas;
+}
+
 export function registerBaseArt(scene: Phaser.Scene): void {
   for (const s of uiTextureSpecs()) add(scene, s.key, s.canvas);
   for (const name of ICON_NAMES) add(scene, `icon:${name}`, iconCanvas(name, ICON_COLORS[name]));
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
-    add(scene, `doll:${c.id}`, battle ? fitHeight(scene, battle, DOLL_H) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
+    // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
+    add(scene, `doll:${c.id}`, battle ? fitHeight(scene, battle, PAINTED_DOLL_H) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
+    const body = dropIn(scene, 'characters', c.id);
+    const paintedBody = body ? { img: source(scene, body), ...size(scene, body) } : undefined;
     for (const v of [...c.verses, c.finale]) {
       const painted = dropIn(scene, 'cards', v.id);
-      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v));
+      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody));
     }
   }
   for (const e of ENEMIES) {
     const painted = dropIn(scene, 'enemies', e.id);
-    add(scene, `enemy:${e.kind}`, painted ? fitHeight(scene, painted, enemySize(e.kind).h) : enemyCanvas(e.kind, 1));
+    add(scene, `enemy:${e.kind}`, painted ? dimmed(fitHeight(scene, painted, e.boss ? 460 : 340)) : enemyCanvas(e.kind, 1));
   }
 }
 
@@ -158,7 +176,7 @@ export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string 
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, PCARD_W, PCARD_H);
   const s = size(scene, painted);
-  const scale = (PCARD_W * 1.7) / s.w;
+  const scale = Math.min((PCARD_W * 1.7) / s.w, (PCARD_H * 1.15) / s.h);
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(source(scene, painted), (PCARD_W - s.w * scale) / 2, -PCARD_H * 0.02, s.w * scale, s.h * scale);
   const shadeG = ctx.createLinearGradient(0, PCARD_H * 0.62, 0, PCARD_H);

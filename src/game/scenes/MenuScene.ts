@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropIn, fitPortrait } from '../art/assets';
+import { dropIn } from '../art/assets';
 import { ensureBg, ensurePortrait } from '../art/registry';
 import type { BgId } from '../art/backgrounds';
 import { audio } from '../audio/AudioController';
@@ -8,6 +8,7 @@ import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel } from '../systems/achievements';
 import { Atmosphere, fadeIn, goTo, text } from '../ui/kit';
+import { livingPortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 interface Slide {
@@ -46,8 +47,7 @@ export class MenuScene extends Phaser.Scene {
     shade.fillRect(0, 0, W, H);
     new Atmosphere(this, { depth: 60, fireflies: 5 });
 
-    const lead = fitPortrait(this.add.image(1520, H + 20, ensurePortrait(this, save.team[0])).setOrigin(0.5, 1), 0.78, 1040).setDepth(10);
-    this.tweens.add({ targets: lead, y: lead.y - 5, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    livingPortrait(this, 1500, H + 20, ensurePortrait(this, save.team[0]), 0.78, 960, 820).setDepth(10);
 
     this.buildHeader();
     this.buildCarousel();

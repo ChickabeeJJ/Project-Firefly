@@ -23,7 +23,7 @@ Automated checks: `npm test` (26 unit tests), `npm run build`, and Playwright ru
 | Guided tutorial (1-1) | ✅ | Playwright run through every gated step on a fresh save; wrong card refused; lesson ends at R4 |
 | Lobby, options menu, info panels | ✅ | screenshots of lobby, hide-UI, menu carousel, Atlas, Achievements (claim), Notice, Gramophone, Profile |
 | Chapters 3–4 balance | ✅ | sim: starter team 80–100 % except 4-8 boss 45 % (★5 team 65 %) |
-| Drop-in art | ✅ | placeholder PNGs in characters/, enemies/, bg/ replaced lobby, battle sprite, enemy and backdrop |
+| Drop-in art | ✅ | 24 painted sprites + 3 backgrounds live; LivingSprite motion verified (strip offsets change per frame); | placeholder PNGs in characters/, enemies/, bg/ replaced lobby, battle sprite, enemy and backdrop |
 
 ## Visuals
 

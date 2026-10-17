@@ -25,3 +25,35 @@ Tips
 - Keep the same camera and lighting across a set, so the troupe looks like one cast.
 - Leave a little transparent margin around the figure and don't crop the feet.
 - Large files are fine for art direction, but keep each under ~1.5 MB so the CrazyGames build stays small (WebP helps).
+
+## Current art (imported 2026-10-17)
+
+Two 4×3 sprite sheets were split and cleaned with `tools/art/split_sheet.py` and
+`tools/art/process_sprites.py` (cuts each sheet into cells, drops stray fragments, upscales ×2,
+crops `heads/`, flips enemies to face left, exports WebP).
+
+| Luminary | Sprite | Dimmed (enemy) | Sprite |
+|---|---|---|---|
+| wren | fire mage | usher | hooded lantern-bearer |
+| odile | water mage | mannequin | fox alchemist |
+| bastian | gear-shield knight | siren | fox-girl spear dancer |
+| marigold | blonde paladin | pendulum | sun-staff priest |
+| ichabod | masked rogue | curtaincaller (boss) | red-caped bard |
+| clementine | hooded scholar | gloam (boss) | necromancer |
+| rook | axe barbarian | keeper (boss) | steampunk gunner |
+| nell | fur-collared swordswoman | hourless (boss) | pale crystal mage |
+| ottoline | witch | | |
+| augustin | hourglass sage | | |
+| percival | robed scribe | | |
+| delphine | staff priestess | | |
+| teddy | dwarf smith | | |
+| evangeline | antlered dryad | | |
+| kit | ranger | | |
+| hesper | elven druid | | |
+
+Backgrounds: `bg/parlour` (lobby + menu), `bg/street` (Chapter 1), `bg/theatre` (Chapter 2).
+Other enemies (moths, hounds, wisps…) and backgrounds keep their code-drawn art until replaced.
+
+All ground units and the lobby/menu leader are drawn with `LivingSprite`
+(`src/game/ui/LivingSprite.ts`), which slices the image into strips and animates them every frame
+(sway, breathing, hair/cape ripple, attack/hit/cast poses), so a single still image moves.

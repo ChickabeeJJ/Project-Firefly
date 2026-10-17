@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropIn, fitPortrait } from '../art/assets';
+import { dropIn } from '../art/assets';
 import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS, getCharacter } from '../data/characters';
@@ -10,6 +10,7 @@ import { claimableCount, playerLevel, totalStars } from '../systems/achievements
 import { frontierStage } from '../systems/progression';
 import { RITE } from '../systems/gacha';
 import { Atmosphere, fadeIn, goTo, text, toast } from '../ui/kit';
+import { livingPortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 /** The newest Luminaries, advertised on the lobby banner. */
@@ -44,11 +45,11 @@ export class LobbyScene extends Phaser.Scene {
     // Leader, centre stage. Painted portraits stand nearly full height.
     const leader = getCharacter(save.team[0]);
     this.add.image(860, H - 24, 'fx:shadow').setDisplaySize(420, 60).setDepth(19);
-    const lead = fitPortrait(this.add.image(860, H + 20, ensurePortrait(this, leader.id)).setOrigin(0.5, 1), 0.92, 1050).setDepth(20);
-    this.tweens.add({ targets: lead, scaleY: lead.scaleY * 1.008, y: lead.y - 4, duration: 2200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    lead.setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 10 });
-    lead.on('pointerup', () => {
+    const lead = livingPortrait(this, 860, H + 20, ensurePortrait(this, leader.id), 0.92, 1000, 900).setDepth(20);
+    lead.hit.setInteractive({ useHandCursor: true });
+    lead.hit.on('pointerup', () => {
       if (this.hidden) return this.toggleUi();
+      lead.pose(14, 0.03, 160, 120);
       this.say(leader.quote);
     });
 
