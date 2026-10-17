@@ -85,7 +85,7 @@ export class FormationScene extends Phaser.Scene {
       const owned = save.roster[id];
       const x = 1000 + i * 340;
       const y = 560;
-      const card = new PortraitCard(this, x, y, id, { level: owned.level, resonance: owned.resonance, badge: i === 0 ? 'LEAD' : undefined });
+      const card = new PortraitCard(this, x, y, id, { level: owned.level, badge: i === 0 ? 'LEAD' : undefined });
       card.setScale(0.98);
       const c = getCharacter(id);
       const adv = enemyMoods.some((m) => moodRelation(c.mood, m) === 1);
@@ -125,7 +125,7 @@ export class FormationScene extends Phaser.Scene {
       const y = twoRows ? H / 2 - 100 + Math.floor(i / cols) * 250 : H / 2 + 20;
       const o = save.roster[c.id];
       const inTeam = save.team.indexOf(c.id);
-      const card = new PortraitCard(this, x, y, c.id, { level: o.level, badge: inTeam >= 0 ? `#${inTeam + 1}` : undefined }).setScale(scale);
+      const card = new PortraitCard(this, x, y, c.id, { level: o.level, slot: inTeam >= 0 ? inTeam + 1 : undefined }).setScale(scale);
       card.setInteractive({ useHandCursor: true });
       card.on('pointerup', () => {
         audio.sfx('card');

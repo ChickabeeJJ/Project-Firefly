@@ -4,6 +4,7 @@ import { registerBaseArt } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { saves } from '../persistence/SaveService';
 import { platform } from '../platform/PlatformAdapter';
+import { startPrologue } from '../systems/storyFlow';
 
 async function loadFonts(): Promise<void> {
   if (!document.fonts) return;
@@ -39,7 +40,7 @@ export class BootScene extends Phaser.Scene {
       this.scene.start(devScene, { stageId: params.get('stage') ?? '1-1' });
       return;
     }
-    if (saves.isNewPlayer) this.scene.start('Battle', { stageId: '1-1' });
+    if (saves.isNewPlayer) startPrologue(this);
     else this.scene.start('Lobby');
   }
 }

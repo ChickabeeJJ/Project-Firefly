@@ -9,6 +9,7 @@ import { C, CSS, H, MOOD_NAME, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { Button, ornament, text } from '../ui/kit';
 import type { BattleScene } from './BattleScene';
+import { startPrologue } from '../systems/storyFlow';
 
 export interface PauseData {
   mode: 'pause' | 'intel' | 'settings';
@@ -92,7 +93,7 @@ export class PauseScene extends Phaser.Scene {
           if (reset.getData('armed')) {
             saves.reset();
             this.scene.stop(this.data_.from ?? 'Lobby');
-            this.scene.start('Battle', { stageId: '1-1' });
+            startPrologue(this);
             return;
           }
           reset.setData('armed', true);
@@ -100,7 +101,7 @@ export class PauseScene extends Phaser.Scene {
         },
       });
       new Button(this, x + pw / 2 - 50, y - ph / 2 + 50, { w: 64, h: 64, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: () => this.close() });
-      text(this, x, y + ph / 2 - 36, 'Firefly Nocturne · all art and audio generated in code', { size: 22, italic: true, color: CSS.paperSub }).setOrigin(0.5);
+      text(this, x, y + ph / 2 - 36, 'Firefly Nocturne · Vellmoor, 1929', { size: 22, italic: true, color: CSS.paperSub }).setOrigin(0.5);
     }
   }
 

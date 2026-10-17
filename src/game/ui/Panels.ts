@@ -164,9 +164,9 @@ const HOW_TO = [
 ];
 
 const WHATS_NEW = [
-  ['Chapter 3 · The Drowned Docks', 'Gull-wraiths, stevedores and a Siren sing beneath the harbour. Boss: Keeper Brine.'],
+  ['Chapter 3 · The Drowned Docks', 'Drowned brides, bilge shades and a siren in the mirror. Boss: Keeper Brine.'],
   ['Chapter 4 · The Clock Without Hands', 'Climb the Cathedral Clock and face The Hourless King.'],
-  ['Six new Luminaries', 'Percival, Delphine, Teddy, Evangeline, Kit and Hesper join the Lantern Rite.'],
+  ['New faces', 'Corvin, Seraphine, Columbine, Lucien, Aldric, Ophelia, Valerian and Elias have new portraits and new names.'],
   ['A guided first battle', 'Stage 1-1 now walks new Lamplighters through every rule.'],
   ['Lobby & menu', 'A new parlour, an options menu, the Atlas, Achievements and a gramophone.'],
 ];
@@ -176,8 +176,8 @@ export function openNotice(scene: Phaser.Scene): void {
   const cols: [string, string[][]][] = [['How to Play', HOW_TO], ['What’s New', WHATS_NEW]];
   cols.forEach(([head, items], k) => {
     const x = W / 2 - 760 + k * 780;
-    c.add(text(scene, x + 20, 190, head.toUpperCase(), { size: 28, font: 'display', bold: true, color: CSS.firefly, spacing: 4 }));
-    let y = 246;
+    c.add(text(scene, x + 20, 214, head.toUpperCase(), { size: 28, font: 'display', bold: true, color: CSS.firefly, spacing: 4 }));
+    let y = 268;
     for (const [t, body] of items) {
       const tt = text(scene, x + 20, y, t, { size: 26, font: 'display', bold: true, color: CSS.cream });
       const bt = text(scene, x + 20, y + 38, body, { size: 22, color: CSS.creamDim, wrap: 700, lineSpacing: 2 });
@@ -234,7 +234,7 @@ export function openGramophone(scene: Phaser.Scene): void {
 export function openProfile(scene: Phaser.Scene): void {
   const { c } = modal(scene, 'LAMPLIGHTER', 1000, 760);
   const s = saves.get();
-  c.add(text(scene, W / 2, 210, `Lv ${playerLevel(s)}  ·  ID ${s.playerId}`, { size: 30, color: CSS.creamDim }).setOrigin(0.5));
+  c.add(text(scene, W / 2, H / 2 - 380 + 152, `Lv ${playerLevel(s)}  ·  ID ${s.playerId}`, { size: 28, color: CSS.creamDim }).setOrigin(0.5));
   const stats: [string, string][] = [
     ['Stages cleared', `${Object.keys(s.stars).length} / ${STAGES.length}`],
     ['Stars earned', `${totalStars(s)} / ${STAGES.length * 3}`],
@@ -245,7 +245,7 @@ export function openProfile(scene: Phaser.Scene): void {
     ['Glimmer', s.glimmer.toLocaleString('en-US')],
   ];
   stats.forEach(([k, v], i) => {
-    const y = 290 + i * 64;
+    const y = H / 2 - 380 + 222 + i * 62;
     c.add(text(scene, W / 2 - 380, y, k, { size: 28, color: CSS.cream }).setOrigin(0, 0.5));
     c.add(text(scene, W / 2 + 380, y, v, { size: 28, bold: true, color: CSS.goldLight }).setOrigin(1, 0.5));
     if (i < stats.length - 1) c.add(scene.add.rectangle(W / 2, y + 32, 760, 1, C.gold, 0.2));

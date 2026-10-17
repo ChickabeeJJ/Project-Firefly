@@ -162,3 +162,28 @@ export interface StageDef {
   outro?: string;
   boss?: boolean;
 }
+
+export type SceneBg = 'street' | 'theatre' | 'docks' | 'clocktower' | 'parlour' | 'lake' | 'map';
+
+/** One beat of a cinematic. `who` is a character id, an enemy id, or a plain display name. */
+export type Shot =
+  | { kind: 'title'; kicker: string; title: string; sub?: string }
+  | { kind: 'narrate'; text: string; bg?: SceneBg; tone?: 'warm' | 'cold' | 'dawn' }
+  | { kind: 'line'; who: string; text: string }
+  | { kind: 'bell'; strokes: number; text?: string; ominous?: boolean }
+  | { kind: 'letter'; text: string; sign: string }
+  | { kind: 'bg'; bg: SceneBg; tone?: 'warm' | 'cold' | 'dawn' };
+
+export interface Cinematic {
+  id: string;
+  /** Menu label in the Story archive. */
+  name: string;
+  bg: SceneBg;
+  tone?: 'warm' | 'cold' | 'dawn';
+  shots: Shot[];
+}
+
+export interface BioSection {
+  title: string;
+  text: string;
+}

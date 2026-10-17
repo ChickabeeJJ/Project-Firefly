@@ -45,10 +45,204 @@ function starGlyph(ctx: Ctx, color: string): void {
   fillOutlined(ctx, p, color, 3.5);
 }
 
+/** Mood emblem: an engraved medallion (dark disc, gilt ring with ticks) holding the glyph. */
+function emblem(glyph: IconFn): IconFn {
+  return (ctx, color) => {
+    ctx.save();
+    ctx.fillStyle = 'rgba(16,13,20,0.94)';
+    ctx.beginPath();
+    ctx.arc(48, 48, 44, 0, Math.PI * 2);
+    ctx.fill();
+    const g = ctx.createLinearGradient(8, 8, 88, 88);
+    g.addColorStop(0, '#f2dba0');
+    g.addColorStop(0.5, '#a07a3a');
+    g.addColorStop(1, '#f0d690');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(48, 48, 43, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < 24; i++) {
+      const a = (i * Math.PI) / 12;
+      const r0 = i % 3 === 0 ? 33 : 36;
+      ctx.beginPath();
+      ctx.moveTo(48 + Math.cos(a) * r0, 48 + Math.sin(a) * r0);
+      ctx.lineTo(48 + Math.cos(a) * 39, 48 + Math.sin(a) * 39);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = rgba(color, 0.55);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(48, 48, 31, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.translate(48, 48);
+    ctx.scale(0.66, 0.66);
+    ctx.translate(-48, -48);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 14;
+    glyph(ctx, color);
+    ctx.restore();
+  };
+}
+
+/** Fine line-art strokes (lobby and menu icons), cream with a soft shadow. */
+function line(ctx: Ctx, path: Path2D, color = CREAM, w = 4.5): void {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = 'rgba(0,0,0,0.65)';
+  ctx.shadowBlur = 5;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = w;
+  ctx.stroke(path);
+  ctx.restore();
+}
+
+function dot(ctx: Ctx, x: number, y: number, r: number, color = CREAM): void {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 const ICONS: Record<string, IconFn> = {
-  sun: sunGlyph,
-  moon: moonGlyph,
-  star: starGlyph,
+  sun: emblem(sunGlyph),
+  moon: emblem(moonGlyph),
+  star: emblem(starGlyph),
+  // ---- line-art (lobby / menu) ----
+  gear(ctx, c) {
+    const p = new Path2D();
+    for (let i = 0; i < 16; i++) {
+      const a = (i * Math.PI) / 8;
+      const r = i % 2 === 0 ? 34 : 27;
+      const a2 = a + Math.PI / 8;
+      if (i === 0) p.moveTo(48 + Math.cos(a) * r, 48 + Math.sin(a) * r);
+      p.lineTo(48 + Math.cos(a2 - 0.12) * r, 48 + Math.sin(a2 - 0.12) * r);
+      const rn = i % 2 === 0 ? 27 : 34;
+      p.lineTo(48 + Math.cos(a2) * rn, 48 + Math.sin(a2) * rn);
+    }
+    p.closePath();
+    line(ctx, p, c, 4);
+    line(ctx, ellipsePath(48, 48, 11, 11), c, 4);
+  },
+  roster(ctx, c) {
+    // theatre mask
+    const mask = new Path2D();
+    mask.moveTo(16, 26);
+    mask.quadraticCurveTo(48, 14, 80, 26);
+    mask.quadraticCurveTo(82, 66, 48, 82);
+    mask.quadraticCurveTo(14, 66, 16, 26);
+    mask.closePath();
+    line(ctx, mask, c);
+    const eyes = new Path2D();
+    eyes.moveTo(28, 42);
+    eyes.quadraticCurveTo(35, 36, 42, 42);
+    eyes.moveTo(54, 42);
+    eyes.quadraticCurveTo(61, 36, 68, 42);
+    eyes.moveTo(36, 62);
+    eyes.quadraticCurveTo(48, 70, 60, 62);
+    line(ctx, eyes, c, 3.5);
+  },
+  atlas(ctx, c) {
+    // field guide with a moth
+    line(ctx, roundRectPath(20, 14, 56, 68, 5), c);
+    const sp = new Path2D();
+    sp.moveTo(28, 14);
+    sp.lineTo(28, 82);
+    line(ctx, sp, c, 3);
+    const m = new Path2D();
+    m.moveTo(52, 36);
+    m.quadraticCurveTo(38, 28, 38, 44);
+    m.quadraticCurveTo(40, 52, 52, 48);
+    m.quadraticCurveTo(64, 52, 66, 44);
+    m.quadraticCurveTo(66, 28, 52, 36);
+    m.moveTo(52, 36);
+    m.lineTo(52, 60);
+    line(ctx, m, c, 3);
+  },
+  trophy(ctx, c) {
+    const cup = new Path2D();
+    cup.moveTo(28, 18);
+    cup.lineTo(68, 18);
+    cup.quadraticCurveTo(68, 54, 48, 58);
+    cup.quadraticCurveTo(28, 54, 28, 18);
+    cup.moveTo(28, 26);
+    cup.quadraticCurveTo(14, 26, 18, 38);
+    cup.quadraticCurveTo(22, 46, 32, 46);
+    cup.moveTo(68, 26);
+    cup.quadraticCurveTo(82, 26, 78, 38);
+    cup.quadraticCurveTo(74, 46, 64, 46);
+    cup.moveTo(48, 58);
+    cup.lineTo(48, 70);
+    cup.moveTo(34, 78);
+    cup.lineTo(62, 78);
+    cup.lineTo(58, 70);
+    cup.lineTo(38, 70);
+    cup.closePath();
+    line(ctx, cup, c);
+    dot(ctx, 48, 34, 4, c);
+  },
+  notice(ctx, c) {
+    // envelope with a wax seal
+    line(ctx, roundRectPath(14, 24, 68, 48, 4), c);
+    const f = new Path2D();
+    f.moveTo(16, 27);
+    f.lineTo(48, 52);
+    f.lineTo(80, 27);
+    line(ctx, f, c, 3.5);
+    ctx.fillStyle = '#c0473a';
+    ctx.beginPath();
+    ctx.arc(48, 52, 7, 0, Math.PI * 2);
+    ctx.fill();
+  },
+  menu(ctx, c) {
+    const p = new Path2D();
+    p.moveTo(22, 28);
+    p.lineTo(74, 28);
+    p.moveTo(22, 48);
+    p.lineTo(74, 48);
+    p.moveTo(22, 68);
+    p.lineTo(58, 68);
+    line(ctx, p, c, 5);
+    dot(ctx, 72, 68, 4, c);
+  },
+  eye(ctx, c) {
+    const p = new Path2D();
+    p.moveTo(12, 48);
+    p.quadraticCurveTo(48, 12, 84, 48);
+    p.quadraticCurveTo(48, 84, 12, 48);
+    p.closePath();
+    line(ctx, p, c);
+    line(ctx, ellipsePath(48, 48, 12, 12), c, 4);
+    dot(ctx, 48, 48, 4, c);
+    const lash = new Path2D();
+    for (const a of [-2.2, -1.57, -0.94]) {
+      lash.moveTo(48 + Math.cos(a) * 30, 46 + Math.sin(a) * 30);
+      lash.lineTo(48 + Math.cos(a) * 38, 46 + Math.sin(a) * 38);
+    }
+    line(ctx, lash, c, 3);
+  },
+  profile(ctx, c) {
+    line(ctx, ellipsePath(48, 34, 14, 14), c);
+    const b = new Path2D();
+    b.moveTo(20, 82);
+    b.quadraticCurveTo(22, 56, 48, 56);
+    b.quadraticCurveTo(74, 56, 76, 82);
+    line(ctx, b, c);
+  },
+  gramophone(ctx, c) {
+    const h = new Path2D();
+    h.moveTo(44, 54);
+    h.quadraticCurveTo(52, 34, 80, 14);
+    h.moveTo(52, 60);
+    h.quadraticCurveTo(70, 52, 86, 46);
+    h.moveTo(80, 14);
+    h.quadraticCurveTo(92, 30, 86, 46);
+    line(ctx, h, c, 4);
+    line(ctx, roundRectPath(14, 64, 62, 18, 3), c, 4);
+    line(ctx, ellipsePath(45, 62, 26, 5), c, 3);
+  },
   // statuses
   might(ctx, c) {
     stroke(ctx, polyPath([[48, 14], [74, 46], [58, 46], [58, 82], [38, 82], [38, 46], [22, 46]]), c, 6);
@@ -175,23 +369,6 @@ const ICONS: Record<string, IconFn> = {
     p.lineTo(24, 72);
     stroke(ctx, p, c, 7);
   },
-  gear(ctx, c) {
-    fillOutlined(ctx, burstPath(48, 48, 36, 27, 8), c, 3.5);
-    fillOutlined(ctx, ellipsePath(48, 48, 12, 12), '#2a2420', 3);
-  },
-  roster(ctx, c) {
-    const mask = new Path2D();
-    mask.moveTo(14, 30);
-    mask.quadraticCurveTo(48, 18, 82, 30);
-    mask.quadraticCurveTo(82, 70, 48, 82);
-    mask.quadraticCurveTo(14, 70, 14, 30);
-    fillOutlined(ctx, mask, c);
-    ctx.fillStyle = '#2a2420';
-    ctx.beginPath();
-    ctx.ellipse(34, 44, 8, 5, 0.2, 0, Math.PI * 2);
-    ctx.ellipse(62, 44, 8, 5, -0.2, 0, Math.PI * 2);
-    ctx.fill();
-  },
   story(ctx, c) {
     const l = new Path2D();
     l.moveTo(48, 26);
@@ -297,62 +474,6 @@ const ICONS: Record<string, IconFn> = {
     fillOutlined(ctx, polyPath([[10, 48], [30, 32], [30, 64]]), c, 3);
     fillOutlined(ctx, polyPath([[86, 48], [66, 32], [66, 64]]), c, 3);
   },
-  atlas(ctx, c) {
-    // Field guide with a moth on the cover.
-    fillOutlined(ctx, roundRectPath(18, 14, 60, 70, 6), c);
-    fillOutlined(ctx, roundRectPath(18, 14, 12, 70, 4), '#8a6a48', 3);
-    fillOutlined(ctx, ellipsePath(44, 48, 9, 13, -0.5), '#2a2420', 2);
-    fillOutlined(ctx, ellipsePath(64, 48, 9, 13, 0.5), '#2a2420', 2);
-    fillOutlined(ctx, ellipsePath(54, 50, 3, 12), '#2a2420', 2);
-  },
-  trophy(ctx, c) {
-    const cup = new Path2D();
-    cup.moveTo(26, 16);
-    cup.lineTo(70, 16);
-    cup.quadraticCurveTo(70, 56, 48, 60);
-    cup.quadraticCurveTo(26, 56, 26, 16);
-    cup.closePath();
-    const ears = new Path2D();
-    ears.arc(24, 30, 10, Math.PI * 0.5, Math.PI * 1.5);
-    ears.moveTo(72, 20);
-    ears.arc(72, 30, 10, -Math.PI * 0.5, Math.PI * 0.5);
-    stroke(ctx, ears, c, 5);
-    fillOutlined(ctx, cup, c);
-    fillOutlined(ctx, roundRectPath(42, 58, 12, 14, 2), c, 3);
-    fillOutlined(ctx, roundRectPath(28, 72, 40, 12, 3), c, 3);
-    fillOutlined(ctx, star4(ctx, 48, 34, 11, 0.35), '#fff3cf', 2);
-  },
-  notice(ctx, c) {
-    // Envelope with a wax seal.
-    fillOutlined(ctx, roundRectPath(12, 24, 72, 50, 6), c);
-    const flap = new Path2D();
-    flap.moveTo(14, 28);
-    flap.lineTo(48, 54);
-    flap.lineTo(82, 28);
-    stroke(ctx, flap, '#2a2420', 3);
-    fillOutlined(ctx, ellipsePath(48, 54, 9, 9), '#c0473a', 2.5);
-  },
-  menu(ctx, c) {
-    const p = new Path2D();
-    for (const y of [26, 48, 70]) {
-      p.moveTo(20, y);
-      p.lineTo(76, y);
-    }
-    stroke(ctx, p, c, 8);
-  },
-  eye(ctx, c) {
-    const p = new Path2D();
-    p.moveTo(10, 48);
-    p.quadraticCurveTo(48, 10, 86, 48);
-    p.quadraticCurveTo(48, 86, 10, 48);
-    p.closePath();
-    fillOutlined(ctx, p, c);
-    fillOutlined(ctx, ellipsePath(48, 48, 14, 14), '#2a2420', 2);
-    ctx.fillStyle = '#fff3cf';
-    ctx.beginPath();
-    ctx.arc(53, 43, 4, 0, Math.PI * 2);
-    ctx.fill();
-  },
   plus(ctx, c) {
     const p = new Path2D();
     p.moveTo(48, 20);
@@ -360,26 +481,6 @@ const ICONS: Record<string, IconFn> = {
     p.moveTo(20, 48);
     p.lineTo(76, 48);
     stroke(ctx, p, c, 10);
-  },
-  profile(ctx, c) {
-    fillOutlined(ctx, ellipsePath(48, 34, 16, 16), c);
-    const b = new Path2D();
-    b.moveTo(18, 84);
-    b.quadraticCurveTo(18, 54, 48, 54);
-    b.quadraticCurveTo(78, 54, 78, 84);
-    b.closePath();
-    fillOutlined(ctx, b, c);
-  },
-  gramophone(ctx, c) {
-    const horn = new Path2D();
-    horn.moveTo(46, 52);
-    horn.quadraticCurveTo(54, 30, 84, 12);
-    horn.quadraticCurveTo(92, 34, 86, 48);
-    horn.quadraticCurveTo(66, 46, 50, 58);
-    horn.closePath();
-    fillOutlined(ctx, roundRectPath(14, 62, 64, 22, 4), '#8a6a48', 3);
-    fillOutlined(ctx, ellipsePath(46, 62, 30, 7), '#2a2420', 3);
-    fillOutlined(ctx, horn, c);
   },
   calendar(ctx, c) {
     fillOutlined(ctx, roundRectPath(14, 20, 68, 62, 8), c);

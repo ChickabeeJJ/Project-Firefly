@@ -44,6 +44,18 @@ function size(scene: Phaser.Scene, key: string): { w: number; h: number } {
   return { w: f.width, h: f.height };
 }
 
+/** Painted renders whose figure looks to the left; mirrored in battle so the troupe faces the enemy. */
+export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper']);
+
+function facingRight(canvas: HTMLCanvasElement, charId: string): HTMLCanvasElement {
+  if (!ART_FACES_LEFT.has(charId)) return canvas;
+  const { canvas: out, ctx } = makeCanvas(canvas.width, canvas.height);
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(canvas, 0, 0);
+  return out;
+}
+
 /** Image resized to fit inside a box, keeping its aspect. */
 function fitBox(scene: Phaser.Scene, key: string, maxH: number, maxW: number): HTMLCanvasElement {
   const s = size(scene, key);
@@ -126,7 +138,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
     // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
-    add(scene, `doll:${c.id}`, battle ? fitBox(scene, battle, PAINTED_DOLL_H, PAINTED_DOLL_W) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
+    add(scene, `doll:${c.id}`, battle ? facingRight(fitBox(scene, battle, PAINTED_DOLL_H, PAINTED_DOLL_W), c.id) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
     const body = dropIn(scene, 'characters', c.id);
     const paintedBody = body ? { img: source(scene, body), ...size(scene, body) } : undefined;

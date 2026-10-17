@@ -126,31 +126,31 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'marigold',
-    name: 'Marigold Pell',
-    title: 'The Gilded Voice',
+    name: 'Valerian Rosenthal',
+    title: 'The Crimson Patron',
     mood: 'sun',
     rarity: 5,
     role: 'Support',
     base: { hp: 980, atk: 132, def: 46 },
     verses: [
       {
-        id: 'marigold_swing', name: 'Swing Time', type: 'buff',
+        id: 'marigold_swing', name: 'A Patron’s Toast', type: 'buff',
         effects: [{ kind: 'status', target: 'allAllies', status: 'might', turns: 2 }],
-        art: { motif: 'note', layout: 'rays', portrait: true },
+        art: { motif: 'candle', layout: 'rays', portrait: true },
       },
       {
-        id: 'marigold_hot', name: 'Hot Number', type: 'mass',
+        id: 'marigold_hot', name: 'Rain of Thorns', type: 'mass',
         effects: [{ kind: 'damage', target: 'allEnemies', power: 0.9 }],
-        art: { motif: 'sunburst', layout: 'burst' },
+        art: { motif: 'swirl', layout: 'burst' },
       },
     ],
     finale: {
-      id: 'marigold_finale', name: 'Grand Crescendo', type: 'mass', finale: true,
+      id: 'marigold_finale', name: 'Last Waltz of Roses', type: 'mass', finale: true,
       effects: [
         { kind: 'damage', target: 'allEnemies', power: 2.8 },
         { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
       ],
-      art: { motif: 'note', layout: 'burst', portrait: true },
+      art: { motif: 'candle', layout: 'burst', portrait: true },
     },
     look: {
       eyeStyle: 'happy', mouth: 'grin',
@@ -159,8 +159,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'dress', coat: '#e2b443', shirt: '#f6e7b8', accent: '#1e1a1a', legs: '#f2d5bd', shoes: '#9b2b25',
       skirt: true, prop: 'feather',
     },
-    palette: { primary: '#f2b62f', secondary: '#d63c34', ink: '#2b1410' },
-    quote: 'Hit the high note and the whole city lights up.',
+    palette: { primary: '#b01e2a', secondary: '#e2b45a', ink: '#1c080a' },
+    quote: 'I funded every lamp in the Gloaming Theatre. I intend to see them lit again.',
   },
   {
     id: 'ichabod',
@@ -316,31 +316,31 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'ottoline',
-    name: 'Ottoline Grey',
-    title: 'The Veiled Seer',
-    mood: 'star',
-    rarity: 4,
+    name: 'Ophelia Sablier',
+    title: 'The Hourglass Countess',
+    mood: 'sun',
+    rarity: 5,
     role: 'Hexer',
     base: { hp: 940, atk: 126, def: 44 },
     verses: [
       {
-        id: 'ottoline_omen', name: 'Ill Omen', type: 'debuff',
+        id: 'ottoline_omen', name: 'Sands of Regret', type: 'debuff',
         effects: [{ kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 }],
         art: { motif: 'eye', layout: 'rings', portrait: true },
       },
       {
-        id: 'ottoline_tarot', name: 'Tarot Cut', type: 'attack',
+        id: 'ottoline_tarot', name: 'Checkmate', type: 'attack',
         effects: [{ kind: 'damage', target: 'enemy', power: 1.55 }],
-        art: { motif: 'tarot', layout: 'split' },
+        art: { motif: 'cards', layout: 'split' },
       },
     ],
     finale: {
-      id: 'ottoline_finale', name: 'Crystal Eclipse', type: 'mass', finale: true,
+      id: 'ottoline_finale', name: 'The Thirteenth Hour', type: 'mass', finale: true,
       effects: [
         { kind: 'damage', target: 'allEnemies', power: 2.2 },
         { kind: 'status', target: 'allEnemies', status: 'daze', turns: 1, chance: [0.5, 0.5, 0.5] },
       ],
-      art: { motif: 'crystal', layout: 'spiral', portrait: true },
+      art: { motif: 'metronome', layout: 'spiral', portrait: true },
     },
     look: {
       eyeStyle: 'soft', mouth: 'smirk',
@@ -349,8 +349,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'dress', coat: '#5a3470', shirt: '#2a1c2e', accent: '#c9a24a', legs: '#2a1c2e', shoes: '#1a1220',
       skirt: true, prop: 'crystal',
     },
-    palette: { primary: '#8e4fb0', secondary: '#e7c45c', ink: '#1a0f22' },
-    quote: 'Your future is bright. I checked.',
+    palette: { primary: '#a8222e', secondary: '#e8d2b8', ink: '#1e0a0e' },
+    quote: 'Every grain is a second someone wasted. I collect them. One day I will give them back.',
   },
   {
     id: 'augustin',
@@ -473,31 +473,31 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'teddy',
-    name: 'Teddy Brass',
-    title: 'The Boiler-Room Mechanic',
+    name: 'Aldric Verdane',
+    title: 'The Astrolabe Warden',
     mood: 'star',
-    rarity: 3,
+    rarity: 4,
     role: 'Guardian',
     base: { hp: 1240, atk: 104, def: 66 },
     verses: [
       {
-        id: 'teddy_patch', name: 'Patch Job', type: 'shield',
+        id: 'teddy_patch', name: 'Orrery Guard', type: 'shield',
         effects: [{ kind: 'shield', target: 'woundedAlly', power: 2.0 }],
-        art: { motif: 'wrench', layout: 'rings', portrait: true },
+        art: { motif: 'shield', layout: 'rings', portrait: true },
       },
       {
-        id: 'teddy_spanner', name: 'Spanner Swing', type: 'attack',
+        id: 'teddy_spanner', name: 'Meridian Bash', type: 'attack',
         effects: [{ kind: 'damage', target: 'enemy', power: 1.45 }],
-        art: { motif: 'wrench', layout: 'burst' },
+        art: { motif: 'metronome', layout: 'burst' },
       },
     ],
     finale: {
-      id: 'teddy_finale', name: 'Full Overhaul', type: 'shield', finale: true,
+      id: 'teddy_finale', name: 'Celestial Bulwark', type: 'shield', finale: true,
       effects: [
         { kind: 'shield', target: 'allAllies', power: 1.4 },
         { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.3 },
       ],
-      art: { motif: 'wrench', layout: 'rays', portrait: true },
+      art: { motif: 'shield', layout: 'rays', portrait: true },
     },
     look: {
       eyeStyle: 'open', mouth: 'grin',
@@ -506,8 +506,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'jacket', coat: '#4a6a7a', shirt: '#d8cdb4', accent: '#c96a2a', legs: '#3a4a5a', shoes: '#22201c',
       freckles: true, prop: 'wrench',
     },
-    palette: { primary: '#5a7a8a', secondary: '#e2a24a', ink: '#141c22' },
-    quote: 'Nothing is broken. It is just waiting for me.',
+    palette: { primary: '#2f7a5a', secondary: '#d6a45a', ink: '#0d1a14' },
+    quote: 'I kept the Cathedral Clock for twenty years. I will keep you a little longer.',
   },
   {
     id: 'evangeline',
@@ -596,15 +596,15 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'hesper',
-    name: 'Hesper Vale',
-    title: 'The Star-Charting Astronomer',
+    name: 'Elias Astrée',
+    title: 'The Star Cartographer',
     mood: 'star',
     rarity: 4,
     role: 'Support',
     base: { hp: 980, atk: 126, def: 48 },
     verses: [
       {
-        id: 'hesper_guide', name: 'Guiding Stars', type: 'buff',
+        id: 'hesper_guide', name: 'Charted Course', type: 'buff',
         effects: [
           { kind: 'light', amount: 2 },
           { kind: 'shield', target: 'self', power: 0.8 },
@@ -612,13 +612,13 @@ export const CHARACTERS: CharacterDef[] = [
         art: { motif: 'telescope', layout: 'rings', portrait: true },
       },
       {
-        id: 'hesper_starfall', name: 'Starfall', type: 'mass',
+        id: 'hesper_starfall', name: 'Falling Meridian', type: 'mass',
         effects: [{ kind: 'damage', target: 'allEnemies', power: 0.82 }],
         art: { motif: 'meteor', layout: 'rays' },
       },
     ],
     finale: {
-      id: 'hesper_finale', name: 'Meteor Shower', type: 'attack', finale: true,
+      id: 'hesper_finale', name: 'Map of Heaven', type: 'attack', finale: true,
       effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.62, hits: 6 }],
       art: { motif: 'meteor', layout: 'burst', portrait: true },
     },
@@ -628,8 +628,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'robe', coat: '#2a2f5a', shirt: '#e8dcc0', accent: '#e2be6a', legs: '#2a2f5a', shoes: '#16182a',
       skirt: true, glasses: true, prop: 'telescope',
     },
-    palette: { primary: '#3a4a9a', secondary: '#f0d07a', ink: '#0e1024' },
-    quote: 'The stars never went out. We simply stopped looking up.',
+    palette: { primary: '#2c3f86', secondary: '#e4d3a2', ink: '#0c1022' },
+    quote: 'Every map of Vellmoor ends at midnight. I am drawing the one that ends at dawn.',
   },
 ];
 

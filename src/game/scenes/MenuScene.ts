@@ -47,7 +47,7 @@ export class MenuScene extends Phaser.Scene {
     shade.fillRect(0, 0, W, H);
     new Atmosphere(this, { depth: 60, fireflies: 5 });
 
-    stagePortrait(this, 1480, H + 20, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 960, 860).setDepth(10);
+    stagePortrait(this, 1450, H + 30, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 1080, 1000).setDepth(10);
 
     this.buildHeader();
     this.buildCarousel();
@@ -80,7 +80,7 @@ export class MenuScene extends Phaser.Scene {
   private buildCarousel(): void {
     const save = saves.get();
     const slides: Slide[] = [
-      { id: 'rite', bg: 'lake', kicker: 'LANTERN RITE', title: 'New Luminaries', sub: 'Delphine, Evangeline and Hesper answer the Rite', go: () => goTo(this, 'Summon') },
+      { id: 'rite', bg: 'lake', kicker: 'LANTERN RITE', title: 'New Luminaries', sub: 'Ophelia, Valerian and Lucien answer the Rite', go: () => goTo(this, 'Summon') },
       ...CHAPTERS.map((ch): Slide => {
         const stages = STAGES.filter((s) => s.chapter === ch.id);
         const cleared = stages.filter((s) => s.id in save.stars).length;

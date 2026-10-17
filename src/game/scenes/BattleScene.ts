@@ -433,7 +433,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (e.finale) {
       audio.sfx('finale');
-      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, Phaser.Display.Color.HexStringToColor(char.palette.primary).color);
+      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, char.title, Phaser.Display.Color.HexStringToColor(char.palette.primary).color);
       this.fx.shake(0.006, 260);
     }
     this.showCastBanner(verse.name + (e.rank > 1 ? '  ' + '★'.repeat(e.rank) : ''), describeVerse(verse, e.rank, e.lit), e.finale ? CSS.gold : CSS.goldLight);

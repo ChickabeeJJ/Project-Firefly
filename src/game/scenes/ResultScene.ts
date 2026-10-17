@@ -8,16 +8,20 @@ import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { expToNext } from '../systems/progression';
 import { RITE } from '../systems/gacha';
+import { goToStage, storyAfter } from '../systems/storyFlow';
 import { Atmosphere, Button, fadeIn, goTo, ornament, text } from '../ui/kit';
 import type { ResultData } from './BattleScene';
 
 /** Victory / defeat summary: big portrait, emblem, objectives, EXP and rewards. */
 export class ResultScene extends Phaser.Scene {
+  private data_!: ResultData;
+
   constructor() {
     super('Result');
   }
 
   create(d: ResultData): void {
+    this.data_ = d;
     fadeIn(this);
     const stage = getStage(d.stageId);
     const save = saves.get();
@@ -104,19 +108,20 @@ export class ResultScene extends Phaser.Scene {
       y += 160;
     }
 
-    const quote = d.won ? `“${mvp.quote}”  — ${mvp.name.split(' ')[0]}` : '“We will light it again tomorrow.”';
-    text(this, 560, H - 70, quote, { size: 28, italic: true, color: CSS.cream, wrap: 900, align: 'center', shadow: true }).setOrigin(0.5).setDepth(70);
+    const quote = d.won ? (stage.outro ? stage.outro : `“${mvp.quote}”  — ${mvp.name.split(' ')[0]}`) : '“We will light it again tomorrow.”';
+    const qt = text(this, 540, H - 66, quote, { size: 27, italic: true, color: CSS.cream, wrap: 880, align: 'center', shadow: true }).setOrigin(0.5).setDepth(70);
+    this.add.rectangle(540, H - 66, Math.min(980, qt.width + 70), qt.height + 26, 0x050406, 0.7).setDepth(69);
 
     const next = nextStageId(stage.id);
     const firstRite = save.totalPulls === 0 && save.glimmer >= RITE.cost * 10;
     const by = H - 110;
     if (d.won) {
       if (firstRite) {
-        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Continue', sub: 'A Lantern Rite awaits', style: 'amber', onClick: () => goTo(this, 'Lobby') }).setDepth(80);
+        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Continue', sub: 'A Lantern Rite awaits', style: 'amber', onClick: () => this.leave(() => goTo(this, 'Lobby')) }).setDepth(80);
       } else if (next) {
-        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Next Stage', sub: next, style: 'amber', onClick: () => goTo(this, 'Formation', { stageId: next }) }).setDepth(80);
+        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Next Stage', sub: next, style: 'amber', onClick: () => this.leave(() => goToStage(this, next)) }).setDepth(80);
       } else {
-        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Return Home', style: 'amber', onClick: () => goTo(this, 'Lobby') }).setDepth(80);
+        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Return Home', style: 'amber', onClick: () => this.leave(() => goTo(this, 'Lobby')) }).setDepth(80);
       }
       new Button(this, rx - 190, by, { w: 300, h: 80, label: 'Story', style: 'cream', onClick: () => goTo(this, 'Story', { stageId: stage.id }) }).setDepth(80);
     } else {
@@ -124,5 +129,13 @@ export class ResultScene extends Phaser.Scene {
       new Button(this, rx - 190, by, { w: 300, h: 80, label: 'Team', style: 'cream', onClick: () => goTo(this, 'Formation', { stageId: stage.id }) }).setDepth(80);
     }
     audio.play(d.won ? 'lobby' : null);
+  }
+
+  /** After a chapter boss falls for the first time, its ending cinematic plays before anything else. */
+  private leave(then: () => void): void {
+    const d = this.data_;
+    const owed = d.won ? storyAfter(d.stageId) : null;
+    if (owed) goTo(this, 'Cinematic', { ids: [owed], next: { scene: 'Lobby' } });
+    else then();
   }
 }

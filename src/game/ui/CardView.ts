@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { CARD_H, CARD_W } from '../art/cardArt';
+import { FRAME } from '../art/cardFrame';
 import { TYPE_LABEL } from '../battle/describe';
 import type { Card } from '../battle/types';
 import { findVerse } from '../data/characters';
@@ -15,8 +16,9 @@ const TYPE_ICON: Record<string, string> = {
 };
 
 /**
- * A verse card. Built at native card resolution (264×404) and scaled by its owner, so text and
- * art stay crisp at every size the game uses.
+ * A verse card: illustration inside the gilt playbill frame (see art/cardFrame), the caster's
+ * portrait in the medallion, rank stars in the top cartouche, a type seal and an engraved plate.
+ * Built at native card resolution (264×404) and scaled by its owner.
  */
 export class CardView extends Phaser.GameObjects.Container {
   card: Card;
@@ -32,32 +34,61 @@ export class CardView extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.card = { ...card };
     const { verse } = findVerse(card.verseId);
+    const fin = card.finale;
 
-    this.litGlow = scene.add.image(0, 0, 'card:lit').setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
-    this.selectGlow = scene.add.image(0, 0, 'card:select').setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this.litGlow = scene.add.image(0, 0, 'card:auraLit').setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this.selectGlow = scene.add.image(0, 0, 'card:auraSelect').setBlendMode(Phaser.BlendModes.ADD).setVisible(false);
+    this.add([this.litGlow, this.selectGlow]);
+    if (fin) {
+      const aura = scene.add.image(0, 0, 'card:auraGold').setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
+      this.add(aura);
+      scene.tweens.add({ targets: aura, alpha: 0.95, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     const art = scene.add.image(0, 0, `card:${verse.id}`);
-    const border = scene.add.image(0, 0, card.finale ? 'card:borderGold' : 'card:border');
-    this.add([this.litGlow, this.selectGlow, art, border]);
+    const frame = scene.add.image(0, 0, fin ? 'card:frameGold' : 'card:frame');
+    this.add([art, frame]);
 
-    // Rank stars (top centre) — Finales show a crown of three gold stars instead.
+    // Rank stars sit in the cartouche; Finales show a crown of three gold stars.
     for (let i = 0; i < 3; i++) {
-      const s = scene.add.image((i - 1) * 40, -CARD_H / 2 + 28, 'icon:star4').setDisplaySize(40, 40);
+      const s = scene.add.image(FRAME.rank.x - CARD_W / 2 + (i - 1) * 30, FRAME.rank.y - CARD_H / 2, 'icon:star4').setDisplaySize(26, 26);
       this.stars.push(s);
       this.add(s);
     }
 
-    const head = scene.add.image(-CARD_W / 2 + 34, -CARD_H / 2 + 34, `head:${charId}`).setDisplaySize(64, 64);
-    this.add(head);
+    const m = FRAME.medal;
+    this.add(scene.add.image(m.x - CARD_W / 2, m.y - CARD_H / 2, `head:${charId}`).setDisplaySize(m.r * 2, m.r * 2));
 
-    const typeColor = card.finale ? CSS.gold : TYPE_CSS[verse.type];
-    const icon = scene.add.image(-CARD_W / 2 + 34, CARD_H / 2 - 32, `icon:${card.finale ? 'star4' : TYPE_ICON[verse.type]}`).setDisplaySize(40, 40);
-    const label = text(scene, -CARD_W / 2 + 62, CARD_H / 2 - 32, card.finale ? 'FINALE' : TYPE_LABEL[verse.type].toUpperCase(), {
-      size: 34, font: 'display', bold: true, color: typeColor, spacing: 5,
-    }).setOrigin(0, 0.5);
-    this.add([icon, label]);
+    // Type seal + engraved type on the plate.
+    const typeColor = fin ? CSS.gold : TYPE_CSS[verse.type];
+    const sx = FRAME.seal.x - CARD_W / 2;
+    const sy = FRAME.seal.y - CARD_H / 2;
+    this.add(scene.add.image(sx, sy, `icon:${fin ? 'star4' : TYPE_ICON[verse.type]}`).setDisplaySize(28, 28));
+    const plateMid = (FRAME.plateY + CARD_H - 7) / 2 - CARD_H / 2 + 8;
+    const label = text(scene, 0, plateMid, fin ? 'FINALE' : TYPE_LABEL[verse.type].toUpperCase(), {
+      size: 30, font: 'display', bold: true, color: typeColor, spacing: 5, stroke: '#08070a', strokeThickness: 3,
+    }).setOrigin(0.5);
+    if (label.width > CARD_W - 64) label.setScale((CARD_W - 64) / label.width);
+    this.add(label);
 
-    this.fly = scene.add.image(CARD_W / 2 - 30, -CARD_H / 2 + 30, 'fx:firefly').setBlendMode(Phaser.BlendModes.ADD).setScale(1.6).setVisible(false);
+    this.fly = scene.add.image(CARD_W / 2 - 30, -CARD_H / 2 + 34, 'fx:firefly').setBlendMode(Phaser.BlendModes.ADD).setScale(1.5).setVisible(false);
     this.add(this.fly);
+
+    if (fin) {
+      // Glints wandering over the gold leaf.
+      for (let k = 0; k < 2; k++) {
+        const g = scene.add.image(0, 0, 'icon:star4').setTint(0xfff3c8).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(22, 22).setAlpha(0);
+        this.add(g);
+        const hop = () => {
+          if (!g.active) return;
+          const edge = Phaser.Math.Between(0, 3);
+          const px = edge < 2 ? Phaser.Math.Between(-CARD_W / 2 + 10, CARD_W / 2 - 10) : (edge === 2 ? -1 : 1) * (CARD_W / 2 - 6);
+          const py = edge >= 2 ? Phaser.Math.Between(-CARD_H / 2 + 10, CARD_H / 2 - 10) : (edge === 0 ? -1 : 1) * (CARD_H / 2 - 6);
+          g.setPosition(px, py).setAngle(0);
+          scene.tweens.add({ targets: g, alpha: 1, angle: 90, duration: 380, yoyo: true, onComplete: () => scene.time.delayedCall(Phaser.Math.Between(300, 1400), hop) });
+        };
+        scene.time.delayedCall(k * 700, hop);
+      }
+    }
 
     this.setSize(CARD_W, CARD_H);
     this.refresh();
@@ -76,7 +107,7 @@ export class CardView extends Phaser.GameObjects.Container {
   refresh(): void {
     this.stars.forEach((s, i) => {
       const on = this.card.finale || i < this.card.rank;
-      s.setTint(this.card.finale ? 0xf0c25a : on ? 0xf26b3a : 0x6a6a6a).setAlpha(on ? 1 : 0.55);
+      s.setTint(this.card.finale ? 0xf6d27a : on ? 0xf0a24a : 0x4a4650).setAlpha(on ? 1 : 0.7);
     });
     this.litGlow.setVisible(this.card.lit);
     this.fly.setVisible(this.card.lit);

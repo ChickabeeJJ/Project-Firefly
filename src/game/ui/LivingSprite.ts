@@ -170,7 +170,14 @@ export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId:
   v.on(Phaser.GameObjects.Events.VIDEO_TEXTURE, reveal);
   v.on(Phaser.GameObjects.Events.VIDEO_PLAYING, reveal);
   v.loadURL(url, true);
-  v.play(true);
+  // Play the (ping-pong) loop once, then rest on its first frame — which matches the still —
+  // for a few seconds before the next breath, so the idle never feels like a stuck GIF.
+  v.play(false);
+  v.on(Phaser.GameObjects.Events.VIDEO_COMPLETE, () => {
+    scene.time.delayedCall(Phaser.Math.Between(2600, 4200), () => {
+      if (v.active) v.play(false);
+    });
+  });
   api.pose = () => {
     if (!v.visible || v.alpha < 1) return still.pose(14, 0.03, 160, 120);
     scene.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, scaleX: v.scaleX * 0.995, duration: 140, yoyo: true, ease: 'Sine.easeOut' });

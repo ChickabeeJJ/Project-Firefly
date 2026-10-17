@@ -10,6 +10,7 @@ import { audio } from './game/audio/AudioController';
 import { BootScene } from './game/scenes/BootScene';
 import { LobbyScene } from './game/scenes/LobbyScene';
 import { MenuScene } from './game/scenes/MenuScene';
+import { CinematicScene } from './game/scenes/CinematicScene';
 import { StoryScene } from './game/scenes/StoryScene';
 import { FormationScene } from './game/scenes/FormationScene';
 import { BattleScene } from './game/scenes/BattleScene';
@@ -35,7 +36,7 @@ const game = new Phaser.Game({
   // Real-time pacing on slow devices: no start-up delta clamp, tolerate frames up to 333 ms.
   fps: { target: 60, min: 3, panicMax: 0 },
   disableContextMenu: true,
-  scene: [BootScene, LobbyScene, MenuScene, StoryScene, FormationScene, BattleScene, PauseScene, ResultScene, SummonScene, RosterScene],
+  scene: [BootScene, LobbyScene, MenuScene, CinematicScene, StoryScene, FormationScene, BattleScene, PauseScene, ResultScene, SummonScene, RosterScene],
 });
 
 if (import.meta.env.DEV) {

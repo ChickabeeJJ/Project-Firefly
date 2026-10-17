@@ -8,13 +8,14 @@ import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel, totalStars } from '../systems/achievements';
 import { frontierStage } from '../systems/progression';
+import { goToStage } from '../systems/storyFlow';
 import { RITE } from '../systems/gacha';
 import { Atmosphere, fadeIn, goTo, text, toast } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 /** The newest Luminaries, advertised on the lobby banner. */
-const FEATURED = ['delphine', 'evangeline', 'hesper'];
+const FEATURED = ['ottoline', 'marigold', 'ichabod'];
 /** Right-hand column: centre x and shared width. */
 const RIGHT_X = 1620;
 const COL_W = 470;
@@ -53,8 +54,8 @@ export class LobbyScene extends Phaser.Scene {
 
     // Leader, centre stage. Painted portraits stand nearly full height.
     const leader = getCharacter(save.team[0]);
-    this.add.image(860, H - 24, 'fx:shadow').setDisplaySize(420, 60).setDepth(19);
-    const lead = stagePortrait(this, 860, H + 20, leader.id, ensurePortrait(this, leader.id), 0.92, 1000, 960).setDepth(20);
+    this.add.image(790, H - 24, 'fx:shadow').setDisplaySize(560, 70).setDepth(19);
+    const lead = stagePortrait(this, 790, H + 40, leader.id, ensurePortrait(this, leader.id), 0.92, 1180, 1260).setDepth(20);
     lead.hit.setInteractive({ useHandCursor: true });
     lead.hit.on('pointerup', () => {
       if (this.hidden) return this.toggleUi();
@@ -240,7 +241,7 @@ export class LobbyScene extends Phaser.Scene {
     // Admission ticket: chapter + next stage, with a torn-off "Enter" stub.
     this.ticket(x, 372, allClear ? 'EVERY LAMP IS LIT' : `CHAPTER ${stage.chapter} · ${chapter.name.toUpperCase()}`,
       allClear ? 'Replay any stage' : `${stage.id}  ${stage.name}`,
-      () => (allClear ? goTo(this, 'Story') : goTo(this, 'Formation', { stageId: stage.id })));
+      () => (allClear ? goTo(this, 'Story') : goToStage(this, stage.id)));
 
     // Two outlined tiles.
     const tw = (COL_W - 18) / 2;
@@ -360,7 +361,7 @@ export class LobbyScene extends Phaser.Scene {
     const t = text(this, 0, 0, line, { size: 28, italic: true, color: CSS.paperText, wrap: 360 });
     const w = t.width + 44;
     const h = t.height + 30;
-    const c = this.add.container(1010, 250).setDepth(80);
+    const c = this.add.container(1030, 150).setDepth(80);
     c.add([this.add.nineslice(0, 0, 'ui:paperPlain', undefined, w, h, 12, 12, 12, 12).setOrigin(0), t.setPosition(22, 15)]);
     c.add(this.add.triangle(30, h + 8, 0, 0, 28, 0, 0, 20, C.paper));
     c.setAlpha(0);

@@ -135,31 +135,97 @@ export class BattleFx {
     });
   }
 
-  /** Finale cut-in: a diagonal band sweeps in with the caster's portrait and the verse name. */
-  cutIn(portraitKey: string, name: string, title: string, color: number): Promise<void> {
+  /**
+   * Finale cut-in, staged like a 1920s theatre poster caught on film: a tilted band of ink and
+   * the caster's colour, a gilt sunburst, sprocketed film rails, the painted caster sweeping in,
+   * gold Cinzel title and a ribbon with name and title. Flickers and scratches like old stock.
+   */
+  cutIn(portraitKey: string, verseName: string, charName: string, charTitle: string, color: number): Promise<void> {
     return new Promise((resolve) => {
-      const c = this.scene.add.container(0, 0).setDepth(680);
-      const shade = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6);
-      const band = this.scene.add.rectangle(W / 2, H / 2, W * 1.4, 420, color, 0.92).setAngle(-8);
-      const band2 = this.scene.add.rectangle(W / 2, H / 2 + 230, W * 1.4, 18, C.gold, 1).setAngle(-8);
-      const band3 = this.scene.add.rectangle(W / 2, H / 2 - 230, W * 1.4, 8, C.gold, 0.8).setAngle(-8);
-      const lines = this.scene.add.graphics();
-      lines.lineStyle(3, 0xffffff, 0.25);
-      for (let i = 0; i < 26; i++) {
-        const y = H / 2 - 200 + i * 16;
-        lines.lineBetween(-200, y + 120, W + 200, y - 160);
-      }
-      const portrait = fitPortrait(this.scene.add.image(-300, H / 2 + 420, portraitKey).setOrigin(0.5, 1), 0.62, 820);
-      const nm = text(this.scene, W + 400, H / 2 - 30, name, { size: 92, font: 'display', bold: true, color: '#fff8ea', spacing: 6, stroke: '#1a1012', strokeThickness: 10 }).setOrigin(0.5);
-      const tt = text(this.scene, W + 400, H / 2 + 60, title, { size: 34, italic: true, color: CSS.goldLight, stroke: '#1a1012', strokeThickness: 6 }).setOrigin(0.5);
-      c.add([shade, band, lines, band2, band3, portrait, nm, tt]);
+      const sc = this.scene;
+      const c = sc.add.container(0, 0).setDepth(680);
+      const shade = sc.add.rectangle(W / 2, H / 2, W, H, 0x050304, 0.78);
+      const sepia = sc.add.rectangle(W / 2, H / 2, W, H, 0x3a2410, 0.22).setBlendMode(Phaser.BlendModes.MULTIPLY);
+      c.add([shade, sepia]);
+
+      const band = sc.add.container(W / 2, H / 2 + 20).setAngle(-6);
+      const BW = W * 1.5;
+      const BH = 470;
+      const deep = Phaser.Display.Color.IntegerToColor(color).darken(55).color;
+      band.add(sc.add.rectangle(0, 0, BW, BH, 0x0e0a08, 1));
+      band.add(sc.add.rectangle(0, 0, BW, BH, deep, 0.85));
+      const wash = sc.add.image(-BW / 2, 0, 'fx:glow').setOrigin(0, 0.5).setDisplaySize(BW * 0.7, BH * 1.6).setTint(color).setAlpha(0.55).setBlendMode(Phaser.BlendModes.ADD);
+      const rays = sc.add.image(360, 0, 'fx:rays').setTint(C.gold).setAlpha(0.42).setDisplaySize(1200, 560).setBlendMode(Phaser.BlendModes.ADD);
+      const grainT = sc.add.tileSprite(0, 0, BW, BH, 'fx:grain').setAlpha(0.14);
+      band.add([wash, rays, grainT]);
+      for (const y of [-BH / 2 + 34, BH / 2 - 34]) band.add(sc.add.rectangle(0, y, BW, 2, C.gold, 0.85));
+      for (const y of [-BH / 2 + 40, BH / 2 - 40]) band.add(sc.add.rectangle(0, y, BW, 1, C.gold, 0.45));
+      const film = [-BH / 2 - 10, BH / 2 + 10].map((y) => sc.add.tileSprite(0, y, BW, 56, 'fx:film'));
+      band.add(film);
+
+      // Caster: large painted art sweeping in from the left, lit by a warm glow.
+      const halo = sc.add.image(-470, 40, 'fx:glow').setTint(color).setDisplaySize(900, 700).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD);
+      const portrait = fitPortrait(sc.add.image(-1100, BH / 2 + 40, portraitKey).setOrigin(0.5, 1), 0.66, 760);
+      band.add([halo, portrait]);
+
+      // Title block.
+      const tx = 360;
+      const kicker = text(sc, tx + 400, -128, '◆   F I N A L E   ◆', { size: 28, font: 'display', bold: true, color: CSS.goldLight, spacing: 6, stroke: '#140c06', strokeThickness: 6 }).setOrigin(0.5).setAlpha(0);
+      const title = text(sc, tx + 400, -28, verseName, { size: 104, font: 'display', bold: true, color: '#f6dc8a', stroke: '#120a06', strokeThickness: 12, shadow: true }).setOrigin(0.5).setAlpha(0);
+      if (title.width > 900) title.setScale(900 / title.width);
+      const grad = title.context.createLinearGradient(0, 0, 0, title.height);
+      grad.addColorStop(0, '#fff6d0');
+      grad.addColorStop(0.5, '#e8bf5a');
+      grad.addColorStop(1, '#a8741e');
+      title.setFill(grad);
+      const ribbonW = 640;
+      const ribbon = sc.add.container(tx + 400, 92).setAlpha(0);
+      const rg = sc.add.graphics();
+      rg.fillStyle(0x0c0806, 0.92);
+      rg.fillPoints([
+        new Phaser.Math.Vector2(-ribbonW / 2 - 30, -32), new Phaser.Math.Vector2(ribbonW / 2 + 30, -32), new Phaser.Math.Vector2(ribbonW / 2 + 10, 0),
+        new Phaser.Math.Vector2(ribbonW / 2 + 30, 32), new Phaser.Math.Vector2(-ribbonW / 2 - 30, 32), new Phaser.Math.Vector2(-ribbonW / 2 - 10, 0),
+      ], true);
+      rg.lineStyle(2, C.gold, 0.9);
+      rg.strokeRect(-ribbonW / 2, -24, ribbonW, 48);
+      const who = text(sc, 0, 0, `${charName}  ·  ${charTitle}`, { size: 30, italic: true, color: CSS.cream }).setOrigin(0.5);
+      if (who.width > ribbonW - 30) who.setScale((ribbonW - 30) / who.width);
+      ribbon.add([rg, who]);
+      band.add([kicker, title, ribbon]);
+      c.add(band);
+
+      // Old-film overlay: scratches and flicker.
+      const scratches = Array.from({ length: 4 }, () => sc.add.image(Phaser.Math.Between(100, W - 100), H / 2, 'fx:scratch').setDisplaySize(4, H).setAlpha(0).setBlendMode(Phaser.BlendModes.ADD));
+      c.add(scratches);
+      const flicker = sc.time.addEvent({
+        delay: 70, loop: true, callback: () => {
+          sepia.setAlpha(0.16 + Math.random() * 0.14);
+          for (const s of scratches) s.setAlpha(Math.random() < 0.18 ? 0.25 + Math.random() * 0.4 : 0).setX(Phaser.Math.Between(80, W - 80));
+          for (const f of film) f.tilePositionX += 9;
+          grainT.tilePositionX = Math.random() * 200;
+          grainT.tilePositionY = Math.random() * 200;
+        },
+      });
+
+      // Entrance: band slams in vertically, caster sweeps, title types on.
+      band.setScale(1, 0.05);
       c.setAlpha(0);
-      this.scene.tweens.add({ targets: c, alpha: 1, duration: 140 });
-      this.scene.tweens.add({ targets: portrait, x: 560, duration: 420, ease: 'Cubic.easeOut' });
-      this.scene.tweens.add({ targets: [nm, tt], x: 1240, duration: 420, delay: 80, ease: 'Cubic.easeOut' });
-      this.scene.time.delayedCall(1250, () => {
-        this.flash(0xfff2d0, 220, 0.8);
-        this.scene.tweens.add({ targets: c, alpha: 0, duration: 200, onComplete: () => { c.destroy(); resolve(); } });
+      sc.tweens.add({ targets: c, alpha: 1, duration: 120 });
+      sc.tweens.add({ targets: band, scaleY: 1, duration: 260, ease: 'Back.easeOut' });
+      sc.tweens.add({ targets: rays, angle: 8, duration: 1900 });
+      sc.tweens.add({ targets: portrait, x: -470, duration: 520, delay: 80, ease: 'Cubic.easeOut' });
+      sc.tweens.add({ targets: kicker, alpha: 1, x: tx, duration: 360, delay: 220, ease: 'Cubic.easeOut' });
+      sc.tweens.add({ targets: title, alpha: 1, x: tx, duration: 420, delay: 300, ease: 'Cubic.easeOut' });
+      sc.tweens.add({ targets: ribbon, alpha: 1, x: tx, duration: 420, delay: 420, ease: 'Cubic.easeOut' });
+      this.scene.time.delayedCall(1550, () => {
+        this.flash(0xfff2d0, 240, 0.85);
+        sc.tweens.add({
+          targets: c, alpha: 0, duration: 220, onComplete: () => {
+            flicker.remove();
+            c.destroy();
+            resolve();
+          },
+        });
       });
     });
   }

@@ -167,3 +167,20 @@ hesper: hesper_guide, hesper_starfall, hesper_finale
 - [ ] Backgrounds are 16:9 with no characters and no text.
 - [ ] Each file is under ~1.5 MB (export as WebP if needed).
 - [ ] Run `npm run dev` and check the lobby, Troupe, a battle and the Atlas.
+
+## 8. Verse card art (what makes the cards look finished)
+
+The card frame (gilt playbill border, portrait medallion, rank cartouche, engraved nameplate,
+type seal) is now drawn in code, so only the **illustration inside the window** is needed.
+
+| File | Size | Notes |
+|---|---|---|
+| `cards/<verseId>.png` | 528×808 (2:3 portrait) | One per Verse (48 total, list in section 6). The bottom ~18 % sits behind the nameplate and the top-left corner behind the portrait medallion, so keep the action in the middle. No text, no border. |
+| `cards/<charId>_finale.png` | 528×808 | Finales: the character mid-ultimate, dramatic lighting, gold accents. |
+
+Style line for card art: *"STYLE + dynamic close-up illustration of [character] casting [verse name], [what it does],
+cinematic lighting, muted desaturated background, 1920s theatre-poster composition, no text, no frame."*
+
+Optional upgrades if you want to replace the coded frame instead:
+- `ui/card_frame.png` and `ui/card_frame_gold.png` — 528×808 transparent PNG frames (opaque border, transparent window).
+- `ui/element_sun.png`, `ui/element_moon.png`, `ui/element_star.png` — 192×192 emblem medallions.

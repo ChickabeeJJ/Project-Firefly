@@ -39,20 +39,25 @@ python3 tools/art/import_enemies.py enemiesA.webp enemiesB.webp [--upA enemiesA_
 
 Luminaries with painted art (ids are internal and unchanged; names follow the art):
 
-| id | Name · title | Art |
+| id | Name · title | Notes |
 |---|---|---|
-| wren | Corvin Vesper · The Lantern Keeper (main character, Star Striker) | `characters/wren.webp` + idle loop `idle/wren.webm` |
-| odile | Seraphine Aube · The Winged Oracle (Moon Healer) | `characters/odile.webp` |
-| bastian | Columbine Rouge · The Cut-String Marionette (Sun Guardian) | `characters/bastian.webp` |
-| ichabod | Lucien Marée · The Tidecaller (Moon Striker) | `characters/ichabod.webp` |
+| wren | Corvin Vesper · The Lantern Keeper (main character) | idle loop `idle/wren.webm` |
+| odile | Seraphine Aube · The Winged Oracle | |
+| bastian | Columbine Rouge · The Cut-String Marionette | mirrored in battle |
+| ichabod | Lucien Marée · The Tidecaller | mirrored in battle |
+| teddy | Aldric Verdane · The Astrolabe Warden | |
+| ottoline | Ophelia Sablier · The Hourglass Countess | |
+| marigold | Valerian Rosenthal · The Crimson Patron | |
+| hesper | Elias Astrée · The Star Cartographer | mirrored in battle |
 
-The other 12 Luminaries use the code-drawn art until their renders arrive. Single transparent
-renders are imported with `python3 tools/art/import_single.py <image> <id> <faceX> <faceY> [size]`.
+Renders that face left are listed in `ART_FACES_LEFT` (src/game/art/registry.ts) so the troupe
+always faces right in battle. Single renders: `python3 tools/art/import_single.py <img> <id> <faceX> <faceY> [size]`.
 
-Idle loops (`idle/<id>.webm`) are VP9 with alpha, played in the lobby and options menu where the
-browser supports transparent WebM (Chrome/Edge/Firefox); Safari falls back to the still render.
-The current loop was made from a black-background MP4: frames keyed against the still render's
-alpha, played forward then backward so it loops without a seam, 1040×770 at 20 fps.
+Idle loops: extract frames at the still's full size, key them with
+`python3 tools/art/key_idle_video.py <frames> <out> <still> 0.85` (flood-fills the black backdrop,
+crops to the still's frame so both match exactly, ping-pongs), then encode VP9 with alpha:
+`ffmpeg -framerate 18 -i out/%03d.png -c:v libvpx-vp9 -pix_fmt yuva420p -crf 42 -b:v 0 idle/<id>.webm`.
+The game plays the loop once, rests 2.6–4.2 s on the first frame, then plays again.
 
 | Dimmed | Sprite | Dimmed | Sprite |
 |---|---|---|---|

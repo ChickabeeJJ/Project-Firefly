@@ -1,3 +1,4 @@
+import { cardAuraCanvas, cardFrameCanvas } from './cardFrame';
 import { CARD_H, CARD_W } from './cardArt';
 import { type Ctx, glow, grain, makeCanvas, rgba, roundRectPath, seeded } from './paint';
 
@@ -18,12 +19,12 @@ function paper(w: number, h: number, base: string, edge: string, seed: number): 
   const rnd = seeded(seed);
   ctx.save();
   ctx.clip(roundRectPath(0, 0, w, h, 10));
-  for (let i = 0; i < 220; i++) {
+  for (let i = 0; i < Math.round((w * h) / 116); i++) {
     ctx.fillStyle = rgba('#8a7650', 0.05 + rnd() * 0.05);
     ctx.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 3, 1);
   }
   ctx.restore();
-  grain(ctx, w, h, 0.05, seed);
+  grain(ctx, w, h, 0.03, seed);
   return canvas;
 }
 
@@ -394,10 +395,72 @@ function jar(): HTMLCanvasElement {
   return canvas;
 }
 
+/** Art-deco sunburst (white, tinted at runtime) for the Finale poster. */
+function raysTex(): HTMLCanvasElement {
+  const S = 512;
+  const { canvas, ctx } = makeCanvas(S, S);
+  ctx.translate(S / 2, S / 2);
+  for (let i = 0; i < 48; i++) {
+    const a0 = (i * Math.PI * 2) / 48;
+    const w = i % 2 === 0 ? 0.05 : 0.022;
+    ctx.fillStyle = rgba('#ffffff', i % 2 === 0 ? 0.55 : 0.3);
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a0) * 36, Math.sin(a0) * 36);
+    ctx.lineTo(Math.cos(a0 - w) * S * 0.5, Math.sin(a0 - w) * S * 0.5);
+    ctx.lineTo(Math.cos(a0 + w) * S * 0.5, Math.sin(a0 + w) * S * 0.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.strokeStyle = rgba('#ffffff', 0.7);
+  for (const [r, lw] of [[30, 3], [38, 1.2], [76, 1.5], [80, 1]] as const) {
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // fade towards the rim so the burst never shows a hard edge
+  ctx.globalCompositeOperation = 'destination-in';
+  const f = ctx.createRadialGradient(0, 0, S * 0.2, 0, 0, S * 0.5);
+  f.addColorStop(0, '#ffffff');
+  f.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = f;
+  ctx.fillRect(-S / 2, -S / 2, S, S);
+  return canvas;
+}
+
+/** Strip of film with sprocket holes (tiles horizontally). */
+function filmTex(): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(128, 56);
+  ctx.fillStyle = '#0a0806';
+  ctx.fillRect(0, 0, 128, 56);
+  ctx.fillStyle = '#e8dcc0';
+  for (let x = 10; x < 128; x += 32) {
+    ctx.fill(roundRectPath(x, 8, 18, 12, 3));
+    ctx.fill(roundRectPath(x, 36, 18, 12, 3));
+  }
+  ctx.fillStyle = rgba('#e2be6a', 0.35);
+  ctx.fillRect(0, 26, 128, 1);
+  ctx.fillRect(0, 29, 128, 1);
+  return canvas;
+}
+
+/** Thin vertical scratch for old-film flicker. */
+function scratchTex(): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(6, 512);
+  const g = ctx.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, rgba('#fff8e8', 0));
+  g.addColorStop(0.3, rgba('#fff8e8', 0.8));
+  g.addColorStop(0.7, rgba('#fff8e8', 0.5));
+  g.addColorStop(1, rgba('#fff8e8', 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(2, 0, 2, 512);
+  return canvas;
+}
+
 export function uiTextureSpecs(): TexSpec[] {
   return [
-    { key: 'ui:paper', canvas: framed(paper(160, 160, '#f2ead8', '#e2d6bd', 4), rgba('#9a8660', 0.6), 7) },
-    { key: 'ui:paperPlain', canvas: paper(160, 160, '#f2ead8', '#e2d6bd', 9) },
+    { key: 'ui:paper', canvas: framed(paper(640, 640, '#f2ead8', '#e2d6bd', 4), rgba('#9a8660', 0.6), 7) },
+    { key: 'ui:paperPlain', canvas: paper(640, 640, '#f2ead8', '#e2d6bd', 9) },
     { key: 'ui:dark', canvas: darkPanel() },
     { key: 'ui:btnAmber', canvas: button('#d9763c', '#b4542a', rgba('#ffe2c0', 0.55)) },
     { key: 'ui:btnCream', canvas: button('#f4ecda', '#dccfb2', rgba('#7a6a4a', 0.5)) },
@@ -407,10 +470,18 @@ export function uiTextureSpecs(): TexSpec[] {
     { key: 'card:border', canvas: cardBorder(false) },
     { key: 'card:borderGold', canvas: cardBorder(true) },
     { key: 'card:back', canvas: cardBack() },
+    { key: 'card:frame', canvas: cardFrameCanvas(false) },
+    { key: 'card:frameGold', canvas: cardFrameCanvas(true) },
+    { key: 'card:auraLit', canvas: cardAuraCanvas('#dcef72', 30) },
+    { key: 'card:auraSelect', canvas: cardAuraCanvas('#f3dc9c', 22) },
+    { key: 'card:auraGold', canvas: cardAuraCanvas('#ffc85a', 26) },
     { key: 'card:lit', canvas: litGlow() },
     { key: 'card:select', canvas: selectGlow() },
     { key: 'ui:emblem', canvas: emblemTex() },
     { key: 'fx:dot', canvas: softDot(64, '#ffffff') },
+    { key: 'fx:rays', canvas: raysTex() },
+    { key: 'fx:film', canvas: filmTex() },
+    { key: 'fx:scratch', canvas: scratchTex() },
     { key: 'fx:glow', canvas: softDot(256, '#ffffff', 0.05) },
     { key: 'fx:firefly', canvas: fireflyTex() },
     { key: 'fx:spark', canvas: sparkTex() },

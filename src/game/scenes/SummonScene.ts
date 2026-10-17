@@ -80,7 +80,7 @@ export class SummonScene extends Phaser.Scene {
       `Luminaries found: ${Object.keys(save.roster).length} / ${CHARACTERS.length}`,
     ];
     lines.forEach((l, i) => ui.add(text(this, x + 4, 390 + i * 50, l, { size: 28, color: i === 1 ? CSS.goldLight : CSS.cream, shadow: true })));
-    ui.add(text(this, x + 4, 620, 'Featured: the Gilded Voice, the Vanishing Man and the Midnight Conductor.', { size: 24, italic: true, color: CSS.creamDim, wrap: 760 }));
+    ui.add(text(this, x + 4, 620, 'Featured: the Hourglass Countess, the Crimson Patron and the Tidecaller.', { size: 24, italic: true, color: CSS.creamDim, wrap: 760 }));
 
     const one = new Button(this, x + 190, H - 140, { w: 340, h: 104, label: 'Light ×1', sub: `${riteCost(1)} Glimmer`, style: 'cream', size: 36, onClick: () => this.start(1) });
     const ten = new Button(this, x + 570, H - 140, { w: 380, h: 104, label: 'Light ×10', sub: `${riteCost(10)} Glimmer`, style: 'amber', size: 36, onClick: () => this.start(10) });
