@@ -8,7 +8,7 @@ import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel } from '../systems/achievements';
 import { Atmosphere, fadeIn, goTo, text } from '../ui/kit';
-import { livingPortrait } from '../ui/LivingSprite';
+import { stagePortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 interface Slide {
@@ -47,7 +47,7 @@ export class MenuScene extends Phaser.Scene {
     shade.fillRect(0, 0, W, H);
     new Atmosphere(this, { depth: 60, fireflies: 5 });
 
-    livingPortrait(this, 1500, H + 20, ensurePortrait(this, save.team[0]), 0.78, 960, 820).setDepth(10);
+    stagePortrait(this, 1480, H + 20, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 960, 860).setDepth(10);
 
     this.buildHeader();
     this.buildCarousel();

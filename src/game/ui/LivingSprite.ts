@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { isDropIn } from '../art/assets';
+import { idleVideoUrl, isDropIn } from '../art/assets';
 
 // Brings still character art to life without extra frames. The texture is cut into thin
 // horizontal strips and every strip is shifted and stretched each frame: the feet stay planted
@@ -128,4 +128,52 @@ export function livingPortrait(scene: Phaser.Scene, x: number, y: number, key: s
   const s = isDropIn(key) ? Math.min(paintedHeight / ls.height, maxWidth / ls.width) : proceduralScale;
   ls.setScale(s);
   return ls;
+}
+
+/** A stage portrait: the character's idle video loop when one exists, else a LivingSprite. */
+export interface StagePortrait {
+  /** Tap target covering the figure. */
+  hit: Phaser.GameObjects.Zone;
+  /** Small reaction when tapped. */
+  pose(): void;
+  setDepth(d: number): StagePortrait;
+}
+
+export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId: string, key: string, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): StagePortrait {
+  const still = livingPortrait(scene, x, y, key, proceduralScale, paintedHeight, maxWidth);
+  const url = idleVideoUrl(charId);
+  const api: StagePortrait = {
+    hit: still.hit,
+    pose: () => still.pose(14, 0.03, 160, 120),
+    setDepth(d) {
+      still.setDepth(d);
+      video?.setDepth(d);
+      return api;
+    },
+  };
+  let video: Phaser.GameObjects.Video | undefined;
+  if (!url) return api;
+  // The still stays on screen until the loop's first frame arrives, then cross-fades out.
+  video = scene.add.video(x, y).setOrigin(0.5, 1).setAlpha(0).setDepth(still.depth);
+  const v = video;
+  let shown = false;
+  const reveal = () => {
+    const w = v.video?.videoWidth ?? 0;
+    const h = v.video?.videoHeight ?? 0;
+    if (shown || !w || !h) return;
+    shown = true;
+    v.setDisplaySize(w, h).setScale(Math.min(paintedHeight / h, maxWidth / w));
+    scene.tweens.add({ targets: v, alpha: 1, duration: 400 });
+    scene.tweens.add({ targets: still, alpha: 0, duration: 400, onComplete: () => still.setVisible(false) });
+  };
+  v.on(Phaser.GameObjects.Events.VIDEO_CREATED, reveal);
+  v.on(Phaser.GameObjects.Events.VIDEO_TEXTURE, reveal);
+  v.on(Phaser.GameObjects.Events.VIDEO_PLAYING, reveal);
+  v.loadURL(url, true);
+  v.play(true);
+  api.pose = () => {
+    if (!v.visible || v.alpha < 1) return still.pose(14, 0.03, 160, 120);
+    scene.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, scaleX: v.scaleX * 0.995, duration: 140, yoyo: true, ease: 'Sine.easeOut' });
+  };
+  return api;
 }

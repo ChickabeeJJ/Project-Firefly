@@ -17,8 +17,8 @@ export const STAGES: StageDef[] = [
     id: '1-2', chapter: 1, index: 2, name: "The Usher's Rounds", level: 2, bg: 'street',
     waves: [['mothling', 'usher'], ['usher']], roundLimit: 15, starRounds: 6,
     intro: [
-      { speaker: 'Wren', portrait: 'wren', text: 'That usher is walking the lane like it owns a ticket to it.' },
-      { speaker: 'Bastian', portrait: 'bastian', text: 'Watch the card above its head. It always shows its hand before it plays it.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'That usher is walking the lane like it owns a ticket to it.' },
+      { speaker: 'Columbine', portrait: 'bastian', text: 'Watch the card above its head. It always shows its hand before it plays it.' },
     ],
     outro: 'An empty lantern rolls into the gutter, still warm.',
   },
@@ -26,7 +26,7 @@ export const STAGES: StageDef[] = [
     id: '1-3', chapter: 1, index: 3, name: 'Moths at the Window', level: 3, bg: 'street',
     waves: [['mothling', 'mothling', 'mothling'], ['usher', 'mothling']], roundLimit: 15, starRounds: 7,
     intro: [
-      { speaker: 'Odile', portrait: 'odile', text: 'They swarm the brightest window first. Keep the light moving.' },
+      { speaker: 'Seraphine', portrait: 'odile', text: 'They swarm the brightest window first. Keep the light moving.' },
     ],
     outro: 'Curtains twitch along the lane. The neighbours are watching the light come back.',
   },
@@ -34,30 +34,30 @@ export const STAGES: StageDef[] = [
     id: '1-4', chapter: 1, index: 4, name: 'Clockwork in the Fog', level: 4, bg: 'street',
     waves: [['mannequin'], ['mothling', 'mannequin']], roundLimit: 15, starRounds: 7,
     intro: [
-      { speaker: 'Bastian', portrait: 'bastian', text: 'A mannequin from Whitlock\'s window. It winds itself up before it swings.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Then we strike while it is still winding.' },
+      { speaker: 'Columbine', portrait: 'bastian', text: 'A mannequin from Whitlock\'s window. It winds itself up before it swings.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Then we strike while it is still winding.' },
     ],
     outro: 'A brass key ticks to a stop on the cobbles.',
   },
   {
     id: '1-5', chapter: 1, index: 5, name: 'Ink in the Gutters', level: 5, bg: 'street',
     waves: [['hound', 'hound'], ['hound', 'usher', 'mothling']], roundLimit: 15, starRounds: 8,
-    intro: [{ speaker: 'Odile', portrait: 'odile', text: 'Their bites burn. I can mend it, but do not let it pile up.' }],
+    intro: [{ speaker: 'Seraphine', portrait: 'odile', text: 'Their bites burn. I can mend it, but do not let it pile up.' }],
     outro: 'The ink runs back into the drains, leaving pale footprints.',
   },
   {
     id: '1-6', chapter: 1, index: 6, name: 'Something Eats the Light', level: 6, bg: 'street', rule: 'fireflyBloom',
     waves: [['lampeater', 'mothling'], ['lampeater', 'usher']], roundLimit: 15, starRounds: 8,
     intro: [
-      { speaker: 'Wren', portrait: 'wren', text: 'The fireflies are thick tonight. And so is whatever is eating them.' },
-      { speaker: 'Bastian', portrait: 'bastian', text: 'Light the Lantern before that moth swallows our fireflies.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'The fireflies are thick tonight. And so is whatever is eating them.' },
+      { speaker: 'Columbine', portrait: 'bastian', text: 'Light the Lantern before that moth swallows our fireflies.' },
     ],
     outro: 'A cloud of freed fireflies drifts up past the rooftops.',
   },
   {
     id: '1-7', chapter: 1, index: 7, name: 'The Theatre Doors', level: 7, bg: 'street',
     waves: [['usher', 'mannequin', 'usher'], ['hound', 'lampeater', 'hound']], roundLimit: 15, starRounds: 9,
-    intro: [{ speaker: 'Odile', portrait: 'odile', text: 'The Dimming pours out of the Gloaming Theatre. The doors are open.' }],
+    intro: [{ speaker: 'Seraphine', portrait: 'odile', text: 'The Dimming pours out of the Gloaming Theatre. The doors are open.' }],
     outro: 'Behind the doors, a single spotlight waits on an empty stage.',
   },
   {
@@ -65,14 +65,14 @@ export const STAGES: StageDef[] = [
     waves: [['usher', 'usher'], ['curtaincaller']], roundLimit: 18, starRounds: 10,
     intro: [
       { speaker: '???', text: 'Ladies and gentlemen, the show is over. Lights, please... out.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Not tonight. Tonight we are the encore.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Not tonight. Tonight we are the encore.' },
     ],
     outro: 'The curtain falls on its caller. Corvid Lane is lit from end to end.',
   },
   {
     id: '2-1', chapter: 2, index: 1, name: 'Stalls of Ash', level: 10, bg: 'theatre',
     waves: [['widow', 'mothling'], ['usher', 'usher', 'widow']], roundLimit: 15, starRounds: 8,
-    intro: [{ speaker: 'Odile', portrait: 'odile', text: 'Every seat is full. None of them are breathing.' }],
+    intro: [{ speaker: 'Seraphine', portrait: 'odile', text: 'Every seat is full. None of them are breathing.' }],
     outro: 'The front stalls empty, one quiet seat at a time.',
   },
   {
@@ -83,7 +83,7 @@ export const STAGES: StageDef[] = [
   {
     id: '2-3', chapter: 2, index: 3, name: 'Dressing Room Mirrors', level: 12, bg: 'theatre', rule: 'restlessDim',
     waves: [['widow', 'widow'], ['lampeater', 'mannequin']], roundLimit: 15, starRounds: 9,
-    intro: [{ speaker: 'Wren', portrait: 'wren', text: 'They are angry before we even walk in. Finales will come fast.' }],
+    intro: [{ speaker: 'Corvin', portrait: 'wren', text: 'They are angry before we even walk in. Finales will come fast.' }],
     outro: 'The mirrors clear. For a moment, they show the theatre as it was.',
   },
   {
@@ -104,8 +104,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: '2-7', chapter: 2, index: 7, name: 'Last Rehearsal', level: 16, bg: 'theatre', rule: 'restlessDim',
-    waves: [['usher', 'widow', 'usher'], ['lampeater', 'mannequin']], roundLimit: 15, starRounds: 10,
-    intro: [{ speaker: 'Bastian', portrait: 'bastian', text: 'Whoever runs this theatre is rehearsing our ending.' }],
+    waves: [['usher', 'widow'], ['lampeater', 'mannequin']], roundLimit: 15, starRounds: 10,
+    intro: [{ speaker: 'Columbine', portrait: 'bastian', text: 'Whoever runs this theatre is rehearsing our ending.' }],
     outro: 'From the wings, a voice laughs like a curtain tearing.',
   },
   {
@@ -113,7 +113,7 @@ export const STAGES: StageDef[] = [
     waves: [['widow', 'widow'], ['gloam']], roundLimit: 20, starRounds: 12,
     intro: [
       { speaker: 'Madame Gloam', text: 'Such bright little things. I shall wear your light as a brooch.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Light the Lantern. Everything we have, all at once.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Light the Lantern. Everything we have, all at once.' },
     ],
     outro: 'The Gloaming Theatre\'s chandelier blazes. Vellmoor will sleep with the lights on tonight.',
   },
@@ -123,14 +123,14 @@ export const STAGES: StageDef[] = [
     waves: [['gullwraith', 'gullwraith'], ['stevedore', 'gullwraith']], roundLimit: 15, starRounds: 8,
     intro: [
       { speaker: 'Nell', portrait: 'nell', text: 'The harbour lights went out first. Every ship out there is sailing blind.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Then we light the way home, one pier at a time.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Then we light the way home, one pier at a time.' },
     ],
     outro: 'A trawler sounds its horn somewhere in the fog. Someone saw the light.',
   },
   {
     id: '3-2', chapter: 3, index: 2, name: 'The Fish Market', level: 21, bg: 'docks',
     waves: [['siren', 'gullwraith'], ['stevedore', 'stevedore']], roundLimit: 15, starRounds: 9,
-    intro: [{ speaker: 'Odile', portrait: 'odile', text: 'Cover your ears if that song starts. It knows your name.' }],
+    intro: [{ speaker: 'Seraphine', portrait: 'odile', text: 'Cover your ears if that song starts. It knows your name.' }],
     outro: 'The market stalls drip with fog, and nothing sings any more.',
   },
   {
@@ -141,7 +141,7 @@ export const STAGES: StageDef[] = [
   {
     id: '3-4', chapter: 3, index: 4, name: 'Customs House', level: 23, bg: 'docks', rule: 'fireflyBloom',
     waves: [['siren', 'siren'], ['gullwraith', 'lampeater', 'gullwraith']], roundLimit: 15, starRounds: 9,
-    intro: [{ speaker: 'Bastian', portrait: 'bastian', text: 'Crates of confiscated fireflies. Someone has been hoarding the light.' }],
+    intro: [{ speaker: 'Columbine', portrait: 'bastian', text: 'Crates of confiscated fireflies. Someone has been hoarding the light.' }],
     outro: 'The crates burst open. The fog lights up green for a mile.',
   },
   {
@@ -165,7 +165,7 @@ export const STAGES: StageDef[] = [
     waves: [['siren', 'siren'], ['keeper']], roundLimit: 20, starRounds: 12,
     intro: [
       { speaker: 'Keeper Brine', text: 'Ships kept crashing on my rocks, so I taught the light to hide them. Kinder, isn\'t it?' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Turn the lamp around, keeper. Or we will do it for you.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Turn the lamp around, keeper. Or we will do it for you.' },
     ],
     outro: 'The lighthouse beam swings back out to sea. Somewhere, a ship turns for home.',
   },
@@ -176,7 +176,7 @@ export const STAGES: StageDef[] = [
     waves: [['cogspider', 'cogspider'], ['chimewisp', 'pendulum']], roundLimit: 15, starRounds: 9,
     intro: [
       { speaker: 'Augustin', portrait: 'augustin', text: 'The cathedral clock has stopped. That is why the night will not end.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Then we climb up and wind it ourselves.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Then we climb up and wind it ourselves.' },
     ],
     outro: 'The stairs creak in a rhythm that is almost, but not quite, a tick.',
   },
@@ -198,7 +198,7 @@ export const STAGES: StageDef[] = [
   },
   {
     id: '4-5', chapter: 4, index: 5, name: 'Gallery of Faces', level: 34, bg: 'clocktower', rule: 'fireflyBloom',
-    waves: [['widow', 'chimewisp'], ['lampeater', 'lampeater'], ['pendulum', 'pendulum']], roundLimit: 18, starRounds: 12,
+    waves: [['widow', 'chimewisp'], ['lampeater', 'pendulum']], roundLimit: 18, starRounds: 12,
     outro: 'Every clock face in the gallery shows a different, wrong time.',
   },
   {
@@ -208,8 +208,8 @@ export const STAGES: StageDef[] = [
   },
   {
     id: '4-7', chapter: 4, index: 7, name: 'The Clock Face', level: 36, bg: 'clocktower', rule: 'restlessDim',
-    waves: [['pendulum', 'chimewisp'], ['curtaincaller']], roundLimit: 18, starRounds: 12,
-    intro: [{ speaker: 'Bastian', portrait: 'bastian', text: 'Him again? The Dimming really does love an encore.' }],
+    waves: [['chimewisp'], ['curtaincaller']], roundLimit: 18, starRounds: 12,
+    intro: [{ speaker: 'Columbine', portrait: 'bastian', text: 'Him again? The Dimming really does love an encore.' }],
     outro: 'Behind the clock face, a throne made of hour hands.',
   },
   {
@@ -217,7 +217,7 @@ export const STAGES: StageDef[] = [
     waves: [['chimewisp', 'cogspider'], ['hourless']], roundLimit: 22, starRounds: 14,
     intro: [
       { speaker: 'The Hourless King', text: 'Morning is a cruelty. I have abolished it. You may thank me.' },
-      { speaker: 'Wren', portrait: 'wren', text: 'Everyone, light the Lantern. Let us show him what a sunrise looks like.' },
+      { speaker: 'Corvin', portrait: 'wren', text: 'Everyone, light the Lantern. Let us show him what a sunrise looks like.' },
     ],
     outro: 'The cathedral clock strikes six. For the first time in a long while, Vellmoor sees the dawn.',
   },

@@ -11,6 +11,23 @@ const FILES = import.meta.glob('../../assets/art/**/*.{png,jpg,jpeg,webp}', {
   import: 'default',
 }) as Record<string, string>;
 
+// Idle loops: src/assets/art/idle/<id>.webm (VP9 with alpha). Played instead of the still portrait
+// where the browser can decode transparent WebM; everywhere else the still art is used.
+const IDLE = import.meta.glob('../../assets/art/idle/*.webm', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+function idleSupported(): boolean {
+  const ua = navigator.userAgent;
+  // Safari plays VP9 but drops the alpha channel.
+  if (/^((?!chrome|chromium|android|crios|fxios|edg).)*safari/i.test(ua)) return false;
+  return document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '';
+}
+
+/** URL of a character's idle loop, or null when there is none or it cannot play here. */
+export function idleVideoUrl(id: string): string | null {
+  const hit = Object.entries(IDLE).find(([p]) => p.endsWith(`/${id}.webm`));
+  return hit && idleSupported() ? hit[1] : null;
+}
+
 export type ArtFolder = 'characters' | 'heads' | 'battle' | 'enemies' | 'bg' | 'cards' | 'banners' | 'ui';
 
 function keyFor(path: string): string | null {

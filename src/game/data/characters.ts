@@ -4,34 +4,34 @@ import type { CharacterDef } from './types';
 export const CHARACTERS: CharacterDef[] = [
   {
     id: 'wren',
-    name: 'Wren Ashcombe',
-    title: 'The Match-Seller',
-    mood: 'sun',
+    name: 'Corvin Vesper',
+    title: 'The Lantern Keeper',
+    mood: 'star',
     rarity: 4,
     role: 'Striker',
     base: { hp: 960, atk: 138, def: 44 },
     verses: [
       {
-        id: 'wren_strike', name: 'Strike a Match', type: 'attack',
+        id: 'wren_strike', name: 'Lantern Swing', type: 'attack',
         effects: [{ kind: 'damage', target: 'enemy', power: 1.6 }],
-        art: { motif: 'match', layout: 'burst', portrait: true },
+        art: { motif: 'lantern', layout: 'burst', portrait: true },
       },
       {
-        id: 'wren_kindle', name: 'Kindling', type: 'debuff',
+        id: 'wren_kindle', name: 'Corvid Embers', type: 'debuff',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.0 },
           { kind: 'status', target: 'enemy', status: 'burn', turns: 2, power: 0.45 },
         ],
-        art: { motif: 'flame', layout: 'rays' },
+        art: { motif: 'wings', layout: 'rays' },
       },
     ],
     finale: {
-      id: 'wren_finale', name: 'Bonfire Overture', type: 'mass', finale: true,
+      id: 'wren_finale', name: 'Gilded Cage', type: 'mass', finale: true,
       effects: [
         { kind: 'damage', target: 'allEnemies', power: 2.4 },
         { kind: 'status', target: 'allEnemies', status: 'burn', turns: 2, power: 0.6 },
       ],
-      art: { motif: 'bonfire', layout: 'burst', portrait: true },
+      art: { motif: 'lantern', layout: 'burst', portrait: true },
     },
     look: {
       eyeStyle: 'open', mouth: 'grin',
@@ -40,25 +40,25 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'coat', coat: '#c89a3c', shirt: '#efe4cc', accent: '#b8382a', legs: '#4a3428', shoes: '#2a1d18',
       prop: 'match', scarf: true, freckles: true,
     },
-    palette: { primary: '#e2672f', secondary: '#f4c34f', ink: '#2a1612' },
-    quote: 'Every street lamp in Vellmoor started as one small flame.',
+    palette: { primary: '#7a52b0', secondary: '#d9b25a', ink: '#16101f' },
+    quote: 'My crows carry every letter the dark tried to bury. Tonight, I deliver them.',
   },
   {
     id: 'odile',
-    name: 'Odile Vance',
-    title: 'The Night Physician',
+    name: 'Seraphine Aube',
+    title: 'The Winged Oracle',
     mood: 'moon',
     rarity: 4,
     role: 'Healer',
     base: { hp: 1010, atk: 112, def: 50 },
     verses: [
       {
-        id: 'odile_tincture', name: 'Silver Tincture', type: 'heal',
+        id: 'odile_tincture', name: 'Starlight Psalm', type: 'heal',
         effects: [{ kind: 'heal', target: 'woundedAlly', power: 1.5 }],
-        art: { motif: 'vial', layout: 'rings' },
+        art: { motif: 'wings', layout: 'rings' },
       },
       {
-        id: 'odile_lullaby', name: 'Lullaby Dose', type: 'debuff',
+        id: 'odile_lullaby', name: 'Hush of Feathers', type: 'debuff',
         effects: [
           { kind: 'damage', target: 'enemy', power: 0.9 },
           { kind: 'status', target: 'enemy', status: 'weak', turns: 2 },
@@ -67,7 +67,7 @@ export const CHARACTERS: CharacterDef[] = [
       },
     ],
     finale: {
-      id: 'odile_finale', name: 'Night Ward', type: 'heal', finale: true,
+      id: 'odile_finale', name: 'Celestial Choir', type: 'heal', finale: true,
       effects: [
         { kind: 'heal', target: 'allAllies', power: 1.6 },
         { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.35 },
@@ -80,39 +80,39 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'labcoat', coat: '#ecebe6', shirt: '#2f3f4a', accent: '#3f9a96', legs: '#2c2f38', shoes: '#1d1d22',
       glasses: true, scarf: true, prop: 'book',
     },
-    palette: { primary: '#3fa29b', secondary: '#d7e7e2', ink: '#14232a' },
-    quote: 'Hold still. Light mends faster than you would think.',
+    palette: { primary: '#2f4f9a', secondary: '#e0c070', ink: '#0e1426' },
+    quote: 'Be still. The stars already saw you healed — I only remind them.',
   },
   {
     id: 'bastian',
-    name: 'Bastian Hollis',
-    title: 'The Umbrella Man',
-    mood: 'star',
+    name: 'Columbine Rouge',
+    title: 'The Cut-String Marionette',
+    mood: 'sun',
     rarity: 3,
     role: 'Guardian',
     base: { hp: 1260, atk: 100, def: 70 },
     verses: [
       {
-        id: 'bastian_brolly', name: 'Under My Brolly', type: 'shield',
+        id: 'bastian_brolly', name: 'Curtain of Ribbons', type: 'shield',
         effects: [{ kind: 'shield', target: 'allAllies', power: 0.75 }],
-        art: { motif: 'umbrella', layout: 'split' },
+        art: { motif: 'swirl', layout: 'split' },
       },
       {
-        id: 'bastian_bash', name: 'Brolly Bash', type: 'attack',
+        id: 'bastian_bash', name: 'Pirouette Kick', type: 'attack',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.3 },
           { kind: 'status', target: 'enemy', status: 'daze', turns: 1, chance: [0.25, 0.45, 0.75] },
         ],
-        art: { motif: 'umbrella', layout: 'burst', portrait: true },
+        art: { motif: 'fist', layout: 'burst', portrait: true },
       },
     ],
     finale: {
-      id: 'bastian_finale', name: 'Rain Check', type: 'shield', finale: true,
+      id: 'bastian_finale', name: 'Encore of Strings', type: 'shield', finale: true,
       effects: [
         { kind: 'shield', target: 'allAllies', power: 1.6 },
         { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
       ],
-      art: { motif: 'rain', layout: 'rays', portrait: true },
+      art: { motif: 'note', layout: 'rays', portrait: true },
     },
     look: {
       eyeStyle: 'open', mouth: 'flat',
@@ -121,8 +121,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'suit', coat: '#5b6170', shirt: '#e9e2d2', accent: '#8a2c35', legs: '#3d414c', shoes: '#1c1a1d',
       prop: 'umbrella', mustache: true,
     },
-    palette: { primary: '#6f7fa6', secondary: '#e9d9a8', ink: '#181b26' },
-    quote: 'Rain or Dimming, nobody gets wet on my watch.',
+    palette: { primary: '#b8323a', secondary: '#e8c26a', ink: '#2a0e12' },
+    quote: 'Someone cut my strings once. Now I hold everyone else’s.',
   },
   {
     id: 'marigold',
@@ -164,31 +164,31 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'ichabod',
-    name: 'Ichabod Lark',
-    title: 'The Vanishing Man',
+    name: 'Lucien Marée',
+    title: 'The Tidecaller',
     mood: 'moon',
     rarity: 5,
     role: 'Striker',
     base: { hp: 920, atk: 150, def: 42 },
     verses: [
       {
-        id: 'ichabod_sleight', name: 'Sleight of Hand', type: 'debuff',
+        id: 'ichabod_sleight', name: 'Riptide', type: 'debuff',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.5 },
           { kind: 'status', target: 'enemy', status: 'frail', turns: 2 },
         ],
-        art: { motif: 'cards', layout: 'split', portrait: true },
+        art: { motif: 'swirl', layout: 'split', portrait: true },
       },
       {
-        id: 'ichabod_flurry', name: 'Card Flurry', type: 'attack',
+        id: 'ichabod_flurry', name: 'Moonlit Rain', type: 'attack',
         effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.6, hits: 3 }],
-        art: { motif: 'cards', layout: 'spiral' },
+        art: { motif: 'rain', layout: 'spiral' },
       },
     ],
     finale: {
-      id: 'ichabod_finale', name: 'The Prestige', type: 'attack', finale: true,
+      id: 'ichabod_finale', name: 'High Tide', type: 'attack', finale: true,
       effects: [{ kind: 'damage', target: 'enemy', power: 5.0 }],
-      art: { motif: 'tophat', layout: 'burst', portrait: true },
+      art: { motif: 'crescent', layout: 'burst', portrait: true },
     },
     look: {
       eyeStyle: 'soft', mouth: 'smirk',
@@ -197,8 +197,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'tailcoat', coat: '#3c2b55', shirt: '#efe8dc', accent: '#b23a48', legs: '#211c2b', shoes: '#141118',
       monocle: true, prop: 'cards',
     },
-    palette: { primary: '#7a4cc0', secondary: '#55c2d4', ink: '#140f1f' },
-    quote: 'Watch closely. The trick is that the dark was never there.',
+    palette: { primary: '#2a4fb0', secondary: '#9ec8ee', ink: '#0a1230' },
+    quote: 'The moon pulls the tide. Tonight, I pull the moon.',
   },
   {
     id: 'clementine',

@@ -1208,7 +1208,7 @@ export class BattleScene extends Phaser.Scene {
         { msg: 'A firefly lit this Verse: +30% power, and casting it feeds the Lantern. Cast it!', at: atCard((c) => c.lit), card: (c) => c.lit },
       ],
       3: [
-        { msg: "Wren's Ardor is full, so her Finale is ready. Finales are huge and never merge. Unleash it!", at: atCard((c) => c.finale), card: (c) => c.finale },
+        { msg: "Corvin's Ardor is full, so his Finale is ready. Finales are huge and never merge. Unleash it!", at: atCard((c) => c.finale), card: (c) => c.finale },
       ],
       4: [
         { msg: 'Five fireflies — the Lantern is full! Tap it for a fourth Beat this round.', at: () => ({ x: this.lantern.x + 160, y: this.lantern.y + 90, dir: 'up' }), lantern: true },

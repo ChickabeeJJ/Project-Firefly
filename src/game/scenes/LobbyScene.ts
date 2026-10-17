@@ -10,7 +10,7 @@ import { claimableCount, playerLevel, totalStars } from '../systems/achievements
 import { frontierStage } from '../systems/progression';
 import { RITE } from '../systems/gacha';
 import { Atmosphere, fadeIn, goTo, text, toast } from '../ui/kit';
-import { livingPortrait } from '../ui/LivingSprite';
+import { stagePortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 /** The newest Luminaries, advertised on the lobby banner. */
@@ -54,11 +54,11 @@ export class LobbyScene extends Phaser.Scene {
     // Leader, centre stage. Painted portraits stand nearly full height.
     const leader = getCharacter(save.team[0]);
     this.add.image(860, H - 24, 'fx:shadow').setDisplaySize(420, 60).setDepth(19);
-    const lead = livingPortrait(this, 860, H + 20, ensurePortrait(this, leader.id), 0.92, 1000, 900).setDepth(20);
+    const lead = stagePortrait(this, 860, H + 20, leader.id, ensurePortrait(this, leader.id), 0.92, 1000, 960).setDepth(20);
     lead.hit.setInteractive({ useHandCursor: true });
     lead.hit.on('pointerup', () => {
       if (this.hidden) return this.toggleUi();
-      lead.pose(14, 0.03, 160, 120);
+      lead.pose();
       this.say(leader.quote);
     });
 

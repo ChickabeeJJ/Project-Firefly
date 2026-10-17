@@ -37,16 +37,22 @@ python3 tools/art/import_characters.py sheetA.webp sheetB.webp [--upA sheetA_4x.
 python3 tools/art/import_enemies.py enemiesA.webp enemiesB.webp [--upA enemiesA_4x.png --upB enemiesB_4x.png]
 ```
 
-| Luminary | Sprite | Luminary | Sprite |
-|---|---|---|---|
-| wren | fire mage | augustin | hourglass sage |
-| odile | water mage | percival | robed scribe |
-| bastian | gear-shield knight | delphine | staff priestess |
-| marigold | blonde paladin | teddy | dwarf smith |
-| ichabod | masked rogue | evangeline | antlered dryad |
-| clementine | hooded scholar | kit | ranger |
-| rook | axe barbarian | hesper | elven druid |
-| nell | fur-collared swordswoman | ottoline | witch |
+Luminaries with painted art (ids are internal and unchanged; names follow the art):
+
+| id | Name · title | Art |
+|---|---|---|
+| wren | Corvin Vesper · The Lantern Keeper (main character, Star Striker) | `characters/wren.webp` + idle loop `idle/wren.webm` |
+| odile | Seraphine Aube · The Winged Oracle (Moon Healer) | `characters/odile.webp` |
+| bastian | Columbine Rouge · The Cut-String Marionette (Sun Guardian) | `characters/bastian.webp` |
+| ichabod | Lucien Marée · The Tidecaller (Moon Striker) | `characters/ichabod.webp` |
+
+The other 12 Luminaries use the code-drawn art until their renders arrive. Single transparent
+renders are imported with `python3 tools/art/import_single.py <image> <id> <faceX> <faceY> [size]`.
+
+Idle loops (`idle/<id>.webm`) are VP9 with alpha, played in the lobby and options menu where the
+browser supports transparent WebM (Chrome/Edge/Firefox); Safari falls back to the still render.
+The current loop was made from a black-background MP4: frames keyed against the still render's
+alpha, played forward then backward so it loops without a seam, 1040×770 at 20 fps.
 
 | Dimmed | Sprite | Dimmed | Sprite |
 |---|---|---|---|

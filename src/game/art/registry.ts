@@ -26,6 +26,8 @@ export const PORTRAIT_SCALE = 2.4;
 const PAINTED_PORTRAIT_H = 1200;
 /** Battle height of painted characters before the 0.85 field scale. */
 const PAINTED_DOLL_H = 330;
+/** …and no wider than this (full renders with big props or capes are wide). */
+const PAINTED_DOLL_W = 360;
 /** Battle heights of painted enemies that should not stand as tall as a person. */
 const PAINTED_ENEMY_H: Partial<Record<string, number>> = { mothling: 230, lampeater: 280, hound: 270, chimewisp: 360 };
 
@@ -40,6 +42,12 @@ function source(scene: Phaser.Scene, key: string): CanvasImageSource {
 function size(scene: Phaser.Scene, key: string): { w: number; h: number } {
   const f = scene.textures.getFrame(key);
   return { w: f.width, h: f.height };
+}
+
+/** Image resized to fit inside a box, keeping its aspect. */
+function fitBox(scene: Phaser.Scene, key: string, maxH: number, maxW: number): HTMLCanvasElement {
+  const s = size(scene, key);
+  return fitHeight(scene, key, Math.min(maxH, Math.round((maxW * s.h) / s.w)));
 }
 
 /** Image resized to a fixed height, keeping its aspect (bottom-centre usage). */
@@ -118,7 +126,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
     // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
-    add(scene, `doll:${c.id}`, battle ? fitHeight(scene, battle, PAINTED_DOLL_H) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
+    add(scene, `doll:${c.id}`, battle ? fitBox(scene, battle, PAINTED_DOLL_H, PAINTED_DOLL_W) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
     const body = dropIn(scene, 'characters', c.id);
     const paintedBody = body ? { img: source(scene, body), ...size(scene, body) } : undefined;
