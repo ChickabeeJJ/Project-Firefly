@@ -13,20 +13,20 @@ const ctx = out.getContext('2d')!;
 
 if (which === 'dolls') {
   const scale = 1.2;
-  out.width = 5 * 270;
-  out.height = 2 * 470;
+  out.width = 8 * 270;
+  out.height = Math.ceil(CHARACTERS.length / 8) * 470;
   ctx.fillStyle = '#4a5654';
   ctx.fillRect(0, 0, out.width, out.height);
   CHARACTERS.forEach((c, i) => {
     const cv = dollCanvas(c.look, scale);
-    ctx.drawImage(cv, (i % 5) * 270, Math.floor(i / 5) * 470);
+    ctx.drawImage(cv, (i % 8) * 270, Math.floor(i / 8) * 470);
     ctx.fillStyle = '#fff';
     ctx.font = '16px serif';
-    ctx.fillText(c.name, (i % 5) * 270 + 10, Math.floor(i / 5) * 470 + 462);
+    ctx.fillText(c.name, (i % 8) * 270 + 10, Math.floor(i / 8) * 470 + 462);
   });
 }
 if (which === 'enemies') {
-  const kinds: EnemyKind[] = ['mothling', 'usher', 'mannequin', 'hound', 'widow', 'lampeater', 'curtaincaller', 'gloam'];
+  const kinds: EnemyKind[] = (new URLSearchParams(location.search).get('set') === 'new') ? ['gullwraith', 'stevedore', 'siren', 'cogspider', 'pendulum', 'chimewisp', 'keeper', 'hourless'] : ['mothling', 'usher', 'mannequin', 'hound', 'widow', 'lampeater', 'curtaincaller', 'gloam'];
   out.width = 1800;
   out.height = 1100;
   const g = ctx.createLinearGradient(0, 0, 0, out.height);

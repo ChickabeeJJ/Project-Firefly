@@ -3,12 +3,14 @@ import type { StageDef } from './types';
 export const CHAPTERS = [
   { id: 1, name: 'The Dimming', subtitle: 'Corvid Lane, after dusk' },
   { id: 2, name: 'The Velvet Curtain', subtitle: 'The Royal Gloaming Theatre' },
+  { id: 3, name: 'The Drowned Docks', subtitle: 'Vellmoor harbour, low tide' },
+  { id: 4, name: 'The Clock Without Hands', subtitle: 'Inside the Cathedral Clock' },
 ];
 
 export const STAGES: StageDef[] = [
   {
-    id: '1-1', chapter: 1, index: 1, name: 'Lamps Out on Corvid Lane', level: 1, bg: 'street',
-    waves: [['mothling', 'mothling']], roundLimit: 15, starRounds: 4,
+    id: '1-1', chapter: 1, index: 1, name: 'First Light (Tutorial)', level: 1, bg: 'street', tutorial: true,
+    waves: [['mothling'], ['mothling', 'mothling']], roundLimit: 15, starRounds: 6,
     outro: 'The first lamp sputters back to life. Somewhere, a firefly answers.',
   },
   {
@@ -115,6 +117,111 @@ export const STAGES: StageDef[] = [
     ],
     outro: 'The Gloaming Theatre\'s chandelier blazes. Vellmoor will sleep with the lights on tonight.',
   },
+  // Chapter 3 — The Drowned Docks
+  {
+    id: '3-1', chapter: 3, index: 1, name: 'Low Tide', level: 20, bg: 'docks',
+    waves: [['gullwraith', 'gullwraith'], ['stevedore', 'gullwraith']], roundLimit: 15, starRounds: 8,
+    intro: [
+      { speaker: 'Nell', portrait: 'nell', text: 'The harbour lights went out first. Every ship out there is sailing blind.' },
+      { speaker: 'Wren', portrait: 'wren', text: 'Then we light the way home, one pier at a time.' },
+    ],
+    outro: 'A trawler sounds its horn somewhere in the fog. Someone saw the light.',
+  },
+  {
+    id: '3-2', chapter: 3, index: 2, name: 'The Fish Market', level: 21, bg: 'docks',
+    waves: [['siren', 'gullwraith'], ['stevedore', 'stevedore']], roundLimit: 15, starRounds: 9,
+    intro: [{ speaker: 'Odile', portrait: 'odile', text: 'Cover your ears if that song starts. It knows your name.' }],
+    outro: 'The market stalls drip with fog, and nothing sings any more.',
+  },
+  {
+    id: '3-3', chapter: 3, index: 3, name: 'Crane Yard', level: 22, bg: 'docks',
+    waves: [['stevedore', 'gullwraith'], ['lampeater', 'siren']], roundLimit: 15, starRounds: 9,
+    outro: 'A crane swings loose, its hook pointing at the lighthouse.',
+  },
+  {
+    id: '3-4', chapter: 3, index: 4, name: 'Customs House', level: 23, bg: 'docks', rule: 'fireflyBloom',
+    waves: [['siren', 'siren'], ['gullwraith', 'lampeater', 'gullwraith']], roundLimit: 15, starRounds: 9,
+    intro: [{ speaker: 'Bastian', portrait: 'bastian', text: 'Crates of confiscated fireflies. Someone has been hoarding the light.' }],
+    outro: 'The crates burst open. The fog lights up green for a mile.',
+  },
+  {
+    id: '3-5', chapter: 3, index: 5, name: 'The Sunken Pier', level: 24, bg: 'docks',
+    waves: [['stevedore', 'gullwraith'], ['siren', 'gullwraith']], roundLimit: 15, starRounds: 10,
+    outro: 'Beneath the planks, the water is full of drowned lanterns.',
+  },
+  {
+    id: '3-6', chapter: 3, index: 6, name: 'Salt and Rust', level: 25, bg: 'docks', rule: 'restlessDim',
+    waves: [['gullwraith', 'gullwraith', 'gullwraith'], ['stevedore', 'siren']], roundLimit: 15, starRounds: 10,
+    outro: 'Rust flakes off the cranes like old paint off a memory.',
+  },
+  {
+    id: '3-7', chapter: 3, index: 7, name: 'The Breakwater', level: 26, bg: 'docks',
+    waves: [['siren', 'lampeater'], ['stevedore', 'gullwraith']], roundLimit: 16, starRounds: 11,
+    intro: [{ speaker: 'Nell', portrait: 'nell', text: 'The lighthouse is shining. But it is shining black.' }],
+    outro: 'At the end of the breakwater, a door creaks open on its own.',
+  },
+  {
+    id: '3-8', chapter: 3, index: 8, name: 'Keeper Brine', level: 28, bg: 'docks', boss: true,
+    waves: [['siren', 'siren'], ['keeper']], roundLimit: 20, starRounds: 12,
+    intro: [
+      { speaker: 'Keeper Brine', text: 'Ships kept crashing on my rocks, so I taught the light to hide them. Kinder, isn\'t it?' },
+      { speaker: 'Wren', portrait: 'wren', text: 'Turn the lamp around, keeper. Or we will do it for you.' },
+    ],
+    outro: 'The lighthouse beam swings back out to sea. Somewhere, a ship turns for home.',
+  },
+
+  // Chapter 4 — The Clock Without Hands
+  {
+    id: '4-1', chapter: 4, index: 1, name: 'The Bell Tower Stairs', level: 30, bg: 'clocktower',
+    waves: [['cogspider', 'cogspider'], ['chimewisp', 'pendulum']], roundLimit: 15, starRounds: 9,
+    intro: [
+      { speaker: 'Augustin', portrait: 'augustin', text: 'The cathedral clock has stopped. That is why the night will not end.' },
+      { speaker: 'Wren', portrait: 'wren', text: 'Then we climb up and wind it ourselves.' },
+    ],
+    outro: 'The stairs creak in a rhythm that is almost, but not quite, a tick.',
+  },
+  {
+    id: '4-2', chapter: 4, index: 2, name: 'Escapement', level: 31, bg: 'clocktower',
+    waves: [['pendulum', 'chimewisp'], ['cogspider', 'cogspider', 'cogspider']], roundLimit: 15, starRounds: 9,
+    outro: 'A great gear shudders, catches, and turns one notch.',
+  },
+  {
+    id: '4-3', chapter: 4, index: 3, name: 'The Carillon', level: 32, bg: 'clocktower', rule: 'restlessDim',
+    waves: [['chimewisp', 'chimewisp', 'chimewisp'], ['pendulum', 'siren']], roundLimit: 15, starRounds: 10,
+    intro: [{ speaker: 'Delphine', portrait: 'delphine', text: 'The bells are out of tune. Let me show them the right note.' }],
+    outro: 'One bell rings true, and the fog outside thins a little.',
+  },
+  {
+    id: '4-4', chapter: 4, index: 4, name: 'Mainspring', level: 33, bg: 'clocktower',
+    waves: [['cogspider', 'pendulum'], ['mannequin', 'chimewisp']], roundLimit: 15, starRounds: 10,
+    outro: 'The mainspring is wound tight with stolen hours.',
+  },
+  {
+    id: '4-5', chapter: 4, index: 5, name: 'Gallery of Faces', level: 34, bg: 'clocktower', rule: 'fireflyBloom',
+    waves: [['widow', 'chimewisp'], ['lampeater', 'lampeater'], ['pendulum', 'pendulum']], roundLimit: 18, starRounds: 12,
+    outro: 'Every clock face in the gallery shows a different, wrong time.',
+  },
+  {
+    id: '4-6', chapter: 4, index: 6, name: 'The Stopped Minute', level: 35, bg: 'clocktower',
+    waves: [['pendulum', 'cogspider'], ['siren', 'chimewisp']], roundLimit: 15, starRounds: 11,
+    outro: 'Dust hangs in the air, unmoving, waiting for the next second.',
+  },
+  {
+    id: '4-7', chapter: 4, index: 7, name: 'The Clock Face', level: 36, bg: 'clocktower', rule: 'restlessDim',
+    waves: [['pendulum', 'chimewisp'], ['curtaincaller']], roundLimit: 18, starRounds: 12,
+    intro: [{ speaker: 'Bastian', portrait: 'bastian', text: 'Him again? The Dimming really does love an encore.' }],
+    outro: 'Behind the clock face, a throne made of hour hands.',
+  },
+  {
+    id: '4-8', chapter: 4, index: 8, name: 'The Hourless King', level: 38, bg: 'clocktower', boss: true,
+    waves: [['chimewisp', 'cogspider'], ['hourless']], roundLimit: 22, starRounds: 14,
+    intro: [
+      { speaker: 'The Hourless King', text: 'Morning is a cruelty. I have abolished it. You may thank me.' },
+      { speaker: 'Wren', portrait: 'wren', text: 'Everyone, light the Lantern. Let us show him what a sunrise looks like.' },
+    ],
+    outro: 'The cathedral clock strikes six. For the first time in a long while, Vellmoor sees the dawn.',
+  },
+
 ];
 
 const byId = new Map(STAGES.map((s) => [s.id, s]));

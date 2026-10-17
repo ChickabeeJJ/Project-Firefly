@@ -2,7 +2,7 @@ import { type Ctx, glow, grain, makeCanvas, mix, rgba, seeded, shade } from './p
 
 // Painted-style backgrounds, authored in 1920×1080 game space and rendered at BG_SCALE.
 export const BG_SCALE = 1600 / 1920;
-export type BgId = 'street' | 'theatre' | 'parlour' | 'lake' | 'map';
+export type BgId = 'street' | 'theatre' | 'parlour' | 'lake' | 'map' | 'docks' | 'clocktower';
 
 const W = 1920;
 const H = 1080;
@@ -586,7 +586,202 @@ function map(ctx: Ctx): void {
   }
 }
 
-const PAINTERS: Record<BgId, (ctx: Ctx) => void> = { street, theatre, parlour, lake, map };
+// ---------------------------------------------------------------------------- docks
+
+function docks(ctx: Ctx): void {
+  const rnd = seeded(51);
+  const HZ = 600;
+  ctx.fillStyle = vgrad(ctx, 0, HZ, [[0, '#0a1418'], [0.6, '#1c2e32'], [1, '#3a4c48']]);
+  ctx.fillRect(0, 0, W, HZ);
+  // Distant lighthouse with a dark beam
+  ctx.fillStyle = '#121c20';
+  ctx.beginPath();
+  ctx.moveTo(1460, HZ - 20);
+  ctx.lineTo(1488, HZ - 330);
+  ctx.lineTo(1532, HZ - 330);
+  ctx.lineTo(1560, HZ - 20);
+  ctx.fill();
+  ctx.fillRect(1476, HZ - 360, 68, 36);
+  glow(ctx, 1510, HZ - 342, 60, '#9fd8f0', 0.35);
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#05080a';
+  ctx.beginPath();
+  ctx.moveTo(1510, HZ - 342);
+  ctx.lineTo(600, HZ - 520);
+  ctx.lineTo(600, HZ - 300);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  // Cranes
+  ctx.strokeStyle = '#141e22';
+  ctx.lineWidth = 14;
+  for (const [x, h] of [[300, 420], [760, 360], [1180, 300]] as [number, number][]) {
+    ctx.beginPath();
+    ctx.moveTo(x, HZ);
+    ctx.lineTo(x, HZ - h);
+    ctx.lineTo(x + 260, HZ - h + 20);
+    ctx.moveTo(x, HZ - h);
+    ctx.lineTo(x - 80, HZ - h + 40);
+    ctx.stroke();
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + 230, HZ - h + 18);
+    ctx.lineTo(x + 230, HZ - h + 160);
+    ctx.stroke();
+    ctx.lineWidth = 14;
+  }
+  fogBand(ctx, HZ - 20, 110, '#9fb8b4', 0.38);
+  // Water
+  ctx.fillStyle = vgrad(ctx, HZ, 760, [[0, '#24363a'], [1, '#101a1e']]);
+  ctx.fillRect(0, HZ, W, 160);
+  for (let i = 0; i < 140; i++) {
+    ctx.fillStyle = rgba('#9fc0c4', 0.05 + rnd() * 0.08);
+    ctx.fillRect(rnd() * W, HZ + rnd() * 150, 30 + rnd() * 90, 2);
+  }
+  // Pier planks
+  ctx.fillStyle = vgrad(ctx, 700, H, [[0, '#3a2e24'], [1, '#18120e']]);
+  ctx.beginPath();
+  ctx.moveTo(0, 720);
+  ctx.lineTo(W, 720);
+  ctx.lineTo(W, H);
+  ctx.lineTo(0, H);
+  ctx.fill();
+  for (let y = 730, step = 14; y < H; y += step, step *= 1.16) {
+    ctx.strokeStyle = rgba('#0c0806', 0.7);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  for (let i = -20; i <= 20; i++) {
+    ctx.strokeStyle = rgba('#0c0806', 0.35);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(960 + i * 60, 720);
+    ctx.lineTo(960 + i * 160, H);
+    ctx.stroke();
+  }
+  // Bollards, crates, rope
+  for (const x of [160, 1780]) {
+    ctx.fillStyle = '#121012';
+    ctx.fillRect(x - 24, 700, 48, 70);
+    ctx.beginPath();
+    ctx.ellipse(x, 700, 34, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#2a2018';
+  ctx.fillRect(1600, 620, 150, 110);
+  ctx.fillRect(1640, 540, 110, 82);
+  ctx.strokeStyle = '#160f0a';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(1600, 620, 150, 110);
+  ctx.strokeRect(1640, 540, 110, 82);
+  // Hanging harbour lamp
+  glow(ctx, 520, 470, 200, '#ffcf7a', 0.3);
+  glow(ctx, 520, 470, 40, '#fff0c0', 0.9);
+  ctx.fillStyle = '#0c1012';
+  ctx.fillRect(514, 300, 12, 150);
+  fogBand(ctx, 760, 120, '#8fa8a8', 0.14);
+  ctx.fillStyle = vgrad(ctx, 880, H, [[0, rgba('#05080a', 0)], [1, rgba('#05080a', 0.55)]]);
+  ctx.fillRect(0, 880, W, H - 880);
+}
+
+// ---------------------------------------------------------------------------- clock tower
+
+function gear(ctx: Ctx, x: number, y: number, r: number, teeth: number, color: string): void {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (i * Math.PI) / teeth;
+    const rr = i % 2 === 0 ? r : r * 0.86;
+    ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.16, 0, Math.PI * 2);
+  ctx.fill();
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.fillRect(-r * 0.05, 0, r * 0.1, r * 0.6);
+    ctx.restore();
+  }
+}
+
+function clocktower(ctx: Ctx): void {
+  ctx.fillStyle = vgrad(ctx, 0, H, [[0, '#120e18'], [0.6, '#221a26'], [1, '#0e0a10']]);
+  ctx.fillRect(0, 0, W, H);
+  // Giant clock face window (backlit)
+  glow(ctx, 960, 330, 520, '#f0d890', 0.18);
+  ctx.fillStyle = rgba('#e8dcb8', 0.16);
+  ctx.beginPath();
+  ctx.arc(960, 330, 360, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = rgba('#d8c08a', 0.5);
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  ctx.lineWidth = 4;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(960 + Math.cos(a) * 300, 330 + Math.sin(a) * 300);
+    ctx.lineTo(960 + Math.cos(a) * 350, 330 + Math.sin(a) * 350);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = rgba('#d8c08a', 0.18);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(960, 330);
+    ctx.lineTo(960 + Math.cos(a) * 360, 330 + Math.sin(a) * 360);
+    ctx.stroke();
+  }
+  // Gears silhouettes
+  gear(ctx, 200, 220, 230, 18, '#1c1620');
+  gear(ctx, 1760, 300, 260, 20, '#1c1620');
+  gear(ctx, 1500, 70, 120, 12, '#2a2030');
+  gear(ctx, 420, 520, 110, 12, '#2a2030');
+  gear(ctx, 1420, 560, 90, 10, '#2a2030');
+  ctx.strokeStyle = '#120e14';
+  ctx.lineWidth = 24;
+  ctx.beginPath();
+  ctx.moveTo(0, 640);
+  ctx.lineTo(W, 640);
+  ctx.stroke();
+  // Floor: wooden platform with brass edge
+  ctx.fillStyle = vgrad(ctx, 650, H, [[0, '#3a2a20'], [1, '#160e0a']]);
+  ctx.fillRect(0, 650, W, H - 650);
+  for (let i = -20; i <= 20; i++) {
+    ctx.strokeStyle = rgba('#0c0806', 0.45);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(960 + i * 50, 650);
+    ctx.lineTo(960 + i * 150, H);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#b08a3a';
+  ctx.fillRect(0, 646, W, 8);
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  lightShaft(ctx, 900, 140, 760, 480, 980, '#f0d890', 0.07);
+  ctx.restore();
+  ctx.fillStyle = vgrad(ctx, 860, H, [[0, rgba('#05030a', 0)], [1, rgba('#05030a', 0.55)]]);
+  ctx.fillRect(0, 860, W, H - 860);
+}
+
+const PAINTERS: Record<BgId, (ctx: Ctx) => void> = { street, theatre, parlour, lake, map, docks, clocktower };
 
 export function backgroundCanvas(id: BgId): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(W * BG_SCALE, H * BG_SCALE);

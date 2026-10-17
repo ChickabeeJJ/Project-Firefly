@@ -16,10 +16,26 @@ export interface AllySetup {
   resonance: number;
 }
 
+/** Scripted beats for the guided tutorial (all keyed by round number). */
+export interface BattleScript {
+  /** Verse ids dealt first that round (before random top-up). */
+  hands?: Record<number, string[]>;
+  /** Verse id to light that round (newest matching card). */
+  lit?: Record<number, string>;
+  /** Lantern fireflies set at the start of that round. */
+  fireflies?: Record<number, number>;
+  /** Character id → Ardor set at the start of that round. */
+  ardor?: Record<number, Record<string, number>>;
+  enemyHpMult?: number;
+  /** Allies cannot drop below 1 HP. */
+  noDefeat?: boolean;
+}
+
 export interface BattleSetup {
   stage: StageDef;
   team: AllySetup[];
   seed: number;
+  script?: BattleScript;
 }
 
 export interface PlanResult {
@@ -55,12 +71,14 @@ export class BattleEngine {
   fallen = 0;
 
   private readonly rng: Rng;
+  private readonly script: BattleScript;
   private nextCid = 1;
   private undoStack: Snapshot[] = [];
 
   constructor(setup: BattleSetup) {
     this.stage = setup.stage;
     this.rng = new Rng(setup.seed);
+    this.script = setup.script ?? {};
     setup.team.forEach((m, i) => {
       const def = getCharacter(m.charId);
       const s = allyStats(def.base, m.level, m.resonance);
@@ -134,6 +152,7 @@ export class BattleEngine {
     ids.forEach((id, i) => {
       const def = getEnemy(id);
       const s = enemyStats(def.base, this.stage.level);
+      if (this.script.enemyHpMult) s.hp = Math.round(s.hp * this.script.enemyHpMult);
       const uid = `e${index}_${i}`;
       uids.push(uid);
       this.units.push({
@@ -154,12 +173,22 @@ export class BattleEngine {
     this.lanternHour = false;
     ev.push({ t: 'roundStart', round: this.round });
     this.purgeFallen(ev);
+    this.applyScript();
     this.deal(ev);
     this.lightCards(ev);
     this.chooseIntents(ev);
     this.ensureTarget();
     this.phase = 'planning';
     return ev;
+  }
+
+  private applyScript(): void {
+    const ff = this.script.fireflies?.[this.round];
+    if (ff !== undefined) this.fireflies = Math.min(LANTERN.capacity, ff);
+    const ardor = this.script.ardor?.[this.round];
+    if (ardor) {
+      for (const u of this.aliveAllies) if (ardor[u.defId] !== undefined) u.ardor = Math.min(ARDOR_MAX, ardor[u.defId]);
+    }
   }
 
   private purgeFallen(ev: BattleEvent[]): void {
@@ -174,6 +203,15 @@ export class BattleEngine {
   private deal(ev: BattleEvent[]): void {
     const alive = this.aliveAllies;
     if (alive.length === 0) return;
+    for (const verseId of this.script.hands?.[this.round] ?? []) {
+      if (normalCount(this.hand) >= HAND_LIMIT) break;
+      const owner = alive.find((u) => getCharacter(u.defId).verses.some((v) => v.id === verseId));
+      if (!owner) continue;
+      const card: Card = { cid: this.nextCid++, ownerUid: owner.uid, verseId, rank: 1, lit: false, finale: false };
+      const index = normalCount(this.hand);
+      this.hand.splice(index, 0, card);
+      ev.push({ t: 'dealCard', card: { ...card }, index, merges: normalizeHand(this.hand) });
+    }
     let guard = 40;
     while (normalCount(this.hand) < HAND_LIMIT && guard-- > 0) {
       const owner = this.rng.pick(alive);
@@ -195,7 +233,20 @@ export class BattleEngine {
   }
 
   private lightCards(ev: BattleEvent[]): void {
+    const scripted = this.script.lit?.[this.round];
+    if (scripted) {
+      const card = [...this.hand].reverse().find((c) => c.verseId === scripted && !c.lit);
+      if (card) {
+        card.lit = true;
+        ev.push({ t: 'light', cid: card.cid });
+        return;
+      }
+    }
     const count = LANTERN.lightsPerRound + (this.stage.rule === 'fireflyBloom' ? 1 : 0);
+    this.lightRandom(count, ev);
+  }
+
+  private lightRandom(count: number, ev: BattleEvent[]): void {
     for (let i = 0; i < count; i++) {
       if (this.hand.filter((c) => c.lit).length >= LANTERN.maxLitInHand) return;
       const candidates = this.hand.filter((c) => !c.finale && !c.lit);
@@ -389,7 +440,7 @@ export class BattleEngine {
       const burn = this.getStatus(u, 'burn');
       if (burn && u.alive) {
         const amount = Math.max(1, Math.round(burn.potency));
-        u.hp = Math.max(0, u.hp - amount);
+        u.hp = Math.max(this.floorHp(u), u.hp - amount);
         ev.push({ t: 'damage', sourceUid: null, targetUid: u.uid, amount, absorbed: 0, crit: false, adv: 0, hp: u.hp, shield: u.shield, dot: true });
         if (u.hp <= 0) this.kill(u, ev);
       }
@@ -462,7 +513,7 @@ export class BattleEngine {
 
   /** Units the presentation should focus on for a cast (first effect's targets). */
   private focusTargets(caster: Unit, effects: Effect[], planned: string | null): string[] {
-    const first = effects.find((fx) => fx.kind !== 'snuff') as Exclude<Effect, { kind: 'snuff' }> | undefined;
+    const first = effects.find((fx) => 'target' in fx) as Extract<Effect, { target: TargetRule }> | undefined;
     if (!first) return [];
     return this.resolveTargetsPreview(caster, first.target, planned).map((u) => u.uid);
   }
@@ -517,6 +568,15 @@ export class BattleEngine {
           ev.push({ t: 'ardor', uid: t.uid, value: t.ardor });
         }
         return;
+      case 'fireflies':
+        for (let i = 0; i < fx.amount && this.fireflies < LANTERN.capacity; i++) {
+          this.fireflies++;
+          ev.push({ t: 'firefly', casterUid: caster.uid, lantern: this.fireflies });
+        }
+        return;
+      case 'light':
+        this.lightRandom(fx.amount, ev);
+        return;
       case 'snuff': {
         const before = this.fireflies;
         this.fireflies = Math.max(0, this.fireflies - fx.amount);
@@ -548,12 +608,16 @@ export class BattleEngine {
     const amount = Math.max(1, Math.round(raw * this.damageFactor(src, tgt) * (crit ? CRIT_MULT : 1) * variance));
     const absorbed = Math.min(tgt.shield, amount);
     tgt.shield -= absorbed;
-    tgt.hp = Math.max(0, tgt.hp - (amount - absorbed));
+    tgt.hp = Math.max(this.floorHp(tgt), tgt.hp - (amount - absorbed));
     ev.push({
       t: 'damage', sourceUid: src.uid, targetUid: tgt.uid, amount, absorbed, crit,
       adv: moodRelation(src.mood, tgt.mood), hp: tgt.hp, shield: tgt.shield,
     });
     if (tgt.hp <= 0) this.kill(tgt, ev);
+  }
+
+  private floorHp(u: Unit): number {
+    return this.script.noDefeat && u.side === 'ally' ? 1 : 0;
   }
 
   private healUnit(t: Unit, raw: number, ev: BattleEvent[], dot = false): void {

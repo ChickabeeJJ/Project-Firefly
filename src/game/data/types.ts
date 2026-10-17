@@ -17,12 +17,17 @@ export type Effect =
   | { kind: 'shield'; target: TargetRule; power: number }
   | { kind: 'status'; target: TargetRule; status: StatusId; turns: number; chance?: RankTriple; power?: number }
   | { kind: 'ardor'; target: TargetRule; amount: number }
-  | { kind: 'snuff'; amount: number };
+  | { kind: 'snuff'; amount: number }
+  /** Adds fireflies to the Lantern. */
+  | { kind: 'fireflies'; amount: number }
+  /** Lights unlit Verses in the hand. */
+  | { kind: 'light'; amount: number };
 
 export type MotifId =
   | 'match' | 'flame' | 'bonfire' | 'vial' | 'crescent' | 'umbrella' | 'rain' | 'note' | 'sunburst'
   | 'cards' | 'tophat' | 'candle' | 'shield' | 'fist' | 'glove' | 'wings' | 'swirl' | 'eye' | 'tarot'
-  | 'crystal' | 'baton' | 'metronome' | 'moth' | 'lantern';
+  | 'crystal' | 'baton' | 'metronome' | 'moth' | 'lantern'
+  | 'camera' | 'violin' | 'wrench' | 'parasol' | 'telescope' | 'teacup' | 'newspaper' | 'meteor' | 'smoke';
 
 export type ArtLayout = 'burst' | 'rays' | 'split' | 'rings' | 'spiral';
 
@@ -44,9 +49,10 @@ export interface VerseDef {
 
 export type HairStyle = 'bob' | 'long' | 'bun' | 'short' | 'curly' | 'ponytail' | 'wavy' | 'slick';
 export type Bangs = 'straight' | 'side' | 'parted' | 'none' | 'curl';
-export type Hat = 'newsboy' | 'tophat' | 'bowler' | 'headband' | 'coif' | 'aviator' | 'veil' | 'flatcap';
+export type Hat = 'newsboy' | 'tophat' | 'bowler' | 'headband' | 'coif' | 'aviator' | 'veil' | 'flatcap' | 'fedora' | 'beret' | 'cloche';
 export type Outfit = 'coat' | 'labcoat' | 'dress' | 'suit' | 'robe' | 'vest' | 'jacket' | 'tailcoat';
-export type Prop = 'lantern' | 'umbrella' | 'baton' | 'crystal' | 'cards' | 'gloves' | 'book' | 'match' | 'feather' | 'goggles';
+export type Prop = 'lantern' | 'umbrella' | 'baton' | 'crystal' | 'cards' | 'gloves' | 'book' | 'match' | 'feather' | 'goggles'
+  | 'camera' | 'violin' | 'wrench' | 'parasol' | 'telescope';
 
 export interface DollSpec {
   skin: string;
@@ -113,7 +119,8 @@ export interface EnemyMove {
   effects: Effect[];
 }
 
-export type EnemyKind = 'mothling' | 'usher' | 'mannequin' | 'hound' | 'widow' | 'lampeater' | 'curtaincaller' | 'gloam';
+export type EnemyKind = 'mothling' | 'usher' | 'mannequin' | 'hound' | 'widow' | 'lampeater' | 'curtaincaller' | 'gloam'
+  | 'gullwraith' | 'stevedore' | 'siren' | 'keeper' | 'cogspider' | 'pendulum' | 'chimewisp' | 'hourless';
 
 export interface EnemyDef {
   id: string;
@@ -147,7 +154,9 @@ export interface StageDef {
   waves: string[][];
   roundLimit: number;
   starRounds: number;
-  bg: 'street' | 'theatre';
+  bg: 'street' | 'theatre' | 'docks' | 'clocktower';
+  /** Guided first battle (scripted hands, gated input). */
+  tutorial?: boolean;
   rule?: StageRuleId;
   intro?: DialogueLine[];
   outro?: string;

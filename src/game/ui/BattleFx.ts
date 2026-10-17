@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fitPortrait } from '../art/assets';
 import { C, CSS, H, W } from '../config/theme';
 import { text } from './kit';
 
@@ -148,7 +149,7 @@ export class BattleFx {
         const y = H / 2 - 200 + i * 16;
         lines.lineBetween(-200, y + 120, W + 200, y - 160);
       }
-      const portrait = this.scene.add.image(-300, H / 2 + 420, portraitKey).setOrigin(0.5, 1).setScale(0.62);
+      const portrait = fitPortrait(this.scene.add.image(-300, H / 2 + 420, portraitKey).setOrigin(0.5, 1), 0.62, 820);
       const nm = text(this.scene, W + 400, H / 2 - 30, name, { size: 92, font: 'display', bold: true, color: '#fff8ea', spacing: 6, stroke: '#1a1012', strokeThickness: 10 }).setOrigin(0.5);
       const tt = text(this.scene, W + 400, H / 2 + 60, title, { size: 34, italic: true, color: CSS.goldLight, stroke: '#1a1012', strokeThickness: 6 }).setOrigin(0.5);
       c.add([shade, band, lines, band2, band3, portrait, nm, tt]);

@@ -364,6 +364,157 @@ const MOTIFS: Record<MotifId, Motif> = {
     MOTIFS.flame(ctx, pal);
     ctx.restore();
   },
+
+  camera(ctx, pal) {
+    ink(ctx, roundRectPath(-90, -50, 180, 110, 14), '#2a2626');
+    ink(ctx, roundRectPath(-60, -78, 60, 30, 6), '#3a3634');
+    ink(ctx, ellipsePath(10, 6, 46, 46), '#4a4440');
+    ink(ctx, ellipsePath(10, 6, 28, 28), pal.secondary, 3);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(0, -6, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ink(ctx, burstPath(70, -70, 40, 14, 8), '#fff6c0', 3);
+  },
+  violin(ctx, pal) {
+    ctx.save();
+    ctx.rotate(0.35);
+    const body = new Path2D();
+    body.moveTo(0, -60);
+    body.bezierCurveTo(44, -60, 44, -22, 22, -12);
+    body.bezierCurveTo(50, 4, 50, 70, 0, 76);
+    body.bezierCurveTo(-50, 70, -50, 4, -22, -12);
+    body.bezierCurveTo(-44, -22, -44, -60, 0, -60);
+    part(ctx, body, { fill: '#a8522a', shadowCircle: [50, 60, 50], highlight: [-16, -36, 12, '#e09a6a'], outline: INK_W });
+    ink(ctx, roundRectPath(-7, -150, 14, 100, 4), '#2a1a12', 3);
+    ink(ctx, roundRectPath(-12, 0, 24, 46, 4), '#2a1a12', 3);
+    ctx.restore();
+    ctx.strokeStyle = '#fff6e0';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(-110, -40);
+    ctx.lineTo(110, 60);
+    ctx.stroke();
+    void pal;
+  },
+  wrench(ctx, pal) {
+    ctx.save();
+    ctx.rotate(-0.6);
+    ink(ctx, roundRectPath(-14, -40, 28, 150, 10), '#aab4be');
+    const head = new Path2D();
+    head.moveTo(-40, -40);
+    head.bezierCurveTo(-46, -100, 46, -100, 40, -40);
+    head.lineTo(14, -40);
+    head.lineTo(14, -74);
+    head.lineTo(-14, -74);
+    head.lineTo(-14, -40);
+    head.closePath();
+    ink(ctx, head, '#aab4be');
+    ctx.restore();
+    for (const [x, y, r] of [[-90, -70, 16], [90, 60, 12], [70, -90, 10]]) ink(ctx, star4(ctx, x, y, r), pal.secondary, 3);
+  },
+  parasol(ctx, pal) {
+    const c = new Path2D();
+    c.moveTo(-110, 10);
+    c.bezierCurveTo(-90, -100, 90, -100, 110, 10);
+    for (let i = 0; i < 7; i++) {
+      const x0 = 110 - i * (220 / 7);
+      c.quadraticCurveTo(x0 - 220 / 14, -8, x0 - 220 / 7, 10);
+    }
+    c.closePath();
+    ink(ctx, c, pal.primary);
+    ctx.save();
+    ctx.clip(c);
+    ctx.strokeStyle = rgba('#ffffff', 0.5);
+    ctx.lineWidth = 4;
+    for (const dx of [-70, -24, 24, 70]) {
+      ctx.beginPath();
+      ctx.moveTo(0, -78);
+      ctx.lineTo(dx, 10);
+      ctx.stroke();
+    }
+    ctx.restore();
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 100);
+    ctx.stroke();
+    ink(ctx, ellipsePath(0, -82, 8, 8), pal.secondary, 3);
+  },
+  telescope(ctx, pal) {
+    ctx.save();
+    ctx.rotate(-0.55);
+    ink(ctx, roundRectPath(-20, -40, 40, 140, 8), '#b08a3a');
+    ink(ctx, roundRectPath(-28, -110, 56, 76, 8), '#7a5a2a');
+    ink(ctx, ellipsePath(0, -112, 28, 9), '#cfe8ff', 3);
+    ctx.restore();
+    for (const [x, y, r] of [[60, -100, 20], [100, -40, 12], [20, -130, 10], [110, -120, 8]]) ink(ctx, star4(ctx, x, y, r), '#fff6d0', 3);
+    void pal;
+  },
+  teacup(ctx, pal) {
+    ink(ctx, ellipsePath(0, 70, 100, 22), '#f6efe2');
+    const cup = new Path2D();
+    cup.moveTo(-70, -10);
+    cup.lineTo(70, -10);
+    cup.bezierCurveTo(70, 60, 30, 70, 0, 70);
+    cup.bezierCurveTo(-30, 70, -70, 60, -70, -10);
+    ink(ctx, cup, '#fbf6ec');
+    ctx.strokeStyle = OUTLINE;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.arc(82, 22, 20, -1.4, 1.4);
+    ctx.stroke();
+    ink(ctx, ellipsePath(0, -10, 70, 12), pal.secondary, 3);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 5;
+    for (const dx of [-24, 6, 34]) {
+      ctx.beginPath();
+      ctx.moveTo(dx, -30);
+      ctx.bezierCurveTo(dx - 16, -60, dx + 16, -80, dx, -110);
+      ctx.stroke();
+    }
+  },
+  newspaper(ctx, pal) {
+    ctx.save();
+    ctx.rotate(-0.18);
+    ink(ctx, roundRectPath(-100, -120, 200, 230, 4), '#f4ecd8');
+    ctx.fillStyle = pal.ink;
+    ctx.fillRect(-84, -104, 168, 34);
+    ctx.fillStyle = rgba(pal.ink, 0.5);
+    for (let i = 0; i < 9; i++) ctx.fillRect(-84 + (i % 2) * 90, -52 + Math.floor(i / 2) * 26, 78, 8);
+    ink(ctx, roundRectPath(6, 0, 78, 70, 2), pal.primary, 3);
+    ctx.restore();
+  },
+  meteor(ctx, pal) {
+    for (const [x, y, s] of [[40, -40, 1], [-60, 50, 0.6], [80, 80, 0.45]] as [number, number, number][]) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(s, s);
+      const tail = new Path2D();
+      tail.moveTo(-26, -20);
+      tail.lineTo(-170, -150);
+      tail.lineTo(-120, -170);
+      tail.lineTo(20, -30);
+      tail.closePath();
+      ink(ctx, tail, pal.secondary, 3);
+      ink(ctx, ellipsePath(0, 0, 36, 36), '#fff6d0');
+      ctx.restore();
+    }
+  },
+  smoke(ctx, pal) {
+    for (const [x, y, r] of [[-50, 30, 50], [30, 10, 60], [0, -50, 54], [70, -40, 40], [-80, -30, 36]] as [number, number, number][]) {
+      part(ctx, ellipsePath(x, y, r, r), { fill: '#d8d4dc', shadowCircle: [x + r * 0.7, y + r * 0.7, r], shadow: '#9a94a4', outline: INK_W });
+    }
+    ink(ctx, ellipsePath(0, 80, 26, 26), '#2a2630');
+    ctx.strokeStyle = '#ffcf5a';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(14, 58);
+    ctx.quadraticCurveTo(30, 40, 22, 26);
+    ctx.stroke();
+    void pal;
+  },
 };
 
 function background(ctx: Ctx, layout: ArtLayout, pal: Pal, rnd: () => number): void {

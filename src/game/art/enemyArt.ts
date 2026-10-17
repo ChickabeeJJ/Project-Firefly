@@ -1,5 +1,5 @@
 import type { EnemyKind } from '../data/types';
-import { type Ctx, ellipsePath, glow, light, makeCanvas, part, polyPath, rgba, roundRectPath, shade } from './paint';
+import { type Ctx, burstPath, ellipsePath, glow, light, makeCanvas, part, polyPath, rgba, roundRectPath, shade } from './paint';
 
 // The Dimfolk: ink silhouettes with a violet aura and glowing eyes, so they read instantly
 // against the warm, friendly Luminaries.
@@ -501,6 +501,300 @@ const ART: Record<EnemyKind, EnemyArt> = {
       ctx.fillStyle = '#5a2a4a';
       ctx.beginPath();
       ctx.ellipse(cx, 172, 6, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    },
+  },
+
+  gullwraith: {
+    w: 300, h: 260,
+    draw(ctx) {
+      const cx = 150;
+      aura(ctx, () => {
+        for (const sd of [-1, 1]) {
+          const w = new Path2D();
+          w.moveTo(cx, 120);
+          w.quadraticCurveTo(cx + sd * 60, 60, cx + sd * 140, 70);
+          w.quadraticCurveTo(cx + sd * 100, 100, cx + sd * 120, 130);
+          w.quadraticCurveTo(cx + sd * 70, 120, cx, 150);
+          part(ctx, w, { fill: '#c9ccd2', shadowCircle: [cx + sd * 100, 150, 50], shadow: '#7a7f8c' });
+        }
+      }, '#9fb7ff', 16);
+      part(ctx, ellipsePath(cx, 140, 34, 46), { fill: '#e6e8ec', shadowCircle: [cx + 30, 170, 34], shadow: '#9ca2ae' });
+      part(ctx, ellipsePath(cx, 92, 26, 24), { fill: '#eef0f2', shadowCircle: [cx + 24, 108, 20], shadow: '#a6acb6' });
+      part(ctx, polyPath([[cx - 8, 98], [cx + 8, 98], [cx, 126]]), { fill: '#e2b84a', shadow: false, outline: 2 });
+      ctx.fillStyle = '#101018';
+      ctx.beginPath();
+      ctx.ellipse(cx - 11, 88, 8, 10, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + 11, 88, 8, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      eyes(ctx, [[cx - 11, 88], [cx + 11, 88]], 3.5, '#b8d8ff');
+      ctx.strokeStyle = rgba('#d8e8ff', 0.5);
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx - 20 + i * 10, 184);
+        ctx.quadraticCurveTo(cx - 24 + i * 12, 220, cx - 30 + i * 14, 250);
+        ctx.stroke();
+      }
+    },
+  },
+  stevedore: {
+    w: 280, h: 420,
+    draw(ctx) {
+      const cx = 140;
+      const iron = '#6a5a4c';
+      for (const x of [cx - 30, cx + 30]) part(ctx, roundRectPath(x - 18, 300, 36, 104, 10), { fill: '#3a322c', shadowCircle: [x + 30, 400, 30] });
+      for (const x of [cx - 32, cx + 32]) part(ctx, ellipsePath(x, 406, 26, 12), { fill: '#1e1a18', shadow: false });
+      aura(ctx, () => {
+        const body = polyPath([[cx - 70, 150], [cx + 70, 150], [cx + 84, 210], [cx + 64, 310], [cx - 64, 310], [cx - 84, 210]], true);
+        part(ctx, body, { fill: iron, shadowCircle: [cx + 110, 300, 100], highlight: [cx - 40, 180, 20, '#8a7a6a'] });
+      }, '#ffb07a', 14);
+      ctx.fillStyle = '#3a302a';
+      for (let y = 170; y < 300; y += 24) for (const x of [cx - 50, cx + 50]) {
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      part(ctx, roundRectPath(cx - 112, 160, 34, 150, 14), { fill: iron, shadowCircle: [cx - 70, 300, 40] });
+      part(ctx, roundRectPath(cx + 78, 160, 34, 120, 14), { fill: iron, shadowCircle: [cx + 120, 280, 40] });
+      ctx.strokeStyle = '#2a221e';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(cx + 95, 280);
+      ctx.lineTo(cx + 95, 330);
+      ctx.arc(cx + 75, 330, 20, 0, Math.PI, false);
+      ctx.stroke();
+      ctx.strokeStyle = '#b8a890';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      part(ctx, roundRectPath(cx - 44, 70, 88, 86, 20), { fill: '#7a6a5a', shadowCircle: [cx + 60, 150, 50], highlight: [cx - 20, 90, 10, '#9a8a7a'] });
+      part(ctx, roundRectPath(cx - 34, 98, 68, 20, 6), { fill: '#141012', shadow: false });
+      eyes(ctx, [[cx - 14, 108], [cx + 14, 108]], 5, '#ffb070');
+      part(ctx, roundRectPath(cx - 50, 56, 100, 22, 8), { fill: '#3a4a5a', shadow: false });
+    },
+  },
+  siren: {
+    w: 300, h: 440,
+    draw(ctx) {
+      const cx = 150;
+      aura(ctx, () => {
+        const tail = new Path2D();
+        tail.moveTo(cx - 50, 220);
+        tail.bezierCurveTo(cx - 80, 320, cx + 40, 360, cx + 20, 420);
+        tail.lineTo(cx + 80, 430);
+        tail.bezierCurveTo(cx + 90, 340, cx + 70, 280, cx + 50, 220);
+        tail.closePath();
+        part(ctx, tail, { fill: '#2f5a64', shadowCircle: [cx + 90, 400, 90], highlight: [cx - 20, 280, 24, '#4a8a94'] });
+      }, '#7fe0d8', 20);
+      ctx.strokeStyle = rgba('#a8f0e8', 0.35);
+      ctx.lineWidth = 2;
+      for (let y = 240; y < 410; y += 14) {
+        ctx.beginPath();
+        ctx.arc(cx + (y - 240) * 0.12, y, 18, 0.2, Math.PI - 0.2);
+        ctx.stroke();
+      }
+      part(ctx, polyPath([[cx - 40, 150], [cx + 40, 150], [cx + 52, 230], [cx - 52, 230]], true), { fill: '#d8e4e6', shadowCircle: [cx + 60, 230, 50], shadow: '#94aab0' });
+      const hair = new Path2D();
+      hair.moveTo(cx - 50, 100);
+      hair.bezierCurveTo(cx - 90, 180, cx - 70, 260, cx - 100, 320);
+      hair.lineTo(cx - 40, 240);
+      hair.lineTo(cx - 30, 140);
+      hair.closePath();
+      hair.moveTo(cx + 50, 100);
+      hair.bezierCurveTo(cx + 90, 180, cx + 80, 250, cx + 110, 300);
+      hair.lineTo(cx + 40, 230);
+      hair.lineTo(cx + 30, 140);
+      hair.closePath();
+      part(ctx, hair, { fill: '#1e3a44', shadow: false });
+      part(ctx, ellipsePath(cx, 108, 36, 44), { fill: '#dce8ea', shadowCircle: [cx + 40, 130, 36], shadow: '#9ab0b6' });
+      part(ctx, ellipsePath(cx, 72, 46, 24), { fill: '#1e3a44', shadow: false });
+      eyes(ctx, [[cx - 13, 108], [cx + 13, 108]], 4.5, '#7ff0e0');
+      ctx.strokeStyle = '#2a4a54';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(cx, 134, 9, 6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    },
+  },
+  keeper: {
+    w: 460, h: 600,
+    draw(ctx) {
+      const cx = 230;
+      aura(ctx, () => {
+        const coat = polyPath([[cx - 60, 200], [cx + 60, 200], [cx + 150, 580], [cx - 150, 580]]);
+        part(ctx, coat, { fill: '#1e2a30', shadowCircle: [cx + 220, 540, 200], highlight: [cx - 60, 340, 50, '#2e3e46'] });
+      }, '#80c8e0', 26);
+      ctx.strokeStyle = rgba('#e8c060', 0.8);
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx - 70 - i * 18, 300 + i * 70);
+        ctx.lineTo(cx + 70 + i * 18, 300 + i * 70);
+        ctx.stroke();
+      }
+      part(ctx, roundRectPath(cx - 160, 220, 30, 200, 12), { fill: '#16202a', shadow: false });
+      part(ctx, roundRectPath(cx + 130, 220, 30, 170, 12), { fill: '#16202a', shadow: false });
+      // The lamp he carries shines darkness.
+      ctx.fillStyle = '#05080c';
+      ctx.beginPath();
+      ctx.moveTo(cx + 145, 380);
+      ctx.lineTo(cx + 420, 300);
+      ctx.lineTo(cx + 420, 480);
+      ctx.closePath();
+      ctx.globalAlpha = 0.55;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      part(ctx, roundRectPath(cx + 115, 380, 60, 80, 12), { fill: '#20262c', shadow: false, highlight: [cx + 130, 400, 8, '#5a6a74'] });
+      part(ctx, ellipsePath(cx + 145, 420, 18, 22), { fill: '#04060a', shadow: false });
+      glow(ctx, cx, 130, 100, '#9fd8f0', 0.25);
+      part(ctx, ellipsePath(cx, 140, 50, 60), { fill: '#c8d4d8', shadowCircle: [cx + 56, 170, 54], shadow: '#7a8c94' });
+      const beard = new Path2D();
+      beard.moveTo(cx - 50, 150);
+      beard.bezierCurveTo(cx - 60, 260, cx + 60, 260, cx + 50, 150);
+      beard.quadraticCurveTo(cx, 190, cx - 50, 150);
+      part(ctx, beard, { fill: '#8a9aa0', shadowCircle: [cx + 50, 240, 50], shadow: '#5a6a70' });
+      part(ctx, roundRectPath(cx - 70, 70, 140, 30, 8), { fill: '#16202a', shadow: false });
+      part(ctx, roundRectPath(cx - 50, 30, 100, 44, 10), { fill: '#16202a', shadow: false });
+      eyes(ctx, [[cx - 18, 136], [cx + 18, 136]], 6, '#9fe8ff');
+    },
+  },
+  cogspider: {
+    w: 320, h: 260,
+    draw(ctx) {
+      const cx = 160;
+      ctx.strokeStyle = '#3a2c1c';
+      ctx.lineWidth = 7;
+      for (const sd of [-1, 1]) for (let i = 0; i < 4; i++) {
+        const a = -0.6 + i * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(cx + sd * 30, 150);
+        ctx.quadraticCurveTo(cx + sd * (80 + i * 10), 70 + i * 20 + Math.sin(a) * 10, cx + sd * (110 + i * 12), 230 - i * 4);
+        ctx.stroke();
+      }
+      aura(ctx, () => {
+        part(ctx, burstPath(cx, 150, 70, 56, 14), { fill: '#b08a3a', shadowCircle: [cx + 70, 200, 60], highlight: [cx - 30, 120, 14, '#e2c070'] });
+      }, '#ffb060', 14);
+      part(ctx, ellipsePath(cx, 150, 34, 34), { fill: '#6a4a24', shadow: false });
+      part(ctx, burstPath(cx, 96, 34, 26, 10), { fill: '#c9a24a', shadowCircle: [cx + 30, 120, 24] });
+      eyes(ctx, [[cx - 10, 92], [cx + 10, 92], [cx - 18, 102], [cx + 18, 102]], 3.5, '#ff7a4a');
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        ctx.fillStyle = '#2a1c10';
+        ctx.beginPath();
+        ctx.arc(cx + Math.cos(a) * 20, 150 + Math.sin(a) * 20, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    },
+  },
+  pendulum: {
+    w: 280, h: 440,
+    draw(ctx) {
+      const cx = 140;
+      for (const x of [cx - 28, cx + 28]) part(ctx, roundRectPath(x - 15, 300, 30, 120, 8), { fill: '#5a6270', shadowCircle: [x + 26, 410, 26] });
+      aura(ctx, () => {
+        part(ctx, polyPath([[cx - 60, 150], [cx + 60, 150], [cx + 50, 310], [cx - 50, 310]], true), { fill: '#7a8494', shadowCircle: [cx + 90, 300, 90], highlight: [cx - 30, 180, 18, '#a8b2c0'] });
+      }, '#c8b0ff', 16);
+      ctx.strokeStyle = '#c9a24a';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(cx, 220, 34, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx, 220);
+      ctx.lineTo(cx, 196);
+      ctx.moveTo(cx, 220);
+      ctx.lineTo(cx + 18, 230);
+      ctx.stroke();
+      // The pendulum blade
+      ctx.strokeStyle = '#2a2a34';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(cx + 70, 170);
+      ctx.lineTo(cx + 110, 360);
+      ctx.stroke();
+      part(ctx, ellipsePath(cx + 112, 372, 30, 30), { fill: '#d8c070', shadowCircle: [cx + 132, 392, 26], highlight: [cx + 104, 362, 8, '#fff2c0'] });
+      part(ctx, roundRectPath(cx - 90, 160, 28, 120, 10), { fill: '#5a6270', shadow: false });
+      part(ctx, roundRectPath(cx - 44, 64, 88, 92, 30), { fill: '#8a94a4', shadowCircle: [cx + 60, 150, 50], highlight: [cx - 20, 84, 10, '#c8d0dc'] });
+      part(ctx, roundRectPath(cx - 30, 100, 60, 10, 4), { fill: '#141418', shadow: false });
+      eyes(ctx, [[cx, 105]], 5, '#c8a8ff');
+      part(ctx, polyPath([[cx - 10, 64], [cx + 10, 64], [cx, 24]]), { fill: '#b03a3a', shadow: false });
+    },
+  },
+  chimewisp: {
+    w: 220, h: 260,
+    draw(ctx) {
+      const cx = 110;
+      glow(ctx, cx, 120, 100, '#9fb8ff', 0.5);
+      aura(ctx, () => {
+        const bell = new Path2D();
+        bell.moveTo(cx - 20, 40);
+        bell.bezierCurveTo(cx - 30, 40, cx - 46, 90, cx - 50, 140);
+        bell.quadraticCurveTo(cx - 60, 160, cx - 66, 168);
+        bell.lineTo(cx + 66, 168);
+        bell.quadraticCurveTo(cx + 60, 160, cx + 50, 140);
+        bell.bezierCurveTo(cx + 46, 90, cx + 30, 40, cx + 20, 40);
+        bell.closePath();
+        part(ctx, bell, { fill: '#c9a24a', shadowCircle: [cx + 70, 160, 60], highlight: [cx - 24, 70, 12, '#fff0b0'] });
+      }, '#a8c0ff', 18);
+      part(ctx, ellipsePath(cx, 176, 14, 14), { fill: '#7a5a2a', shadow: false });
+      ctx.fillStyle = '#1a1420';
+      ctx.beginPath();
+      ctx.ellipse(cx, 150, 40, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      eyes(ctx, [[cx - 14, 110], [cx + 14, 110]], 4, '#e8f0ff');
+      ctx.strokeStyle = rgba('#c8d8ff', 0.6);
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(cx, 120, 80 + i * 14, 0.9, 2.2);
+        ctx.stroke();
+      }
+    },
+  },
+  hourless: {
+    w: 480, h: 620,
+    draw(ctx) {
+      const cx = 240;
+      // Clock-face halo with no hands
+      glow(ctx, cx, 140, 140, '#f0d890', 0.3);
+      part(ctx, ellipsePath(cx, 140, 120, 120), { fill: '#e8dcc0', shadow: false, outline: 4 });
+      ctx.fillStyle = '#2a2018';
+      ctx.font = 'bold 22px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const numerals = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+      numerals.forEach((n, i) => {
+        const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+        ctx.fillText(n, cx + Math.cos(a) * 98, 140 + Math.sin(a) * 98);
+      });
+      aura(ctx, () => {
+        const robe = polyPath([[cx - 60, 220], [cx + 60, 220], [cx + 190, 610], [cx - 190, 610]]);
+        part(ctx, robe, { fill: '#2a1e3a', shadowCircle: [cx + 250, 580, 220], highlight: [cx - 70, 380, 60, '#3e2e56'] });
+      }, '#d8b0ff', 26);
+      ctx.strokeStyle = '#c9a24a';
+      ctx.lineWidth = 6;
+      for (let i = -3; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(cx + i * 10, 240);
+        ctx.lineTo(cx + i * 54, 600);
+        ctx.stroke();
+      }
+      // Hands he tore from the clock, held like a sceptre
+      ctx.strokeStyle = '#1a1420';
+      ctx.lineWidth = 10;
+      ctx.beginPath();
+      ctx.moveTo(cx + 150, 600);
+      ctx.lineTo(cx + 190, 200);
+      ctx.stroke();
+      part(ctx, polyPath([[cx + 182, 180], [cx + 210, 210], [cx + 196, 140]]), { fill: '#c9a24a', shadow: false });
+      part(ctx, roundRectPath(cx - 150, 240, 30, 200, 12), { fill: '#1e1630', shadow: false });
+      part(ctx, ellipsePath(cx, 190, 44, 52), { fill: '#d8d0e4', shadowCircle: [cx + 50, 220, 46], shadow: '#9a90b0' });
+      const crown = polyPath([[cx - 50, 150], [cx - 40, 110], [cx - 20, 136], [cx, 100], [cx + 20, 136], [cx + 40, 110], [cx + 50, 150]]);
+      part(ctx, crown, { fill: '#c9a24a', shadow: false, highlight: [cx - 10, 120, 6, '#fff0b0'] });
+      eyes(ctx, [[cx - 16, 190], [cx + 16, 190]], 5, '#f0d0ff');
+      ctx.fillStyle = '#5a2a4a';
+      ctx.beginPath();
+      ctx.ellipse(cx, 218, 7, 3, 0, 0, Math.PI * 2);
       ctx.fill();
     },
   },

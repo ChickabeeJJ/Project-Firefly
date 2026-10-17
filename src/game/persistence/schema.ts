@@ -14,7 +14,11 @@ export interface OwnedCharacter {
 export interface Settings {
   music: number;
   sfx: number;
+  /** Lobby gramophone record. */
+  track: 'lobby' | 'rite' | 'battle' | 'boss';
 }
+
+const TRACKS = ['lobby', 'rite', 'battle', 'boss'] as const;
 
 export interface SaveData {
   version: number;
@@ -29,6 +33,12 @@ export interface SaveData {
   settings: Settings;
   /** Tutorial hints already shown. */
   hints: string[];
+  /** Player card number shown in the lobby. */
+  playerId: number;
+  /** Enemy ids met in battle (Atlas). */
+  seen: string[];
+  /** Achievement ids already claimed. */
+  claimed: string[];
 }
 
 export function freshSave(): SaveData {
@@ -42,13 +52,20 @@ export function freshSave(): SaveData {
     stars: {},
     pity: 0,
     totalPulls: 0,
-    settings: { music: 0.6, sfx: 0.8 },
+    settings: { music: 0.6, sfx: 0.8, track: 'lobby' },
     hints: [],
+    playerId: 100000000 + Math.floor(Math.random() * 899999999),
+    seen: [],
+    claimed: [],
   };
 }
 
 const charIds = new Set(CHARACTERS.map((c) => c.id));
 const stageIds = new Set(STAGES.map((s) => s.id));
+
+function strings(v: unknown, max: number): string[] {
+  return Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string'))].slice(0, max) : [];
+}
 
 function num(v: unknown, min: number, max: number, fallback: number): number {
   return typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
@@ -97,7 +114,14 @@ export function sanitizeSave(raw: unknown): SaveData {
     stars,
     pity: Math.round(num(r.pity, 0, 1000, 0)),
     totalPulls: Math.round(num(r.totalPulls, 0, 1e7, 0)),
-    settings: { music: num(s.music, 0, 1, base.settings.music), sfx: num(s.sfx, 0, 1, base.settings.sfx) },
-    hints: Array.isArray(r.hints) ? (r.hints as unknown[]).filter((h): h is string => typeof h === 'string').slice(0, 64) : [],
+    settings: {
+      music: num(s.music, 0, 1, base.settings.music),
+      sfx: num(s.sfx, 0, 1, base.settings.sfx),
+      track: (TRACKS as readonly string[]).includes(s.track as string) ? (s.track as Settings['track']) : 'lobby',
+    },
+    hints: strings(r.hints, 128),
+    playerId: Math.round(num(r.playerId, 100000000, 999999999, base.playerId)),
+    seen: strings(r.seen, 64),
+    claimed: strings(r.claimed, 64),
   };
 }

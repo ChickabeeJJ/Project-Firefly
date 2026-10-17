@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadDropInArt } from '../art/assets';
 import { registerBaseArt } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { saves } from '../persistence/SaveService';
@@ -23,6 +24,7 @@ export class BootScene extends Phaser.Scene {
     await platform.init();
     platform.loadingStart();
     await loadFonts();
+    await loadDropInArt(this);
     registerBaseArt(this);
     const save = saves.load();
     audio.setVolumes(save.settings.music, save.settings.sfx);

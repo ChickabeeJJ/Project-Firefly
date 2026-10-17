@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fitPortrait } from '../art/assets';
 import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { Rng } from '../battle/rng';
@@ -53,7 +54,7 @@ export class SummonScene extends Phaser.Scene {
     ui.add(this.add.rectangle(W / 2, H / 2, W, H, 0x05070c, 0.35));
     const feat = ['augustin', 'ichabod', 'marigold'];
     feat.forEach((id, i) => {
-      const p = this.add.image(1130 + i * 260, H + 60 + (i === 1 ? 0 : 30), ensurePortrait(this, id)).setOrigin(0.5, 1).setScale(i === 1 ? 0.86 : 0.76);
+      const p = fitPortrait(this.add.image(1130 + i * 260, H + 60 + (i === 1 ? 0 : 30), ensurePortrait(this, id)).setOrigin(0.5, 1), i === 1 ? 0.86 : 0.76, i === 1 ? 1020 : 920);
       if (i !== 2) p.setTint(0xb8b8c8);
       ui.add(p);
     });
@@ -236,7 +237,7 @@ export class SummonScene extends Phaser.Scene {
       const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x05060a, 0.88).setInteractive();
       const sun = this.add.image(760, 520, 'fx:glow').setTint(res.rarity === 5 ? 0xffc040 : res.rarity === 4 ? 0x9a70e0 : 0xd8c8a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(1100, 1100).setAlpha(0.6);
       const em = this.add.image(760, 470, 'ui:emblem').setScale(2.6).setAlpha(0.25);
-      const p = this.add.image(760, H + 40, ensurePortrait(this, res.id)).setOrigin(0.5, 1).setScale(1.0).setAlpha(0);
+      const p = fitPortrait(this.add.image(760, H + 40, ensurePortrait(this, res.id)).setOrigin(0.5, 1), 1.0, 1060).setAlpha(0);
       const name = text(this, 1260, 400, c.name, { size: 74, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
       const title = text(this, 1264, 470, c.title, { size: 34, italic: true, color: RARITY_CSS[res.rarity] }).setOrigin(0, 0.5);
       const stars = rarityStars(this, 1360, 540, res.rarity, 40, res.rarity === 5 ? 0xf0c25a : res.rarity === 4 ? 0xb98ae0 : 0xa9b4c2);

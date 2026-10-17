@@ -389,6 +389,248 @@ export const CHARACTERS: CharacterDef[] = [
     palette: { primary: '#2f4f8f', secondary: '#e8c25a', ink: '#0e1220' },
     quote: 'On my downbeat, the night begins to listen.',
   },
+  {
+    id: 'percival',
+    name: 'Percival Quill',
+    title: 'The Ink-Stained Reporter',
+    mood: 'sun',
+    rarity: 4,
+    role: 'Hexer',
+    base: { hp: 950, atk: 128, def: 46 },
+    verses: [
+      {
+        id: 'percival_front', name: 'Front Page', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.1 },
+          { kind: 'status', target: 'enemy', status: 'frail', turns: 2 },
+        ],
+        art: { motif: 'newspaper', layout: 'split', portrait: true },
+      },
+      {
+        id: 'percival_flash', name: 'Flashbulb', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.35 },
+          { kind: 'status', target: 'enemy', status: 'daze', turns: 1, chance: [0.3, 0.5, 0.8] },
+        ],
+        art: { motif: 'camera', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'percival_finale', name: 'Extra! Extra!', type: 'mass', finale: true,
+      effects: [
+        { kind: 'damage', target: 'allEnemies', power: 2.2 },
+        { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 },
+      ],
+      art: { motif: 'newspaper', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'smirk',
+      skin: '#f0d4bc', hair: '#5a3a24', hairStyle: 'short', bangs: 'side', eyes: '#5a7a4a',
+      hat: 'fedora', hatColor: '#6a6560', hatAccent: '#2a2622',
+      outfit: 'vest', coat: '#5c5148', shirt: '#efe7d6', accent: '#3a5a8a', legs: '#3a3a40', shoes: '#1d1a18',
+      glasses: true, prop: 'camera',
+    },
+    palette: { primary: '#d98a2b', secondary: '#f1ead8', ink: '#1e1a16' },
+    quote: 'If the dark has a secret, I want it above the fold.',
+  },
+  {
+    id: 'delphine',
+    name: 'Delphine Moreau',
+    title: 'The Midnight Violinist',
+    mood: 'moon',
+    rarity: 5,
+    role: 'Striker',
+    base: { hp: 930, atk: 152, def: 42 },
+    verses: [
+      {
+        id: 'delphine_pizz', name: 'Pizzicato', type: 'attack',
+        effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.48, hits: 4 }],
+        art: { motif: 'violin', layout: 'spiral', portrait: true },
+      },
+      {
+        id: 'delphine_lament', name: 'Lament in D', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.6 },
+          { kind: 'status', target: 'enemy', status: 'weak', turns: 2 },
+        ],
+        art: { motif: 'note', layout: 'rings' },
+      },
+    ],
+    finale: {
+      id: 'delphine_finale', name: 'Danse Macabre', type: 'mass', finale: true,
+      effects: [{ kind: 'damage', target: 'allEnemies', power: 3.0 }],
+      art: { motif: 'violin', layout: 'burst', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccd', hair: '#1f2a3a', hairStyle: 'bob', bangs: 'straight', eyes: '#4aa3b8',
+      hat: 'cloche', hatColor: '#1d3a42', hatAccent: '#c9a24a',
+      outfit: 'dress', coat: '#1f4a52', shirt: '#0e1c22', accent: '#c9a24a', legs: '#1a1f26', shoes: '#0e1014',
+      skirt: true, prop: 'violin',
+    },
+    palette: { primary: '#2a7f8a', secondary: '#e8c25a', ink: '#0c171c' },
+    quote: 'Every string remembers the hand that played it last.',
+  },
+  {
+    id: 'teddy',
+    name: 'Teddy Brass',
+    title: 'The Boiler-Room Mechanic',
+    mood: 'star',
+    rarity: 3,
+    role: 'Guardian',
+    base: { hp: 1240, atk: 104, def: 66 },
+    verses: [
+      {
+        id: 'teddy_patch', name: 'Patch Job', type: 'shield',
+        effects: [{ kind: 'shield', target: 'woundedAlly', power: 2.0 }],
+        art: { motif: 'wrench', layout: 'rings', portrait: true },
+      },
+      {
+        id: 'teddy_spanner', name: 'Spanner Swing', type: 'attack',
+        effects: [{ kind: 'damage', target: 'enemy', power: 1.45 }],
+        art: { motif: 'wrench', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'teddy_finale', name: 'Full Overhaul', type: 'shield', finale: true,
+      effects: [
+        { kind: 'shield', target: 'allAllies', power: 1.4 },
+        { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.3 },
+      ],
+      art: { motif: 'wrench', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'grin',
+      skin: '#e2b896', hair: '#c88a3a', hairStyle: 'curly', bangs: 'none', eyes: '#6a4a2a',
+      hat: 'beret', hatColor: '#3a4a5a', hatAccent: '#2a3440',
+      outfit: 'jacket', coat: '#4a6a7a', shirt: '#d8cdb4', accent: '#c96a2a', legs: '#3a4a5a', shoes: '#22201c',
+      freckles: true, prop: 'wrench',
+    },
+    palette: { primary: '#5a7a8a', secondary: '#e2a24a', ink: '#141c22' },
+    quote: 'Nothing is broken. It is just waiting for me.',
+  },
+  {
+    id: 'evangeline',
+    name: 'Lady Evangeline Ash',
+    title: 'The Parasol Heiress',
+    mood: 'sun',
+    rarity: 5,
+    role: 'Healer',
+    base: { hp: 1060, atk: 118, def: 54 },
+    verses: [
+      {
+        id: 'evangeline_tea', name: 'Afternoon Tea', type: 'heal',
+        effects: [
+          { kind: 'heal', target: 'allAllies', power: 0.85 },
+          { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.2 },
+        ],
+        art: { motif: 'teacup', layout: 'rays', portrait: true },
+      },
+      {
+        id: 'evangeline_noblesse', name: 'Noblesse Oblige', type: 'buff',
+        effects: [
+          { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
+          { kind: 'heal', target: 'woundedAlly', power: 0.6 },
+        ],
+        art: { motif: 'parasol', layout: 'split' },
+      },
+    ],
+    finale: {
+      id: 'evangeline_finale', name: 'Garden Party', type: 'heal', finale: true,
+      effects: [
+        { kind: 'heal', target: 'allAllies', power: 2.0 },
+        { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
+      ],
+      art: { motif: 'parasol', layout: 'burst', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'smile',
+      skin: '#f6e2d4', hair: '#f2e2b8', hairStyle: 'wavy', bangs: 'parted', eyes: '#c26a5a',
+      hat: 'cloche', hatColor: '#f2ead8', hatAccent: '#d86a7a',
+      outfit: 'dress', coat: '#f0c8c4', shirt: '#fbf2ea', accent: '#d86a7a', legs: '#f6e2d4', shoes: '#c25a6a',
+      skirt: true, prop: 'parasol',
+    },
+    palette: { primary: '#e88a98', secondary: '#f6e6b8', ink: '#2a1418' },
+    quote: 'One must always dress for the end of the world. Tea?',
+  },
+  {
+    id: 'kit',
+    name: 'Kit Marlowe',
+    title: 'The Rooftop Runner',
+    mood: 'moon',
+    rarity: 4,
+    role: 'Striker',
+    base: { hp: 900, atk: 144, def: 40 },
+    verses: [
+      {
+        id: 'kit_dash', name: 'Rooftop Dash', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.3 },
+          { kind: 'status', target: 'self', status: 'might', turns: 2 },
+        ],
+        art: { motif: 'swirl', layout: 'burst', portrait: true },
+      },
+      {
+        id: 'kit_smoke', name: 'Smoke Bomb', type: 'debuff',
+        effects: [{ kind: 'status', target: 'allEnemies', status: 'weak', turns: 2 }],
+        art: { motif: 'smoke', layout: 'spiral' },
+      },
+    ],
+    finale: {
+      id: 'kit_finale', name: 'Midnight Heist', type: 'attack', finale: true,
+      effects: [
+        { kind: 'damage', target: 'enemy', power: 3.6 },
+        { kind: 'fireflies', amount: 2 },
+      ],
+      art: { motif: 'moth', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'smirk',
+      skin: '#eccab4', hair: '#151418', hairStyle: 'short', bangs: 'side', eyes: '#d0a040',
+      hat: 'beret', hatColor: '#2a2230', hatAccent: '#1a141e',
+      outfit: 'vest', coat: '#2a2a34', shirt: '#3a3a48', accent: '#c94a4a', legs: '#222228', shoes: '#141218',
+      scarf: true,
+    },
+    palette: { primary: '#3a3a5a', secondary: '#e8604a', ink: '#0e0e14' },
+    quote: 'The rooftops are the only street the Dimming forgot.',
+  },
+  {
+    id: 'hesper',
+    name: 'Hesper Vale',
+    title: 'The Star-Charting Astronomer',
+    mood: 'star',
+    rarity: 4,
+    role: 'Support',
+    base: { hp: 980, atk: 126, def: 48 },
+    verses: [
+      {
+        id: 'hesper_guide', name: 'Guiding Stars', type: 'buff',
+        effects: [
+          { kind: 'light', amount: 2 },
+          { kind: 'shield', target: 'self', power: 0.8 },
+        ],
+        art: { motif: 'telescope', layout: 'rings', portrait: true },
+      },
+      {
+        id: 'hesper_starfall', name: 'Starfall', type: 'mass',
+        effects: [{ kind: 'damage', target: 'allEnemies', power: 0.82 }],
+        art: { motif: 'meteor', layout: 'rays' },
+      },
+    ],
+    finale: {
+      id: 'hesper_finale', name: 'Meteor Shower', type: 'attack', finale: true,
+      effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.62, hits: 6 }],
+      art: { motif: 'meteor', layout: 'burst', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'smile',
+      skin: '#e6c8b0', hair: '#3a2a4a', hairStyle: 'long', bangs: 'straight', eyes: '#8a7ad8',
+      outfit: 'robe', coat: '#2a2f5a', shirt: '#e8dcc0', accent: '#e2be6a', legs: '#2a2f5a', shoes: '#16182a',
+      skirt: true, glasses: true, prop: 'telescope',
+    },
+    palette: { primary: '#3a4a9a', secondary: '#f0d07a', ink: '#0e1024' },
+    quote: 'The stars never went out. We simply stopped looking up.',
+  },
 ];
 
 export const STARTER_TEAM = ['wren', 'odile', 'bastian'];

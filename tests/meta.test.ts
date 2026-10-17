@@ -7,8 +7,10 @@ import { getStage } from '../src/game/data/stages';
 
 describe('save validation', () => {
   it('returns a fresh save for garbage', () => {
-    expect(sanitizeSave(null)).toEqual(freshSave());
-    expect(sanitizeSave('nope')).toEqual(freshSave());
+    const strip = ({ playerId: _id, ...rest }: ReturnType<typeof freshSave>) => rest;
+    expect(strip(sanitizeSave(null))).toEqual(strip(freshSave()));
+    expect(strip(sanitizeSave('nope'))).toEqual(strip(freshSave()));
+    expect(sanitizeSave(null).playerId).toBeGreaterThanOrEqual(100000000);
   });
 
   it('drops unknown characters/stages and clamps numbers', () => {
@@ -88,5 +90,19 @@ describe('lantern rite', () => {
     expect(five).toBeLessThan(0.07);
     expect(four).toBeGreaterThan(0.21);
     expect(four).toBeLessThan(0.27);
+  });
+});
+
+describe('achievements', () => {
+  it('claims once and only when complete', async () => {
+    const { claimAchievement, claimableCount } = await import('../src/game/systems/achievements');
+    const save = freshSave();
+    expect(claimAchievement(save, 'first_light')).toBe(0);
+    applyBattleResult(save, getStage('1-1'), true, 3, 0);
+    expect(claimableCount(save)).toBeGreaterThanOrEqual(1);
+    const g = save.glimmer;
+    expect(claimAchievement(save, 'first_light')).toBe(100);
+    expect(save.glimmer).toBe(g + 100);
+    expect(claimAchievement(save, 'first_light')).toBe(0);
   });
 });

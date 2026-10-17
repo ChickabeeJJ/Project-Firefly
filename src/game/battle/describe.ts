@@ -52,6 +52,10 @@ function effectText(fx: Effect, mult: number, rank: number): string {
       return `Grant ${who(fx.target)} +${fx.amount} Ardor.`;
     case 'snuff':
       return `Snuffs ${fx.amount} fireflies from your Lantern.`;
+    case 'fireflies':
+      return `Add ${fx.amount} fireflies to your Lantern.`;
+    case 'light':
+      return `Light ${fx.amount} Verse${fx.amount > 1 ? 's' : ''} in your hand with fireflies.`;
   }
 }
 

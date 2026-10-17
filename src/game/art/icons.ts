@@ -297,6 +297,102 @@ const ICONS: Record<string, IconFn> = {
     fillOutlined(ctx, polyPath([[10, 48], [30, 32], [30, 64]]), c, 3);
     fillOutlined(ctx, polyPath([[86, 48], [66, 32], [66, 64]]), c, 3);
   },
+  atlas(ctx, c) {
+    // Field guide with a moth on the cover.
+    fillOutlined(ctx, roundRectPath(18, 14, 60, 70, 6), c);
+    fillOutlined(ctx, roundRectPath(18, 14, 12, 70, 4), '#8a6a48', 3);
+    fillOutlined(ctx, ellipsePath(44, 48, 9, 13, -0.5), '#2a2420', 2);
+    fillOutlined(ctx, ellipsePath(64, 48, 9, 13, 0.5), '#2a2420', 2);
+    fillOutlined(ctx, ellipsePath(54, 50, 3, 12), '#2a2420', 2);
+  },
+  trophy(ctx, c) {
+    const cup = new Path2D();
+    cup.moveTo(26, 16);
+    cup.lineTo(70, 16);
+    cup.quadraticCurveTo(70, 56, 48, 60);
+    cup.quadraticCurveTo(26, 56, 26, 16);
+    cup.closePath();
+    const ears = new Path2D();
+    ears.arc(24, 30, 10, Math.PI * 0.5, Math.PI * 1.5);
+    ears.moveTo(72, 20);
+    ears.arc(72, 30, 10, -Math.PI * 0.5, Math.PI * 0.5);
+    stroke(ctx, ears, c, 5);
+    fillOutlined(ctx, cup, c);
+    fillOutlined(ctx, roundRectPath(42, 58, 12, 14, 2), c, 3);
+    fillOutlined(ctx, roundRectPath(28, 72, 40, 12, 3), c, 3);
+    fillOutlined(ctx, star4(ctx, 48, 34, 11, 0.35), '#fff3cf', 2);
+  },
+  notice(ctx, c) {
+    // Envelope with a wax seal.
+    fillOutlined(ctx, roundRectPath(12, 24, 72, 50, 6), c);
+    const flap = new Path2D();
+    flap.moveTo(14, 28);
+    flap.lineTo(48, 54);
+    flap.lineTo(82, 28);
+    stroke(ctx, flap, '#2a2420', 3);
+    fillOutlined(ctx, ellipsePath(48, 54, 9, 9), '#c0473a', 2.5);
+  },
+  menu(ctx, c) {
+    const p = new Path2D();
+    for (const y of [26, 48, 70]) {
+      p.moveTo(20, y);
+      p.lineTo(76, y);
+    }
+    stroke(ctx, p, c, 8);
+  },
+  eye(ctx, c) {
+    const p = new Path2D();
+    p.moveTo(10, 48);
+    p.quadraticCurveTo(48, 10, 86, 48);
+    p.quadraticCurveTo(48, 86, 10, 48);
+    p.closePath();
+    fillOutlined(ctx, p, c);
+    fillOutlined(ctx, ellipsePath(48, 48, 14, 14), '#2a2420', 2);
+    ctx.fillStyle = '#fff3cf';
+    ctx.beginPath();
+    ctx.arc(53, 43, 4, 0, Math.PI * 2);
+    ctx.fill();
+  },
+  plus(ctx, c) {
+    const p = new Path2D();
+    p.moveTo(48, 20);
+    p.lineTo(48, 76);
+    p.moveTo(20, 48);
+    p.lineTo(76, 48);
+    stroke(ctx, p, c, 10);
+  },
+  profile(ctx, c) {
+    fillOutlined(ctx, ellipsePath(48, 34, 16, 16), c);
+    const b = new Path2D();
+    b.moveTo(18, 84);
+    b.quadraticCurveTo(18, 54, 48, 54);
+    b.quadraticCurveTo(78, 54, 78, 84);
+    b.closePath();
+    fillOutlined(ctx, b, c);
+  },
+  gramophone(ctx, c) {
+    const horn = new Path2D();
+    horn.moveTo(46, 52);
+    horn.quadraticCurveTo(54, 30, 84, 12);
+    horn.quadraticCurveTo(92, 34, 86, 48);
+    horn.quadraticCurveTo(66, 46, 50, 58);
+    horn.closePath();
+    fillOutlined(ctx, roundRectPath(14, 62, 64, 22, 4), '#8a6a48', 3);
+    fillOutlined(ctx, ellipsePath(46, 62, 30, 7), '#2a2420', 3);
+    fillOutlined(ctx, horn, c);
+  },
+  calendar(ctx, c) {
+    fillOutlined(ctx, roundRectPath(14, 20, 68, 62, 8), c);
+    fillOutlined(ctx, roundRectPath(14, 20, 68, 18, 6), '#c0473a', 3);
+    const r = new Path2D();
+    r.moveTo(32, 12);
+    r.lineTo(32, 28);
+    r.moveTo(64, 12);
+    r.lineTo(64, 28);
+    stroke(ctx, r, c, 5);
+    ctx.fillStyle = '#2a2420';
+    for (let i = 0; i < 6; i++) ctx.fillRect(24 + (i % 3) * 18, 48 + Math.floor(i / 3) * 16, 10, 8);
+  },
 };
 
 export const ICON_NAMES = Object.keys(ICONS);

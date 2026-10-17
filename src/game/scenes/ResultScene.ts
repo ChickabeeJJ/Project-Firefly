@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fitPortrait } from '../art/assets';
 import { ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { getCharacter } from '../data/characters';
@@ -26,7 +27,7 @@ export class ResultScene extends Phaser.Scene {
     const disc = this.add.image(560, 520, 'fx:glow').setTint(d.won ? 0x9a2a26 : 0x3a3050).setDisplaySize(980, 980).setAlpha(0.85);
     this.add.circle(560, 520, 330, d.won ? 0x7a1f1d : 0x2a2436, 1).setAlpha(0.9);
     this.tweens.add({ targets: disc, alpha: 0.6, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    const portrait = this.add.image(560, H + 30, ensurePortrait(this, mvp.id)).setOrigin(0.5, 1).setScale(0.98);
+    const portrait = fitPortrait(this.add.image(560, H + 30, ensurePortrait(this, mvp.id)).setOrigin(0.5, 1), 0.98, 1060);
     if (!d.won) portrait.setTint(0x8a8aa0);
     portrait.setAlpha(0).setX(500);
     this.tweens.add({ targets: portrait, alpha: 1, x: 560, duration: 600, ease: 'Cubic.easeOut' });

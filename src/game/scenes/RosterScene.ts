@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { fitPortrait } from '../art/assets';
 import { CARD_W } from '../art/cardArt';
 import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
@@ -86,7 +87,7 @@ export class RosterScene extends Phaser.Scene {
     const d = this.add.container(0, 0).setDepth(200);
     d.add(this.add.rectangle(W / 2, H / 2, W, H, 0x06070a, 0.94).setInteractive());
     d.add(this.add.image(470, 520, 'fx:glow').setTint(Phaser.Display.Color.HexStringToColor(c.palette.primary).color).setDisplaySize(900, 900).setAlpha(0.35));
-    d.add(this.add.image(470, H + 30, ensurePortrait(this, id)).setOrigin(0.5, 1).setScale(0.95));
+    d.add(fitPortrait(this.add.image(470, H + 30, ensurePortrait(this, id)).setOrigin(0.5, 1), 0.95, 1060));
     d.add(new Button(this, W - 90, 70, { w: 76, h: 76, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: () => { d.destroy(); this.detail = undefined; } }));
 
     const x = 900;

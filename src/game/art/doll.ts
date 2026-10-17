@@ -412,6 +412,50 @@ function hat(ctx: Ctx, s: DollSpec): void {
       }
       break;
     }
+    case 'fedora': {
+      part(ctx, ellipsePath(112, 100, 80, 15), { fill: shade(c, 0.08), shadow: false });
+      const crown = new Path2D();
+      crown.moveTo(62, 98);
+      crown.bezierCurveTo(58, 40, 90, 34, 112, 50);
+      crown.bezierCurveTo(134, 34, 166, 40, 162, 98);
+      crown.closePath();
+      part(ctx, crown, { fill: c, shadowCircle: [190, 100, 50], highlight: [84, 56, 14, light(c, 0.22)] });
+      part(ctx, roundRectPath(62, 80, 100, 14, 3), { fill: a, shadow: false, outline: 2 });
+      const front = new Path2D();
+      front.ellipse(112, 100, 80, 15, 0, 0, Math.PI);
+      front.lineTo(32, 100);
+      part(ctx, front, { fill: c, shadow: false });
+      break;
+    }
+    case 'beret': {
+      const b = new Path2D();
+      b.moveTo(44, 112);
+      b.bezierCurveTo(30, 60, 140, 40, 186, 84);
+      b.bezierCurveTo(190, 104, 150, 114, 110, 110);
+      b.closePath();
+      part(ctx, b, { fill: c, shadowCircle: [190, 130, 60], highlight: [90, 66, 18, light(c, 0.2)] });
+      part(ctx, ellipsePath(112, 58, 5, 7), { fill: a, shadow: false, outline: 2 });
+      break;
+    }
+    case 'cloche': {
+      const b = new Path2D();
+      b.moveTo(42, 132);
+      b.bezierCurveTo(30, 52, 194, 52, 182, 132);
+      b.quadraticCurveTo(160, 112, 112, 110);
+      b.quadraticCurveTo(64, 112, 42, 132);
+      part(ctx, b, { fill: c, shadowCircle: [196, 140, 64], highlight: [82, 76, 18, light(c, 0.25)] });
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 9;
+      ctx.beginPath();
+      ctx.moveTo(52, 112);
+      ctx.quadraticCurveTo(112, 96, 172, 112);
+      ctx.stroke();
+      ctx.strokeStyle = a;
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      part(ctx, ellipsePath(158, 104, 10, 10), { fill: a, shadow: false, highlight: [155, 101, 3, '#fff6e6'] });
+      break;
+    }
     case 'veil': {
       const pill = roundRectPath(112, 64, 52, 26, 8);
       ctx.save();
@@ -598,7 +642,8 @@ function arms(ctx: Ctx, s: DollSpec, L: BodyLayout): void {
       limb(ctx, [70, 222], left, 11, 9, sleeve);
       hand(ctx, left[0], left[1] + 4, skin);
   }
-  const raised = s.prop === 'match' || s.prop === 'baton' || s.prop === 'crystal' || s.prop === 'cards' || s.prop === 'feather';
+  const raised = s.prop === 'match' || s.prop === 'baton' || s.prop === 'crystal' || s.prop === 'cards' || s.prop === 'feather'
+    || s.prop === 'violin' || s.prop === 'parasol' || s.prop === 'telescope';
   if (raised) {
     limb(ctx, [150, 222], [164, 262], 11, 9, sleeve);
     limb(ctx, [164, 262], [172, 236], 9, 8, sleeve);
@@ -715,6 +760,90 @@ function prop(ctx: Ctx, s: DollSpec, h: Pt): void {
       ctx.rotate(-0.15);
       part(ctx, roundRectPath(-14, -22, 28, 36, 3), { fill: '#3f5a74', shadow: false, outline: 2.4 });
       part(ctx, roundRectPath(-10, -18, 4, 28, 1), { fill: '#d8c79a', shadow: false, outline: 0 });
+      ctx.restore();
+      break;
+    }
+    case 'camera': {
+      part(ctx, roundRectPath(x - 26, y - 22, 44, 30, 5), { fill: '#2a2626', shadow: false, highlight: [x - 18, y - 16, 4, '#5a5450'] });
+      part(ctx, ellipsePath(x - 4, y - 7, 10, 10), { fill: '#46423e', shadow: false, highlight: [x - 7, y - 10, 3, '#cfe0f0'] });
+      part(ctx, roundRectPath(x - 22, y - 32, 14, 10, 2), { fill: '#d8d0c0', shadow: false, outline: 2 });
+      break;
+    }
+    case 'violin': {
+      ctx.save();
+      ctx.translate(x - 30, y + 4);
+      ctx.rotate(-0.9);
+      const body = new Path2D();
+      body.moveTo(0, -30);
+      body.bezierCurveTo(16, -30, 16, -14, 9, -8);
+      body.bezierCurveTo(18, 0, 18, 22, 0, 24);
+      body.bezierCurveTo(-18, 22, -18, 0, -9, -8);
+      body.bezierCurveTo(-16, -14, -16, -30, 0, -30);
+      part(ctx, body, { fill: '#9a4a22', shadowCircle: [14, 20, 18], highlight: [-6, -18, 5, '#d08a5a'] });
+      part(ctx, roundRectPath(-3, -66, 6, 40, 2), { fill: '#2a1a12', shadow: false, outline: 1.5 });
+      ctx.restore();
+      ctx.strokeStyle = '#efe6d2';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y - 50);
+      ctx.lineTo(x + 30, y + 30);
+      ctx.stroke();
+      break;
+    }
+    case 'wrench': {
+      ctx.save();
+      ctx.translate(x + 2, y + 4);
+      ctx.rotate(0.3);
+      part(ctx, roundRectPath(-5, -6, 10, 58, 4), { fill: '#9aa4ae', shadow: false, highlight: [-2, 10, 3, '#e0e8f0'] });
+      const jaw = new Path2D();
+      jaw.moveTo(-14, 52);
+      jaw.lineTo(14, 52);
+      jaw.lineTo(14, 72);
+      jaw.lineTo(5, 72);
+      jaw.lineTo(5, 62);
+      jaw.lineTo(-5, 62);
+      jaw.lineTo(-5, 72);
+      jaw.lineTo(-14, 72);
+      jaw.closePath();
+      part(ctx, jaw, { fill: '#9aa4ae', shadow: false });
+      ctx.restore();
+      break;
+    }
+    case 'parasol': {
+      ctx.strokeStyle = OUTLINE;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(x, y + 6);
+      ctx.lineTo(x - 30, y - 110);
+      ctx.stroke();
+      const canopy = new Path2D();
+      const cx = x - 34;
+      const cy = y - 112;
+      canopy.moveTo(cx - 74, cy + 22);
+      canopy.bezierCurveTo(cx - 60, cy - 50, cx + 60, cy - 50, cx + 74, cy + 22);
+      for (let i = 0; i < 6; i++) {
+        const x0 = cx + 74 - i * (148 / 6);
+        canopy.quadraticCurveTo(x0 - 148 / 12, cy + 10, x0 - 148 / 6, cy + 22);
+      }
+      canopy.closePath();
+      part(ctx, canopy, { fill: s.accent, shadowCircle: [cx + 80, cy + 30, 60], highlight: [cx - 30, cy - 10, 16, light(s.accent, 0.35)] });
+      ctx.strokeStyle = rgba('#ffffff', 0.5);
+      ctx.lineWidth = 2;
+      for (const dx of [-40, 0, 40]) {
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 28);
+        ctx.lineTo(cx + dx, cy + 20);
+        ctx.stroke();
+      }
+      break;
+    }
+    case 'telescope': {
+      ctx.save();
+      ctx.translate(x, y - 10);
+      ctx.rotate(-0.7);
+      part(ctx, roundRectPath(-8, -70, 16, 60, 4), { fill: '#b08a3a', shadow: false, highlight: [-3, -60, 3, '#f0d890'] });
+      part(ctx, roundRectPath(-11, -100, 22, 34, 4), { fill: '#7a5a2a', shadow: false });
+      part(ctx, ellipsePath(0, -102, 11, 4), { fill: '#cfe8ff', shadow: false, outline: 2 });
       ctx.restore();
       break;
     }

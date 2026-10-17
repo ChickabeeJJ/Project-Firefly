@@ -3,7 +3,7 @@ import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { chooseAutoAction } from '../battle/autoplay';
 import { describeEffects, describeVerse, STATUS_INFO, TYPE_LABEL } from '../battle/describe';
-import { BattleEngine } from '../battle/engine';
+import { BattleEngine, type BattleScript } from '../battle/engine';
 import { LANTERN } from '../battle/rules';
 import type { BattleEvent, Card, MergeStep } from '../battle/types';
 import { findVerse } from '../data/characters';
@@ -45,6 +45,32 @@ const ENEMY_POS: Record<number, { x: number; y: number }[]> = {
   2: [{ x: 1300, y: 738 }, { x: 1570, y: 712 }],
   3: [{ x: 1230, y: 746 }, { x: 1452, y: 702 }, { x: 1672, y: 754 }],
 };
+/** A gated tutorial step: only the matching action is allowed while it is shown. */
+interface TutStep {
+  msg: string;
+  /** Where the bubble points; null = centred, no arrow. */
+  at: (s: BattleScene) => { x: number; y: number; dir: 'down' | 'up' } | null;
+  /** Card the player must cast; omitted for tap-to-continue and lantern steps. */
+  card?: (c: Card) => boolean;
+  lantern?: boolean;
+  tap?: boolean;
+}
+
+/** Stage 1-1 for new players: a scripted, hand-held first battle. */
+const TUTORIAL_SCRIPT: BattleScript = {
+  hands: {
+    1: ['wren_strike', 'odile_lullaby', 'wren_strike', 'bastian_brolly', 'odile_tincture', 'wren_kindle', 'bastian_bash'],
+    2: ['wren_kindle', 'odile_tincture', 'bastian_brolly'],
+  },
+  lit: { 1: 'bastian_bash', 2: 'wren_kindle' },
+  ardor: { 3: { wren: 5 } },
+  fireflies: { 4: 5 },
+  enemyHpMult: 2,
+  noDefeat: true,
+};
+
+const TUTORIAL_HINTS = ['cast', 'beats', 'merge', 'firefly', 'finale', 'lantern', 'intent'];
+
 const EFFECTS = new Set(['damage', 'heal', 'shield', 'status', 'resist', 'statusEnd', 'ardor', 'firefly', 'snuff', 'death']);
 
 export class BattleScene extends Phaser.Scene {
@@ -77,6 +103,10 @@ export class BattleScene extends Phaser.Scene {
   private autoBtn!: DiamondButton;
   private speedBtn!: DiamondButton;
   private damageBy = new Map<string, number>();
+  /** Remaining gated tutorial steps per round (1-1 only, until finished once). */
+  private tutSteps: Record<number, TutStep[]> | null = null;
+  private tutStep: TutStep | null = null;
+  private tutBubble?: Phaser.GameObjects.Container;
 
   constructor() {
     super('Battle');
@@ -101,14 +131,24 @@ export class BattleScene extends Phaser.Scene {
     this.time.timeScale = 1;
     this.speed = 1;
     this.auto = false;
+    this.tutStep = null;
+    this.tutBubble = undefined;
     fadeIn(this);
 
     this.stage = getStage(data.stageId);
     const save = saves.get();
+    const guided = !!this.stage.tutorial && !saves.hasHint('tutorialDone');
+    // The script needs the starter trio, so the guided battle always fields them.
+    const team = guided ? ['wren', 'odile', 'bastian'] : save.team;
+    this.tutSteps = guided ? this.buildTutorial() : null;
     this.engine = new BattleEngine({
       stage: this.stage,
-      team: save.team.map((id) => ({ charId: id, level: save.roster[id].level, resonance: save.roster[id].resonance })),
+      team: team.map((id) => {
+        const o = save.roster[id] ?? { level: 1, resonance: 0 };
+        return { charId: id, level: o.level, resonance: o.resonance };
+      }),
       seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0,
+      script: guided ? TUTORIAL_SCRIPT : undefined,
     });
 
     this.add.image(W / 2, H / 2, ensureBg(this, this.stage.bg)).setDisplaySize(W, H).setDepth(0);
@@ -224,7 +264,7 @@ export class BattleScene extends Phaser.Scene {
     await this.wait(500);
     const events = this.engine.start();
     await this.playEvents(events);
-    if (this.stage.id === '1-1') this.bark('a0', 'The lamps are going out. Let us light them back up!');
+    if (this.stage.tutorial) this.bark('a0', 'The lamps are going out. Let us light them back up!');
     if (this.stage.boss) this.bark('a0', 'Everything we have — all at once!');
     platform.gameplayStart();
     this.beginPlanning();
@@ -257,6 +297,7 @@ export class BattleScene extends Phaser.Scene {
     this.hideUnitTip();
     if (this.hint) saves.markHint(this.hint.id);
     this.clearHint();
+    this.clearTutBubble();
     this.dipHand(true);
     for (const it of this.slotItems) if (it.getData('move')) this.tweens.add({ targets: it, alpha: 0.25, duration: 200 });
     const events = this.engine.resolveRound();
@@ -612,8 +653,10 @@ export class BattleScene extends Phaser.Scene {
 
   private spawnWave(uids: string[]): void {
     const pos = ENEMY_POS[uids.length] ?? ENEMY_POS[3];
+    const seen = saves.get().seen;
     uids.forEach((uid, i) => {
       const u = this.engine.unit(uid)!;
+      if (!seen.includes(u.defId)) seen.push(u.defId);
       const p = u.boss ? { x: 1440, y: 790 } : pos[i];
       const v = new UnitView(this, u, { ...p, scale: u.boss ? 0.95 : 0.85 });
       v.setInteractive(() => {
@@ -750,7 +793,7 @@ export class BattleScene extends Phaser.Scene {
       this.tapCard(v.cid);
     });
     v.on('dragstart', () => {
-      if (!this.canPlan() || v.card.finale || !this.handOrder.includes(v.cid)) return;
+      if (!this.canPlan() || v.card.finale || !this.handOrder.includes(v.cid) || this.tutStep) return;
       v.setData('dragged', true);
       this.hideTooltip();
       this.tweens.killTweensOf(v);
@@ -829,6 +872,7 @@ export class BattleScene extends Phaser.Scene {
   private tapCard(cid: number): void {
     if (!this.canPlan() || !this.handOrder.includes(cid)) return;
     const v = this.cards.get(cid);
+    if (v && !this.tutAllows(v.card)) return;
     const res = this.engine.cast(cid, this.engine.targetUid);
     if (!res.ok || !v) {
       audio.sfx('deny');
@@ -842,10 +886,8 @@ export class BattleScene extends Phaser.Scene {
     this.completeHint('cast');
     if (v.card.lit) this.completeHint('firefly');
     if (v.card.finale) this.completeHint('finale');
-    if (res.merges.length) this.mergeHint();
-    else if (this.stage.id === '1-1' && this.engine.queue.length === 1 && !this.engine.readyToResolve) {
-      this.showHint('beats', 'Fill every Beat — the round then plays out on its own. Tap the last Beat to take it back.', W / 2, SLOT_Y + 110, 'up');
-    }
+    if (res.merges.length && !this.tutSteps) this.mergeHint();
+    this.tutAdvance();
     this.afterPlan();
   }
 
@@ -894,6 +936,10 @@ export class BattleScene extends Phaser.Scene {
 
   private tapLantern(): void {
     if (!this.canPlan()) return;
+    if (this.tutStep && !this.tutStep.lantern) {
+      this.tutNudge();
+      return;
+    }
     if (!this.engine.lightLantern()) {
       if (!this.engine.lanternHour) toast(this, `The Lantern needs ${LANTERN.capacity} fireflies`, 'firefly');
       audio.sfx('deny');
@@ -906,6 +952,7 @@ export class BattleScene extends Phaser.Scene {
     }
     void this.fx.banner('LANTERN HOUR', 'An extra Beat this round', CSS.firefly);
     this.completeHint('lantern');
+    this.tutAdvance();
     this.buildSlots();
     this.refreshLantern();
     this.afterPlan();
@@ -918,7 +965,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private undo(): void {
-    if (!this.canPlan() || !this.engine.undo()) return;
+    if (!this.canPlan() || this.tutStep || !this.engine.undo()) return;
     audio.sfx('back');
     this.rebuildPlan();
   }
@@ -1023,6 +1070,10 @@ export class BattleScene extends Phaser.Scene {
   // ===================================================================== auto / speed / pause
 
   private toggleAuto(): void {
+    if (this.tutStep || Object.values(this.tutSteps ?? {}).some((l) => l.length > 0)) {
+      toast(this, 'Auto unlocks once the lesson is over', 'auto');
+      return;
+    }
     this.auto = !this.auto;
     this.autoBtn.setOn(this.auto);
     toast(this, this.auto ? 'Auto battle on' : 'Auto battle off', 'auto');
@@ -1071,8 +1122,13 @@ export class BattleScene extends Phaser.Scene {
     this.ended = true;
     this.busy = true;
     this.clearHint();
+    this.clearTutBubble();
     platform.gameplayStop();
     const save = saves.get();
+    if (won && this.tutSteps) {
+      saves.markHint('tutorialDone');
+      for (const id of TUTORIAL_HINTS) saves.markHint(id);
+    }
     const outcome = applyBattleResult(save, this.stage, won, rounds, fallen);
     saves.commit();
     if (won && outcome.stars.count === 3) platform.happytime();
@@ -1096,13 +1152,16 @@ export class BattleScene extends Phaser.Scene {
 
   private tutorial(): void {
     const r = this.engine.round;
+    if (this.tutSteps) {
+      this.tutStep = null;
+      this.tutAdvance();
+      return;
+    }
     const lit = this.engine.hand.find((c) => c.lit);
-    if (this.stage.id === '1-1') {
-      if (r === 1) this.showHint('cast', 'Tap a Verse to cast it. You have 3 Beats each round.', HAND_CX, HAND_Y - CARD_DH / 2 - 20, 'down');
-      if (r === 2 && lit) {
-        const v = this.cards.get(lit.cid);
-        if (v) this.showHint('firefly', 'A firefly lit this Verse: +30% power, and casting it feeds your Lantern.', v.homeX, v.homeY - CARD_DH / 2 - 20, 'down');
-      }
+    if (r === 1) this.showHint('cast', 'Tap a Verse to cast it. You have 3 Beats each round.', HAND_CX, HAND_Y - CARD_DH / 2 - 20, 'down');
+    if (r <= 2 && lit) {
+      const v = this.cards.get(lit.cid);
+      if (v) this.showHint('firefly', 'A firefly lit this Verse: +30% power, and casting it feeds your Lantern.', v.homeX, v.homeY - CARD_DH / 2 - 20, 'down');
     }
     if (r === 1 && this.stage.id === '1-2') {
       const e = this.engine.aliveEnemies[0];
@@ -1123,21 +1182,118 @@ export class BattleScene extends Phaser.Scene {
     }
   }
 
-  private showHint(id: string, msg: string, x: number, y: number, dir: 'down' | 'up', autoHideMs = 0): void {
-    if (this.hint || saves.hasHint(id) || this.ended) return;
+  private buildTutorial(): Record<number, TutStep[]> {
+    const atCard = (pick: (c: Card) => boolean) => (s: BattleScene) => {
+      const card = s.engine.hand.find((c) => pick(c) && s.handOrder.includes(c.cid));
+      const v = card && s.cards.get(card.cid);
+      return v ? { x: v.homeX, y: v.homeY - CARD_DH / 2 - 20, dir: 'down' as const } : null;
+    };
+    const atEnemy = (s: BattleScene) => {
+      const e = s.engine.aliveEnemies[0];
+      const v = e && s.views.get(e.uid);
+      return v ? { x: v.x, y: v.top - 120, dir: 'down' as const } : null;
+    };
+    const lullaby = (c: Card) => c.verseId === 'odile_lullaby';
+    const strike2 = (c: Card) => c.verseId === 'wren_strike' && c.rank >= 2;
+    const normal = (c: Card) => !c.finale;
+    return {
+      1: [
+        { msg: 'A Mothling! The icon above an enemy shows its next move — and who it will hit. Plan around it.', at: atEnemy, tap: true },
+        { msg: 'These are your Verses. Each round you get 3 Beats to cast them.\n\nTap Lullaby Dose — the card between the two Strikes.', at: atCard(lullaby), card: lullaby },
+        { msg: 'The two Strikes slid together and merged into a ★★ Verse — much stronger! Cast it.', at: atCard(strike2), card: strike2 },
+        { msg: 'One Beat left. Cast any Verse — the round then plays out on its own.', at: () => ({ x: HAND_CX, y: HAND_Y - CARD_DH / 2 - 20, dir: 'down' }), card: normal },
+      ],
+      2: [
+        { msg: 'A firefly lit this Verse: +30% power, and casting it feeds the Lantern. Cast it!', at: atCard((c) => c.lit), card: (c) => c.lit },
+      ],
+      3: [
+        { msg: "Wren's Ardor is full, so her Finale is ready. Finales are huge and never merge. Unleash it!", at: atCard((c) => c.finale), card: (c) => c.finale },
+      ],
+      4: [
+        { msg: 'Five fireflies — the Lantern is full! Tap it for a fourth Beat this round.', at: () => ({ x: this.lantern.x + 160, y: this.lantern.y + 90, dir: 'up' }), lantern: true },
+        { msg: "That's everything! Finish the fight your way. (Drag a Verse to move it for 1 Beat; tap an enemy to focus it.)", at: () => null, tap: true },
+      ],
+    };
+  }
+
+  /** Shows the next gated step for this round, if any. */
+  private tutAdvance(): void {
+    if (!this.tutSteps || this.ended) return;
+    const list = this.tutSteps[this.engine.round];
+    this.clearTutBubble();
+    this.tutStep = null;
+    // Skip steps whose subject is missing (e.g. the card got merged away).
+    while (list?.length) {
+      const step = list.shift()!;
+      if (step.card && !this.engine.hand.some((c) => step.card!(c) && this.handOrder.includes(c.cid))) continue;
+      if (step.lantern && !this.engine.canLightLantern) continue;
+      this.tutStep = step;
+      // Let merges and deals settle before pointing at a card.
+      this.time.delayedCall(step.card ? 380 : 120, () => this.tutStep === step && this.drawTutBubble(step));
+      return;
+    }
+  }
+
+  private tutAllows(card: Card): boolean {
+    const step = this.tutStep;
+    if (!step || (step.card && step.card(card))) return true;
+    this.tutNudge();
+    return false;
+  }
+
+  private tutNudge(): void {
+    audio.sfx('deny');
+    const b = this.tutBubble;
+    if (b) this.tweens.add({ targets: b, scale: 1.04, duration: 90, yoyo: true });
+  }
+
+  private drawTutBubble(step: TutStep): void {
+    if (this.ended) return;
+    const at = step.at(this);
+    const msg = step.tap ? `${step.msg}\n\nTap anywhere to continue ▸` : step.msg;
+    const c = this.bubble(msg, at?.x ?? W / 2, at?.y ?? H / 2 - 120, at?.dir ?? 'up', !!at, 600);
+    c.setDepth(830);
+    if (step.tap) {
+      const z = this.add.zone(W / 2, H / 2, W, H).setInteractive();
+      c.addAt(z, 0);
+      z.once('pointerup', () => {
+        if (this.tutStep !== step) return;
+        audio.sfx('tap');
+        this.tutAdvance();
+      });
+    }
+    this.tutBubble = c;
+  }
+
+  private clearTutBubble(): void {
+    const c = this.tutBubble;
+    if (!c) return;
+    this.tutBubble = undefined;
+    this.tweens.killTweensOf(c);
+    this.tweens.add({ targets: c, alpha: 0, duration: 160, onComplete: () => c.destroy() });
+  }
+
+  /** Paper speech bubble with an arrow pointing at (x, y). */
+  private bubble(msg: string, x: number, y: number, dir: 'down' | 'up', arrow = true, wrap = 520): Phaser.GameObjects.Container {
     const c = this.add.container(0, 0).setDepth(820);
-    const t = text(this, 0, 0, msg, { size: 26, color: CSS.paperText, wrap: 520, lineSpacing: 2 });
+    const t = text(this, 0, 0, msg, { size: 26, color: CSS.paperText, wrap, lineSpacing: 2 });
     const w = t.width + 48;
     const h = t.height + 36;
     const bx = Phaser.Math.Clamp(x - w / 2, 20, W - w - 20);
-    const by = dir === 'down' ? y - h - 26 : y + 26;
+    const by = Phaser.Math.Clamp(arrow ? (dir === 'down' ? y - h - 26 : y + 26) : y - h / 2, 20, H - h - 20);
     const bg = this.add.nineslice(bx, by, 'ui:paper', undefined, w, h, 14, 14, 14, 14).setOrigin(0);
     t.setPosition(bx + 24, by + 18);
-    const arrow = this.add.triangle(x, dir === 'down' ? y - 14 : y + 14, 0, 0, 36, 0, 18, 22, C.paper).setAngle(dir === 'down' ? 0 : 180);
-    c.add([bg, arrow, t]);
+    c.add([bg, t]);
+    if (arrow) c.add(this.add.triangle(x, dir === 'down' ? y - 14 : y + 14, 0, 0, 36, 0, 18, 22, C.paper).setAngle(dir === 'down' ? 0 : 180));
     c.setAlpha(0);
     this.tweens.add({ targets: c, alpha: 1, duration: 260 });
-    this.tweens.add({ targets: c, y: dir === 'down' ? -8 : 8, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    if (arrow) this.tweens.add({ targets: c, y: dir === 'down' ? -8 : 8, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return c;
+  }
+
+  private showHint(id: string, msg: string, x: number, y: number, dir: 'down' | 'up', autoHideMs = 0): void {
+    if (this.hint || saves.hasHint(id) || this.ended || this.tutSteps) return;
+    const c = this.bubble(msg, x, y, dir);
     this.hint = { id, c };
     if (autoHideMs) this.time.delayedCall(autoHideMs, () => this.completeHint(id));
   }
