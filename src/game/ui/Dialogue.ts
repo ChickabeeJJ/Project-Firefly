@@ -11,7 +11,7 @@ import { text } from './kit';
 export function playDialogue(scene: Phaser.Scene, lines: DialogueLine[], title?: string): Promise<void> {
   return new Promise((resolve) => {
     const root = scene.add.container(0, 0).setDepth(5000);
-    const shade = scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55).setInteractive();
+    const shade = scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.75).setInteractive();
     const top = scene.add.rectangle(W / 2, 0, W, 110, 0x000000, 1).setOrigin(0.5, 0);
     const box = scene.add.image(W / 2, H, 'fx:glow').setOrigin(0.5, 1).setTint(0x000000).setDisplaySize(W * 1.4, 620).setAlpha(0.95);
     const band = scene.add.rectangle(W / 2, H - 150, W, 300, 0x07080a, 0.82);

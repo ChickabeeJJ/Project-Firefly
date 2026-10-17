@@ -5,7 +5,8 @@ import fs from 'node:fs';
 const [url, prefix, w = '1920', h = '1080', stepsFile] = process.argv.slice(2);
 const steps = stepsFile ? JSON.parse(fs.readFileSync(stepsFile, 'utf8')) : [{ wait: 4000 }, { shot: 'start' }];
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: +w, height: +h } });
+const touch = !!process.env.TOUCH;
+const page = await browser.newPage({ viewport: { width: +w, height: +h }, hasTouch: touch, isMobile: touch, deviceScaleFactor: touch ? 3 : 1 });
 const logs = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(`[${m.type()}] ${m.text()}`); });
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}\n${e.stack}`));
@@ -27,8 +28,9 @@ for (const s of steps) {
       await page.waitForTimeout(250);
     }
   }
-  if (s.clickAt) { const pt = await page.evaluate(s.clickAt); if (pt) { const [px, py] = await toPage(pt); await page.mouse.click(px, py); } }
-  if (s.click) { const [px, py] = await toPage(s.click); await page.mouse.click(px, py); }
+  if (s.clickAt) { const pt = await page.evaluate(s.clickAt); if (pt) { const [px, py] = await toPage(pt); if (touch) await page.touchscreen.tap(px, py); else await page.mouse.click(px, py); } }
+  if (s.click) { const [px, py] = await toPage(s.click); if (touch) await page.touchscreen.tap(px, py); else await page.mouse.click(px, py); }
+  if (s.drag && s.skip) { const d = await page.evaluate('window.__drag'); s.drag = d; }
   if (s.drag) { const [ax, ay] = await toPage(s.drag[0]); const [bx, by] = await toPage(s.drag[1]); await page.mouse.move(ax, ay); await page.mouse.down(); await page.mouse.move((ax + bx) / 2, (ay + by) / 2, { steps: 5 }); await page.mouse.move(bx, by, { steps: 5 }); await page.mouse.up(); }
   if (s.key) await page.keyboard.press(s.key);
   if (s.eval) { const r = await page.evaluate(s.eval); if (r !== undefined) console.log('eval:', JSON.stringify(r)); }

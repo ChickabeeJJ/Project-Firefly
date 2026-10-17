@@ -639,7 +639,10 @@ export class BattleScene extends Phaser.Scene {
 
   private bindUnitTip(v: UnitView): void {
     v.sprite.on('pointerover', () => this.showUnitTip(v.unit.uid));
-    v.sprite.on('pointerout', () => this.hideUnitTip());
+    v.sprite.on('pointerout', (p: Phaser.Input.Pointer) => {
+      // Lifting a finger counts as "out"; keep the timed tip visible on touch screens.
+      if (!p.wasTouch) this.hideUnitTip();
+    });
   }
 
   private flashUnitTip(uid: string): void {
@@ -730,7 +733,7 @@ export class BattleScene extends Phaser.Scene {
     v.on('pointerover', () => {
       if (!this.canPlan() || !this.handOrder.includes(v.cid)) return;
       this.tweens.killTweensOf(v);
-      this.tweens.add({ targets: v, y: v.homeY - 30, duration: 120 });
+      this.tweens.add({ targets: v, x: v.homeX, y: v.homeY - 30, scale: HAND_SCALE, duration: 120 });
       v.setSelected(true);
       this.showTooltip(v);
     });
@@ -738,7 +741,7 @@ export class BattleScene extends Phaser.Scene {
       v.setSelected(false);
       if (v.getData('dragged') || !this.handOrder.includes(v.cid)) return;
       this.tweens.killTweensOf(v);
-      this.tweens.add({ targets: v, y: v.homeY + (this.busy ? HAND_DIP : 0), duration: 140 });
+      this.tweens.add({ targets: v, x: v.homeX, y: v.homeY + (this.busy ? HAND_DIP : 0), scale: HAND_SCALE, duration: 140 });
       this.hideTooltip();
     });
     v.on('pointerup', () => {
