@@ -5,7 +5,7 @@ import { audio } from '../audio/AudioController';
 import { Rng } from '../battle/rng';
 import { MAX_RESONANCE } from '../battle/rules';
 import { CHARACTERS, getCharacter } from '../data/characters';
-import { C, CSS, H, RARITY_CSS, W } from '../config/theme';
+import { C, CSS, H, RARITY_COLOR, RARITY_CSS, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { platform } from '../platform/PlatformAdapter';
 import { performRite, RITE, riteCost, type RiteResult } from '../systems/gacha';
@@ -52,13 +52,7 @@ export class SummonScene extends Phaser.Scene {
     const save = saves.get();
     const ui = this.add.container(0, 0).setDepth(50);
     ui.add(this.add.rectangle(W / 2, H / 2, W, H, 0x05070c, 0.35));
-    const feat = ['augustin', 'ichabod', 'marigold'];
-    feat.forEach((id, i) => {
-      const p = fitPortrait(this.add.image(1130 + i * 260, H + 60 + (i === 1 ? 0 : 30), ensurePortrait(this, id)).setOrigin(0.5, 1), i === 1 ? 0.86 : 0.76, i === 1 ? 1020 : 920);
-      if (i !== 2) p.setTint(0xb8b8c8);
-      ui.add(p);
-    });
-    ui.add(this.add.image(1450, 420, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(900, 700).setAlpha(0.12));
+    ui.add(this.oddsPanel(1430, 560));
 
     ui.add(new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Lobby') }));
     const cur = this.add.container(W - 250, 60);
@@ -80,7 +74,6 @@ export class SummonScene extends Phaser.Scene {
       `Luminaries found: ${Object.keys(save.roster).length} / ${CHARACTERS.length}`,
     ];
     lines.forEach((l, i) => ui.add(text(this, x + 4, 390 + i * 50, l, { size: 28, color: i === 1 ? CSS.goldLight : CSS.cream, shadow: true })));
-    ui.add(text(this, x + 4, 620, 'Featured: the Hourglass Countess, the Crimson Patron and the Tidecaller.', { size: 24, italic: true, color: CSS.creamDim, wrap: 760 }));
 
     const one = new Button(this, x + 190, H - 140, { w: 340, h: 104, label: 'Light ×1', sub: `${riteCost(1)} Glimmer`, style: 'cream', size: 36, onClick: () => this.start(1) });
     const ten = new Button(this, x + 570, H - 140, { w: 380, h: 104, label: 'Light ×10', sub: `${riteCost(10)} Glimmer`, style: 'amber', size: 36, onClick: () => this.start(10) });
@@ -89,6 +82,45 @@ export class SummonScene extends Phaser.Scene {
     else this.tweens.add({ targets: ten, scale: 1.04, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     ui.add([one, ten]);
     this.ui = ui;
+  }
+
+  /** Pool details: every Luminary with its individual odds, grouped by rarity. */
+  private oddsPanel(cx: number, cy: number): Phaser.GameObjects.Container {
+    const save = saves.get();
+    const c = this.add.container(cx, cy);
+    const w = 760;
+    const h = 880;
+    const g = this.add.graphics();
+    g.fillStyle(0x080a10, 0.62).fillRect(-w / 2, -h / 2, w, h);
+    g.lineStyle(1.5, C.gold, 0.5).strokeRect(-w / 2, -h / 2, w, h);
+    g.lineStyle(1, C.gold, 0.25).strokeRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16);
+    c.add(g);
+    c.add(text(this, 0, -h / 2 + 40, 'POOL DETAILS', { size: 30, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0.5));
+    c.add(ornament(this, 0, -h / 2 + 74, 360));
+    let y = -h / 2 + 110;
+    ([5, 4, 3] as const).forEach((r) => {
+      const pool = CHARACTERS.filter((ch) => ch.rarity === r);
+      const rate = r === 3 ? 1 - RITE.rates[5] - RITE.rates[4] : RITE.rates[r];
+      c.add(this.add.rectangle(-w / 2 + 24, y + 4, w - 48, 40, RARITY_COLOR[r], 0.16).setOrigin(0, 0.5));
+      c.add(rarityStars(this, -w / 2 + 40 + r * 13, y + 4, r, 22, RARITY_COLOR[r]));
+      c.add(text(this, w / 2 - 36, y + 4, `${(rate * 100).toFixed(1)}% total`, { size: 22, bold: true, color: RARITY_CSS[r] }).setOrigin(1, 0.5));
+      y += 44;
+      pool.forEach((ch, i) => {
+        const col = i % 2;
+        const px = -w / 2 + 40 + col * ((w - 60) / 2);
+        const py = y + Math.floor(i / 2) * 58 + 26;
+        const owned = !!save.roster[ch.id];
+        c.add(this.add.image(px + 22, py, `head:${ch.id}`).setDisplaySize(46, 46).setAlpha(owned ? 1 : 0.85));
+        c.add(this.add.image(px + 60, py, `icon:${ch.mood}`).setDisplaySize(26, 26));
+        const nm = text(this, px + 80, py, ch.name, { size: 21, color: owned ? CSS.cream : CSS.creamDim }).setOrigin(0, 0.5);
+        if (nm.width > 168) nm.setScale(168 / nm.width);
+        c.add(nm);
+        c.add(text(this, px + (w - 60) / 2 - 20, py, `${((rate / pool.length) * 100).toFixed(2)}%`, { size: 20, bold: true, color: RARITY_CSS[r] }).setOrigin(1, 0.5));
+      });
+      y += Math.ceil(pool.length / 2) * 58 + 20;
+    });
+    c.add(text(this, 0, h / 2 - 30, 'Faded names are not yet in your Troupe.', { size: 19, italic: true, color: CSS.muted }).setOrigin(0.5));
+    return c;
   }
 
   private start(count: number): void {

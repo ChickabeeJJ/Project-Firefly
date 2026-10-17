@@ -194,13 +194,13 @@ export class UnitView {
     this.scene.time.delayedCall(70, () => this.sprite.clearTint());
     const dir = this.unit.side === 'ally' ? -1 : 1;
     this.scene.tweens.add({ targets: this.root, x: this.root.x + dir * (strong ? 26 : 14), duration: 60, yoyo: true, ease: 'Quad.easeOut' });
-    if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * (strong ? 40 : 24), -0.05, 70, 60);
+    if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * (strong ? 22 : 12), -0.012, 70, 60);
   }
 
   lunge(toward: number, distance = 70): Promise<void> {
     return new Promise((resolve) => {
       const dir = Math.sign(toward - this.root.x) || 1;
-      if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * 46, -0.04, 140, 120);
+      if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * 26, -0.01, 140, 120);
       this.scene.tweens.add({
         targets: this.root, x: this.root.x + dir * distance, duration: 140, yoyo: true, hold: 120, ease: 'Cubic.easeOut',
         onYoyo: () => resolve(),
@@ -212,7 +212,7 @@ export class UnitView {
   castPose(): void {
     if (!(this.sprite instanceof LivingSprite)) return;
     const back = this.unit.side === 'ally' ? -18 : 18;
-    this.sprite.pose(back, 0.05, 180, 160);
+    this.sprite.pose(back, 0.012, 180, 160);
   }
 
   die(): Promise<void> {

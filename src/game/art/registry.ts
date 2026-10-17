@@ -7,6 +7,7 @@ import { CARD_H, CARD_W, PCARD_H, PCARD_W, portraitCardCanvas, verseArtCanvas } 
 import { dollCanvas, drawDoll } from './doll';
 import { enemyCanvas } from './enemyArt';
 import { iconCanvas, ICON_NAMES } from './icons';
+import { ITEM_ICON_IDS, itemIconCanvas } from './itemIcons';
 import { grain, makeCanvas, mix, rgba } from './paint';
 import { uiTextureSpecs } from './uiTextures';
 
@@ -25,11 +26,11 @@ export const PORTRAIT_SCALE = 2.4;
 /** Painted portraits are stored at this height (memory cap). */
 const PAINTED_PORTRAIT_H = 1200;
 /** Battle height of painted characters before the 0.85 field scale. */
-const PAINTED_DOLL_H = 330;
+const PAINTED_DOLL_H = 385;
 /** …and no wider than this (full renders with big props or capes are wide). */
-const PAINTED_DOLL_W = 360;
+const PAINTED_DOLL_W = 420;
 /** Battle heights of painted enemies that should not stand as tall as a person. */
-const PAINTED_ENEMY_H: Partial<Record<string, number>> = { mothling: 230, lampeater: 280, hound: 270, chimewisp: 360 };
+const PAINTED_ENEMY_H: Partial<Record<string, number>> = { mothling: 260, lampeater: 320, hound: 310, chimewisp: 410 };
 
 function add(scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement): void {
   if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
@@ -45,7 +46,7 @@ function size(scene: Phaser.Scene, key: string): { w: number; h: number } {
 }
 
 /** Painted renders whose figure looks to the left; mirrored in battle so the troupe faces the enemy. */
-export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper']);
+export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper', 'kit']);
 
 function facingRight(canvas: HTMLCanvasElement, charId: string): HTMLCanvasElement {
   if (!ART_FACES_LEFT.has(charId)) return canvas;
@@ -132,9 +133,32 @@ function dimmed(canvas: HTMLCanvasElement): HTMLCanvasElement {
   return canvas;
 }
 
+/** Painted lantern (ui/lanternN) on a warm glow, boxed like the procedural rite lanterns. */
+function paintedLantern(scene: Phaser.Scene, key: string, glowColor: string): HTMLCanvasElement {
+  const W0 = 200;
+  const H0 = 240;
+  const { canvas, ctx } = makeCanvas(W0, H0);
+  const g = ctx.createRadialGradient(W0 / 2, H0 * 0.42, 4, W0 / 2, H0 * 0.42, W0 / 2);
+  g.addColorStop(0, rgba(glowColor, 0.7));
+  g.addColorStop(1, rgba(glowColor, 0));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W0, H0);
+  const s = size(scene, key);
+  const k = Math.min((W0 * 1.15) / s.w, (H0 - 4) / s.h);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source(scene, key), (W0 - s.w * k) / 2, 2, s.w * k, s.h * k);
+  return canvas;
+}
+
 export function registerBaseArt(scene: Phaser.Scene): void {
+  // Painted lanterns replace the rite's paper lanterns (★3 hexagonal, ★4 round, ★5 star).
+  ([['3', 'lantern1', '#ffd27a'], ['4', 'lantern2', '#b48cff'], ['5', 'lantern3', '#ffb030']] as const).forEach(([r, id, col]) => {
+    const k = dropIn(scene, 'ui', id);
+    if (k) add(scene, `rite:lantern${r}`, paintedLantern(scene, k, col));
+  });
   for (const s of uiTextureSpecs()) add(scene, s.key, s.canvas);
   for (const name of ICON_NAMES) add(scene, `icon:${name}`, iconCanvas(name, ICON_COLORS[name]));
+  for (const id of ITEM_ICON_IDS) add(scene, `item:${id}`, dropIn(scene, 'ui', `item_${id}`) ? fitHeight(scene, dropIn(scene, 'ui', `item_${id}`)!, 128) : itemIconCanvas(id));
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
     // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
@@ -149,7 +173,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   }
   for (const e of ENEMIES) {
     const painted = dropIn(scene, 'enemies', e.id);
-    add(scene, `enemy:${e.kind}`, painted ? dimmed(fitHeight(scene, painted, PAINTED_ENEMY_H[e.kind] ?? (e.boss ? 470 : 350))) : enemyCanvas(e.kind, 1));
+    add(scene, `enemy:${e.kind}`, painted ? dimmed(fitHeight(scene, painted, PAINTED_ENEMY_H[e.kind] ?? (e.boss ? 520 : 400))) : enemyCanvas(e.kind, 1));
   }
 }
 
@@ -181,6 +205,36 @@ export function isPaintedPortrait(key: string): boolean {
   return key.startsWith('hfp:');
 }
 
+/**
+ * Element card backgrounds (ui/panel_<name>), chosen per Luminary from their element, with the
+ * palette deciding between the warm / cool variants. Missing files fall back to a gradient.
+ */
+const PANELS: Record<string, string> = {
+  crimson: '#a8322e', verdant: '#3f6a3a', tide: '#2c3f86', gilt: '#c8a24a', amethyst: '#6a3f9a', umber: '#5a4636',
+};
+const MOOD_PANELS: Record<string, string[]> = { sun: ['crimson', 'gilt', 'verdant'], moon: ['tide', 'umber'], star: ['amethyst', 'verdant', 'umber'] };
+
+export function panelFor(charId: string): string {
+  const c = getCharacter(charId);
+  const hex = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const p = hex(c.palette.primary);
+  let best = MOOD_PANELS[c.mood][0];
+  let bestD = Infinity;
+  for (const name of MOOD_PANELS[c.mood]) {
+    const q = hex(PANELS[name]);
+    const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2;
+    if (d < bestD) {
+      bestD = d;
+      best = name;
+    }
+  }
+  return best;
+}
+
+export function elementPanel(scene: Phaser.Scene, charId: string): string | null {
+  return dropIn(scene, 'ui', `panel_${panelFor(charId)}`);
+}
+
 export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string {
   const key = `pcard:${charId}`;
   if (scene.textures.exists(key)) return key;
@@ -192,15 +246,24 @@ export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string 
   // Painted card: palette backdrop, upper-body crop, same frame as the procedural card.
   const c = getCharacter(charId);
   const { canvas, ctx } = makeCanvas(PCARD_W, PCARD_H);
-  const g = ctx.createLinearGradient(0, 0, 0, PCARD_H);
-  g.addColorStop(0, mix(c.palette.primary, '#ffffff', 0.12));
-  g.addColorStop(1, mix(c.palette.primary, c.palette.ink, 0.75));
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, PCARD_W, PCARD_H);
+  const panel = elementPanel(scene, charId);
+  if (panel) {
+    const ps = size(scene, panel);
+    cover(ctx, source(scene, panel), ps.w, ps.h, PCARD_W, PCARD_H, 0.5);
+    ctx.fillStyle = rgba('#0b0b0e', 0.18);
+    ctx.fillRect(0, 0, PCARD_W, PCARD_H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, PCARD_H);
+    g.addColorStop(0, mix(c.palette.primary, '#ffffff', 0.12));
+    g.addColorStop(1, mix(c.palette.primary, c.palette.ink, 0.75));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, PCARD_W, PCARD_H);
+  }
   const s = size(scene, painted);
-  const scale = Math.min((PCARD_W * 1.7) / s.w, (PCARD_H * 1.15) / s.h);
+  // Upper-body framing with headroom: the figure starts ~7% below the top edge.
+  const scale = Math.min((PCARD_W * 1.5) / s.w, (PCARD_H * 1.08) / s.h);
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(source(scene, painted), (PCARD_W - s.w * scale) / 2, -PCARD_H * 0.02, s.w * scale, s.h * scale);
+  ctx.drawImage(source(scene, painted), (PCARD_W - s.w * scale) / 2, PCARD_H * 0.07, s.w * scale, s.h * scale);
   const shadeG = ctx.createLinearGradient(0, PCARD_H * 0.62, 0, PCARD_H);
   shadeG.addColorStop(0, rgba('#0b0b0e', 0));
   shadeG.addColorStop(1, rgba('#0b0b0e', 0.95));

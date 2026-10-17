@@ -1,13 +1,15 @@
 import { CHARACTERS, STARTER_TEAM } from '../data/characters';
 import { STAGES } from '../data/stages';
-import { MAX_LEVEL, MAX_RESONANCE } from '../battle/rules';
+import { MAX_RESONANCE } from '../battle/rules';
+import { fromLegacyLevel, type ItemId, ITEM_ORDER, levelCap, maxInsight } from '../systems/growth';
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 export const STARTING_GLIMMER = 1600;
 
 export interface OwnedCharacter {
+  /** Level within the current Insight tier (resets to 1 on Insight). */
   level: number;
-  exp: number;
+  insight: number;
   resonance: number;
 }
 
@@ -39,11 +41,15 @@ export interface SaveData {
   seen: string[];
   /** Achievement ids already claimed. */
   claimed: string[];
+  /** Growth materials (Wick Dust, Brass Sovereigns, Insight materials). */
+  items: Record<ItemId, number>;
 }
+
+export const STARTING_ITEMS: Record<ItemId, number> = { dust: 3000, sovereign: 1500, moth: 0, velvet: 0, tide: 0, spring: 0 };
 
 export function freshSave(): SaveData {
   const roster: Record<string, OwnedCharacter> = {};
-  for (const id of STARTER_TEAM) roster[id] = { level: 1, exp: 0, resonance: 0 };
+  for (const id of STARTER_TEAM) roster[id] = { level: 1, insight: 0, resonance: 0 };
   return {
     version: SAVE_VERSION,
     glimmer: STARTING_GLIMMER,
@@ -57,6 +63,7 @@ export function freshSave(): SaveData {
     playerId: 100000000 + Math.floor(Math.random() * 899999999),
     seen: [],
     claimed: [],
+    items: { ...STARTING_ITEMS },
   };
 }
 
@@ -65,6 +72,13 @@ const stageIds = new Set(STAGES.map((s) => s.id));
 
 function strings(v: unknown, max: number): string[] {
   return Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string'))].slice(0, max) : [];
+}
+
+function sanitizeItems(v: unknown, legacy: boolean): Record<ItemId, number> {
+  const src = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
+  const out = {} as Record<ItemId, number>;
+  for (const id of ITEM_ORDER) out[id] = Math.round(num(src[id], 0, 1e9, legacy ? STARTING_ITEMS[id] * 4 : 0));
+  return out;
 }
 
 function num(v: unknown, min: number, max: number, fallback: number): number {
@@ -80,19 +94,23 @@ export function sanitizeSave(raw: unknown): SaveData {
   if (!raw || typeof raw !== 'object') return base;
   const r = raw as Record<string, unknown>;
 
+  const legacy = num(r.version, 0, 99, 0) < 2;
   const roster: Record<string, OwnedCharacter> = {};
   if (r.roster && typeof r.roster === 'object') {
     for (const [id, v] of Object.entries(r.roster as Record<string, unknown>)) {
       if (!charIds.has(id) || !v || typeof v !== 'object') continue;
       const o = v as Record<string, unknown>;
-      roster[id] = {
-        level: Math.round(num(o.level, 1, MAX_LEVEL, 1)),
-        exp: Math.round(num(o.exp, 0, 1e7, 0)),
-        resonance: Math.round(num(o.resonance, 0, MAX_RESONANCE, 0)),
-      };
+      const rarity = CHARACTERS.find((c) => c.id === id)!.rarity;
+      const resonance = Math.round(num(o.resonance, 0, MAX_RESONANCE, 0));
+      if (legacy) {
+        roster[id] = { ...fromLegacyLevel(Math.round(num(o.level, 1, 40, 1)), rarity), resonance };
+      } else {
+        const insight = Math.round(num(o.insight, 0, maxInsight(rarity), 0));
+        roster[id] = { level: Math.round(num(o.level, 1, levelCap(insight), 1)), insight, resonance };
+      }
     }
   }
-  for (const id of STARTER_TEAM) roster[id] ??= { level: 1, exp: 0, resonance: 0 };
+  for (const id of STARTER_TEAM) roster[id] ??= { level: 1, insight: 0, resonance: 0 };
 
   let team = Array.isArray(r.team) ? (r.team as unknown[]).filter((id): id is string => typeof id === 'string' && !!roster[id]) : [];
   team = [...new Set(team)].slice(0, 3);
@@ -123,5 +141,6 @@ export function sanitizeSave(raw: unknown): SaveData {
     playerId: Math.round(num(r.playerId, 100000000, 999999999, base.playerId)),
     seen: strings(r.seen, 64),
     claimed: strings(r.claimed, 64),
+    items: sanitizeItems(r.items, legacy),
   };
 }

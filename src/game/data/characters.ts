@@ -354,31 +354,31 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'augustin',
-    name: 'Augustin Bellweather',
-    title: 'The Midnight Conductor',
+    name: 'Isidore Vellum',
+    title: 'The Archivist of Ash',
     mood: 'moon',
     rarity: 5,
     role: 'Support',
     base: { hp: 1000, atk: 136, def: 50 },
     verses: [
       {
-        id: 'augustin_accel', name: 'Accelerando', type: 'buff',
+        id: 'augustin_accel', name: 'Marginalia', type: 'buff',
         effects: [{ kind: 'ardor', target: 'allAllies', amount: 1 }],
-        art: { motif: 'metronome', layout: 'rings', portrait: true },
+        art: { motif: 'newspaper', layout: 'rings', portrait: true },
       },
       {
-        id: 'augustin_forte', name: 'Fortissimo', type: 'attack',
+        id: 'augustin_forte', name: 'Paper Cut', type: 'attack',
         effects: [{ kind: 'damage', target: 'enemy', power: 1.65 }],
-        art: { motif: 'baton', layout: 'burst' },
+        art: { motif: 'cards', layout: 'burst' },
       },
     ],
     finale: {
-      id: 'augustin_finale', name: 'Coda', type: 'mass', finale: true,
+      id: 'augustin_finale', name: 'The Unwritten Page', type: 'mass', finale: true,
       effects: [
         { kind: 'damage', target: 'allEnemies', power: 2.6 },
         { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 },
       ],
-      art: { motif: 'baton', layout: 'rays', portrait: true },
+      art: { motif: 'newspaper', layout: 'rays', portrait: true },
     },
     look: {
       eyeStyle: 'soft', mouth: 'flat',
@@ -386,8 +386,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'tailcoat', coat: '#1d2030', shirt: '#f2efe8', accent: '#d8b04a', legs: '#171a26', shoes: '#0f1016',
       prop: 'baton', mustache: true,
     },
-    palette: { primary: '#2f4f8f', secondary: '#e8c25a', ink: '#0e1220' },
-    quote: 'On my downbeat, the night begins to listen.',
+    palette: { primary: '#4a4a5e', secondary: '#e6d8b8', ink: '#141218' },
+    quote: 'Everything the Dimming eats, I have already written down. It cannot unwrite me.',
   },
   {
     id: 'percival',
@@ -555,34 +555,34 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'kit',
-    name: 'Kit Marlowe',
-    title: 'The Rooftop Runner',
+    name: 'Sylvain Noct',
+    title: 'The Wandering Orrerist',
     mood: 'moon',
     rarity: 4,
     role: 'Striker',
     base: { hp: 900, atk: 144, def: 40 },
     verses: [
       {
-        id: 'kit_dash', name: 'Rooftop Dash', type: 'attack',
+        id: 'kit_dash', name: 'Orbit Strike', type: 'attack',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.3 },
           { kind: 'status', target: 'self', status: 'might', turns: 2 },
         ],
-        art: { motif: 'swirl', layout: 'burst', portrait: true },
+        art: { motif: 'telescope', layout: 'burst', portrait: true },
       },
       {
-        id: 'kit_smoke', name: 'Smoke Bomb', type: 'debuff',
+        id: 'kit_smoke', name: 'Eclipse Hour', type: 'debuff',
         effects: [{ kind: 'status', target: 'allEnemies', status: 'weak', turns: 2 }],
-        art: { motif: 'smoke', layout: 'spiral' },
+        art: { motif: 'crescent', layout: 'spiral' },
       },
     ],
     finale: {
-      id: 'kit_finale', name: 'Midnight Heist', type: 'attack', finale: true,
+      id: 'kit_finale', name: 'Grand Orrery', type: 'attack', finale: true,
       effects: [
         { kind: 'damage', target: 'enemy', power: 3.6 },
         { kind: 'fireflies', amount: 2 },
       ],
-      art: { motif: 'moth', layout: 'rays', portrait: true },
+      art: { motif: 'meteor', layout: 'rays', portrait: true },
     },
     look: {
       eyeStyle: 'open', mouth: 'smirk',
@@ -591,8 +591,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'vest', coat: '#2a2a34', shirt: '#3a3a48', accent: '#c94a4a', legs: '#222228', shoes: '#141218',
       scarf: true,
     },
-    palette: { primary: '#3a3a5a', secondary: '#e8604a', ink: '#0e0e14' },
-    quote: 'The rooftops are the only street the Dimming forgot.',
+    palette: { primary: '#22305a', secondary: '#d8c48a', ink: '#0a0e1a' },
+    quote: 'My orrery still turns. Somewhere out there, the planets have not heard the night stopped.',
   },
   {
     id: 'hesper',

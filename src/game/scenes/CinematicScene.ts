@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ART_FACES_LEFT, ensureBg, ensurePortrait } from '../art/registry';
+import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
@@ -8,7 +8,7 @@ import { getCinematic } from '../data/story';
 import type { SceneBg, Shot } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { Atmosphere, ornament, text } from '../ui/kit';
+import { Atmosphere, text } from '../ui/kit';
 import { type LivingSprite, livingPortrait } from '../ui/LivingSprite';
 
 export interface CinematicData {
@@ -25,9 +25,16 @@ interface Beat {
   seg: number;
   bg: SceneBg;
   tone: Tone;
+  /** Clock stamp shown when this beat opens a cinematic (e.g. "23:59"). */
+  clock?: string;
 }
 
-const BAR = 104;
+/** Bottom text block (the reference's dialogue layout: name, hairline, text). */
+const TX = 420;
+const NAME_Y = 892;
+const RULE_Y = 930;
+const BODY_Y = 948;
+const WRAP = 1100;
 const TONE: Record<string, { color: number; alpha: number; mode: Phaser.BlendModes }> = {
   cold: { color: 0x1a2c48, alpha: 0.55, mode: Phaser.BlendModes.MULTIPLY },
   warm: { color: 0x6a3a14, alpha: 0.32, mode: Phaser.BlendModes.MULTIPLY },
@@ -57,6 +64,8 @@ export class CinematicScene extends Phaser.Scene {
   private seg = -1;
   private cast: { who: string; side: 'L' | 'R'; obj: LivingSprite | Phaser.GameObjects.Image }[] = [];
   private nextMark!: Phaser.GameObjects.Text;
+  private auto = false;
+  private asking = false;
 
   constructor() {
     super('Cinematic');
@@ -82,7 +91,7 @@ export class CinematicScene extends Phaser.Scene {
       }
       const cin = getCinematic(id);
       if (!cin) return;
-      this.beats.push({ shot: { kind: 'bg', bg: cin.bg, tone: cin.tone }, seg, bg: cin.bg, tone: cin.tone });
+      this.beats.push({ shot: { kind: 'bg', bg: cin.bg, tone: cin.tone }, seg, bg: cin.bg, tone: cin.tone, clock: cin.clock });
       for (const shot of cin.shots) this.beats.push({ shot, seg, bg: cin.bg, tone: cin.tone });
     });
 
@@ -91,24 +100,42 @@ export class CinematicScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.28).setDepth(1);
     new Atmosphere(this, { depth: 40, fireflies: 6 });
     this.ui = this.add.container(0, 0).setDepth(70);
-    const top = this.add.rectangle(W / 2, -BAR, W, BAR, 0x000000).setOrigin(0.5, 0).setDepth(60);
-    const bot = this.add.rectangle(W / 2, H + BAR, W, BAR, 0x000000).setOrigin(0.5, 1).setDepth(60);
-    this.tweens.add({ targets: top, y: 0, duration: 700, ease: 'Cubic.easeOut' });
-    this.tweens.add({ targets: bot, y: H, duration: 700, ease: 'Cubic.easeOut' });
+    // Soft dark floor under the text, as in the reference (no letterbox bars).
+    const floor = this.add.graphics().setDepth(20);
+    floor.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.92, 0.92);
+    floor.fillRect(0, H - 330, W, 190);
+    floor.fillStyle(0x000000, 0.92).fillRect(0, H - 140, W, 140);
+    const topShade = this.add.graphics().setDepth(20);
+    topShade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.5, 0.5, 0, 0);
+    topShade.fillRect(0, 0, W, 120);
 
-    const skip = text(this, W - 60, BAR / 2, 'SKIP  ▸▸', { size: 26, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(1, 0.5).setDepth(90).setInteractive({ useHandCursor: true });
-    skip.on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
-      e.stopPropagation();
-      audio.sfx('back');
-      this.finish();
+    const corner = (x: number, label: string, onClick: () => void) => {
+      const t = text(this, x, 48, label, { size: 22, font: 'display', color: CSS.creamDim, spacing: 3 }).setOrigin(1, 0.5).setDepth(90).setInteractive({ useHandCursor: true });
+      t.on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+        e.stopPropagation();
+        onClick();
+      });
+      return t;
+    };
+    const autoT = corner(W - 190, 'AUTO  ▷', () => {
+      this.auto = !this.auto;
+      audio.sfx('tap');
+      autoT.setText(this.auto ? 'AUTO  ▶' : 'AUTO  ▷').setColor(this.auto ? CSS.goldLight : CSS.creamDim);
+      if (this.auto && !this.typer && !this.busy) this.time.delayedCall(600, () => this.auto && this.advance());
     });
-    this.nextMark = text(this, W - 80, H - BAR - 30, '▼', { size: 24, color: CSS.creamDim }).setOrigin(0.5).setDepth(90).setAlpha(0);
+    corner(W - 50, 'SKIP  ▸|', () => {
+      audio.sfx('tap');
+      this.confirmSkip();
+    });
+    this.nextMark = text(this, W - 360, H - 60, '▼', { size: 20, color: CSS.creamDim }).setOrigin(0.5).setDepth(90).setAlpha(0);
     this.tweens.add({ targets: this.nextMark, y: this.nextMark.y + 8, duration: 500, yoyo: true, repeat: -1 });
 
-    this.input.on('pointerup', () => this.advance());
+    this.auto = false;
+    this.asking = false;
+    this.input.on('pointerup', () => !this.asking && this.advance());
     this.input.keyboard?.on('keydown-SPACE', () => this.advance());
     this.input.keyboard?.on('keydown-ENTER', () => this.advance());
-    this.input.keyboard?.on('keydown-ESC', () => this.finish());
+    this.input.keyboard?.on('keydown-ESC', () => this.confirmSkip());
 
     const boss = data.ids.some((id) => id.startsWith('stage:') && getStage(id.slice(6)).boss);
     audio.play(boss ? 'boss' : data.ids.some((id) => !id.startsWith('stage:')) ? 'rite' : 'lobby');
@@ -138,7 +165,11 @@ export class CinematicScene extends Phaser.Scene {
     }
     const s = b.shot;
     switch (s.kind) {
-      case 'bg': this.setBg(s.bg, s.tone); this.wait(500, () => this.advance()); break;
+      case 'bg':
+        this.setBg(s.bg, s.tone);
+        if (b.clock) this.stamp(b.clock);
+        this.wait(b.clock ? 1400 : 500, () => this.advance());
+        break;
       case 'narrate': this.narrate(s.text, s.bg, s.tone); break;
       case 'line': this.line(s.who, s.text); break;
       case 'letter': this.letter(s.text, s.sign); break;
@@ -193,6 +224,8 @@ export class CinematicScene extends Phaser.Scene {
           this.typer?.remove();
           this.typer = undefined;
           this.nextMark.setAlpha(1);
+          const at = this.i;
+          if (this.auto) this.time.delayedCall(1500 + full.length * 18, () => this.auto && this.i === at && !this.asking && this.advance());
         }
       },
     });
@@ -224,11 +257,9 @@ export class CinematicScene extends Phaser.Scene {
     if (bg || tone) this.setBg(bg ?? this.beats[this.i].bg, tone ?? this.beats[this.i].tone);
     this.clearUi();
     this.dimCast(true);
-    const t = text(this, W / 2, H / 2, '', { size: 40, italic: true, color: CSS.cream, wrap: 1300, align: 'center', lineSpacing: 10, shadow: true }).setOrigin(0.5);
-    const r1 = ornament(this, W / 2, H / 2 - 120, 460).setAlpha(0);
-    const r2 = ornament(this, W / 2, H / 2 + 120, 460).setAlpha(0);
-    this.ui.add([r1, r2, t]);
-    this.tweens.add({ targets: [r1, r2], alpha: 0.7, duration: 600 });
+    const rule = this.add.rectangle(TX, RULE_Y, WRAP, 1, 0xe8dcc0, 0.3).setOrigin(0, 0.5);
+    const t = text(this, TX, BODY_Y, '', { size: 30, color: CSS.cream, wrap: WRAP, lineSpacing: 8, shadow: true });
+    this.ui.add([rule, t]);
     this.type(t, str, 1);
   }
 
@@ -252,56 +283,83 @@ export class CinematicScene extends Phaser.Scene {
     const info = this.castFor(who);
     if (info.key) this.enter(who, info.key, info.enemy);
     this.dimCast(!info.key, who);
-    // dialogue panel
-    const panelY = H - BAR - 190;
-    const shade = this.add.graphics();
-    shade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.88, 0.88);
-    shade.fillRect(0, panelY - 150, W, 90);
-    shade.fillStyle(0x000000, 0.88);
-    shade.fillRect(0, panelY - 60, W, H - BAR - panelY + 60);
-    const name = text(this, W / 2 - 600, panelY - 52, info.name, { size: 38, font: 'display', bold: true, color: info.enemy ? '#e7a0b8' : CSS.goldLight, spacing: 3, shadow: true });
-    const rule = this.add.rectangle(W / 2 - 600, panelY + 2, 1200, 2, info.enemy ? 0xb04a6a : C.gold, 0.6).setOrigin(0, 0.5);
-    const body = text(this, W / 2 - 600, panelY + 22, '', { size: 34, color: CSS.cream, wrap: 1200, lineSpacing: 8, shadow: true });
-    this.ui.add([shade, rule, name, body]);
+    const name = text(this, TX, NAME_Y, info.name, { size: 32, color: info.enemy ? '#e7a0b8' : CSS.cream, spacing: 1, shadow: true }).setOrigin(0, 0.5);
+    const rule = this.add.rectangle(TX, RULE_Y, WRAP, 1, info.enemy ? 0xb04a6a : 0xe8dcc0, 0.35).setOrigin(0, 0.5);
+    const body = text(this, TX, BODY_Y, '', { size: 30, color: CSS.cream, wrap: WRAP, lineSpacing: 8, shadow: true });
+    this.ui.add([rule, name, body]);
+    // Speakers without art get a small head medallion beside their name.
+    if (!info.key) {
+      const hc = this.add.circle(TX - 70, NAME_Y + 34, 44, 0x15131a, 0.9).setStrokeStyle(1.5, 0xe8dcc0, 0.4);
+      const q = text(this, TX - 70, NAME_Y + 34, '?', { size: 40, font: 'display', color: CSS.creamDim }).setOrigin(0.5);
+      this.ui.add([hc, q]);
+    }
     this.type(body, str, 2);
   }
 
-  /** Brings a speaker on stage: allies alternate sides (Corvin stage left), foes take stage right. */
+  /** One speaker at a time, centre stage; a new speaker cross-fades in over the last. */
   private enter(who: string, key: string, enemy: boolean): void {
     if (this.cast.some((c) => c.who === who)) return;
-    let side: 'L' | 'R';
-    if (enemy) side = 'R';
-    else if (who === 'wren') side = 'L';
-    else {
-      const left = this.cast.find((c) => c.side === 'L');
-      const right = this.cast.find((c) => c.side === 'R');
-      side = !right ? 'R' : !left ? 'L' : right.who === 'wren' ? 'L' : 'R';
-    }
-    const old = this.cast.find((c) => c.side === side);
-    if (old) {
+    for (const old of this.cast) {
       const o = old.obj;
-      this.tweens.add({ targets: o, alpha: 0, x: o.x + (side === 'L' ? -120 : 120), duration: 320, onComplete: () => o.destroy() });
-      this.cast = this.cast.filter((c) => c !== old);
+      this.tweens.add({ targets: o, alpha: 0, duration: 380, onComplete: () => o.destroy() });
     }
-    const x = side === 'L' ? 360 : W - 360;
+    this.cast = [];
+    const x = W / 2 + 40;
     let obj: LivingSprite | Phaser.GameObjects.Image;
     if (enemy) {
-      const glow = this.add.image(x, H / 2 + 40, 'fx:glow').setTint(0x6a2a8a).setDisplaySize(900, 900).setAlpha(0.5).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
-      const img = this.add.image(x, H - BAR + 30, key).setOrigin(0.5, 1).setDepth(10);
-      img.setScale(Math.min(760 / img.height, 720 / img.width)).setFlipX(false);
-      this.tweens.add({ targets: glow, alpha: 0.25, duration: 1400, yoyo: true, repeat: -1 });
+      const glow = this.add.image(x, H / 2, 'fx:glow').setTint(0x6a2a8a).setDisplaySize(1000, 900).setAlpha(0.4).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
+      const img = this.add.image(x, H - 120, key).setOrigin(0.5, 1).setDepth(10);
+      img.setScale(Math.min(760 / img.height, 760 / img.width));
+      this.tweens.add({ targets: glow, alpha: 0.2, duration: 1600, yoyo: true, repeat: -1 });
       img.once(Phaser.GameObjects.Events.DESTROY, () => glow.destroy());
       obj = img;
     } else {
-      const ls = livingPortrait(this, x, H + 40, key, 0.7, 920, 820).setDepth(10);
-      // speakers face each other
-      if ((side === 'R') !== ART_FACES_LEFT.has(who)) ls.setScale(-ls.scaleX, ls.scaleY);
-      obj = ls;
+      // Waist-up framing: tall portrait, feet below the frame edge.
+      obj = livingPortrait(this, x, H + 220, key, 0.82, 1180, 1100).setDepth(10);
     }
-    const tx = obj.x;
-    obj.setAlpha(0).setX(tx + (side === 'L' ? -160 : 160));
-    this.tweens.add({ targets: obj, x: tx, alpha: 1, duration: 520, ease: 'Cubic.easeOut' });
-    this.cast.push({ who, side, obj });
+    obj.setAlpha(0).setY(obj.y + 12);
+    this.tweens.add({ targets: obj, alpha: 1, y: obj.y - 12, duration: 460, ease: 'Sine.easeOut' });
+    this.cast.push({ who, side: 'L', obj });
+  }
+
+  /** Segmented clock stamp in the corner, the way the reference opens a scene. */
+  private stamp(time: string): void {
+    const t = text(this, 70, 150, time.split('').join(' '), { size: 46, font: 'body', color: '#e8dcc0', spacing: 4 }).setDepth(80).setAlpha(0);
+    t.setFontFamily('"Courier New", monospace');
+    this.tweens.add({ targets: t, alpha: 0.85, duration: 800 });
+    this.tweens.add({ targets: t, alpha: 0, delay: 5200, duration: 1200, onComplete: () => t.destroy() });
+  }
+
+  private confirmSkip(): void {
+    if (this.asking || this.ending) return;
+    this.asking = true;
+    const c = this.add.container(0, 0).setDepth(200);
+    c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive());
+    c.add(text(this, W / 2, H / 2 - 150, 'NOTICE', { size: 34, font: 'display', color: CSS.cream, spacing: 6 }).setOrigin(0.5));
+    c.add(this.add.rectangle(W / 2, H / 2 - 40, W, 96, 0xefe6d2, 0.95));
+    c.add(text(this, W / 2, H / 2 - 40, 'Skip this story?', { size: 30, color: CSS.paperSub }).setOrigin(0.5));
+    const btn = (bx: number, label: string, fill: number, color: string, fn: () => void) => {
+      const b = this.add.container(bx, H / 2 + 80);
+      b.add(this.add.rectangle(0, 0, 300, 60, fill, 0.95));
+      b.add(text(this, 0, 0, label, { size: 28, font: 'display', color }).setOrigin(0.5));
+      b.setSize(300, 60).setInteractive({ useHandCursor: true }).on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+        e.stopPropagation();
+        fn();
+      });
+      c.add(b);
+    };
+    btn(W / 2 - 170, 'Cancel', 0xd8d0c0, CSS.paperText, () => {
+      audio.sfx('back');
+      c.destroy();
+      this.time.delayedCall(50, () => (this.asking = false));
+    });
+    btn(W / 2 + 170, 'Confirm', C.amber, '#fff4e4', () => {
+      audio.sfx('tap');
+      c.destroy();
+      this.finish();
+    });
+    c.setAlpha(0);
+    this.tweens.add({ targets: c, alpha: 1, duration: 200 });
   }
 
   private letter(str: string, sign: string): void {
@@ -328,28 +386,28 @@ export class CinematicScene extends Phaser.Scene {
     });
   }
 
+  /** "· Title ·" on black with a small part line, as the reference opens each story. */
   private title(kicker: string, title: string, sub?: string): void {
     this.clearUi();
     this.dimCast(true);
     const black = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0);
-    const emblem = this.add.image(W / 2, H / 2 - 190, 'ui:emblem').setScale(0.7).setAlpha(0);
-    const k = text(this, W / 2, H / 2 - 70, kicker, { size: 30, font: 'display', bold: true, color: CSS.gold, spacing: 14 }).setOrigin(0.5).setAlpha(0);
-    const t = text(this, W / 2, H / 2 + 10, title, { size: 92, font: 'display', bold: true, color: CSS.cream, spacing: 4, shadow: true }).setOrigin(0.5).setAlpha(0);
+    const t = text(this, W / 2, H / 2 - 20, `·  ${title}  ·`, { size: 64, color: CSS.cream, spacing: 2 }).setOrigin(0.5).setAlpha(0);
     if (t.width > W - 200) t.setScale((W - 200) / t.width);
-    const r = this.add.rectangle(W / 2, H / 2 + 80, 10, 2, C.gold, 0.9);
-    const s = text(this, W / 2, H / 2 + 120, sub ?? '', { size: 32, italic: true, color: CSS.creamDim }).setOrigin(0.5).setAlpha(0);
-    this.ui.add([black, emblem, k, t, r, s]);
-    this.tweens.add({ targets: black, alpha: 0.82, duration: 600 });
-    this.tweens.add({ targets: emblem, alpha: 0.5, duration: 900, delay: 200 });
-    this.tweens.add({ targets: k, alpha: 1, duration: 600, delay: 300 });
-    this.tweens.add({ targets: t, alpha: 1, duration: 900, delay: 500 });
-    this.tweens.add({ targets: r, width: 760, duration: 900, delay: 600, ease: 'Cubic.easeOut' });
-    this.tweens.add({ targets: s, alpha: 1, duration: 700, delay: 900 });
+    const mark = text(this, W / 2, H / 2 + 50, '⟡', { size: 26, color: CSS.creamDim }).setOrigin(0.5).setAlpha(0);
+    const k = text(this, W / 2, H / 2 + 110, kicker, { size: 22, color: CSS.creamDim, spacing: 8 }).setOrigin(0.5).setAlpha(0);
+    const s = text(this, W / 2, H / 2 + 150, sub ?? '', { size: 22, italic: true, color: CSS.muted }).setOrigin(0.5).setAlpha(0);
+    this.ui.add([black, t, mark, k, s]);
+    this.tweens.add({ targets: black, alpha: 0.94, duration: 700 });
+    this.tweens.add({ targets: t, alpha: 1, duration: 1100, delay: 400 });
+    this.tweens.add({ targets: [mark, k], alpha: 1, duration: 900, delay: 900 });
+    this.tweens.add({ targets: s, alpha: 1, duration: 900, delay: 1200 });
     audio.sfx('reveal4');
     this.busy = true;
-    this.time.delayedCall(1400, () => {
+    this.time.delayedCall(1700, () => {
       this.busy = false;
       this.nextMark.setAlpha(1);
+      const at = this.i;
+      if (this.auto) this.time.delayedCall(1500, () => this.auto && this.i === at && this.advance());
     });
   }
 

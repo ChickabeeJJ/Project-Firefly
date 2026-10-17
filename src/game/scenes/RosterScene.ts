@@ -1,9 +1,9 @@
 import Phaser from 'phaser';
 import { PCARD_H, PCARD_W } from '../art/cardArt';
-import { ensureBg, ensurePortrait } from '../art/registry';
+import { elementPanel, ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { describeVerse, TYPE_LABEL } from '../battle/describe';
-import { MAX_LEVEL, MAX_RESONANCE } from '../battle/rules';
+import { MAX_RESONANCE } from '../battle/rules';
 import { allyStats } from '../battle/stats';
 import type { Card } from '../battle/types';
 import { CHARACTERS, getCharacter } from '../data/characters';
@@ -11,7 +11,7 @@ import { BIOS } from '../data/story';
 import type { BioSection, CharacterDef } from '../data/types';
 import { C, CSS, H, MOOD_CSS, MOOD_NAME, RARITY_CSS, TYPE_CSS, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { expToNext } from '../systems/progression';
+import { affordable, effectiveLevel, formatQty, insightCost, insightLabel, insightState, ITEMS, type ItemId, levelCap, levelCost, levelUp, maxAffordableLevel, maxInsight, raiseInsight } from '../systems/growth';
 import { CardView } from '../ui/CardView';
 import { Atmosphere, Button, fadeIn, goTo, ornament, rarityStars, text, toast } from '../ui/kit';
 import { livingPortrait } from '../ui/LivingSprite';
@@ -54,6 +54,7 @@ function fallbackBio(c: CharacterDef): BioSection[] {
 export class RosterScene extends Phaser.Scene {
   private sort: 'rarity' | 'level' = 'level';
   private page?: Phaser.GameObjects.Container;
+  private statRows: Phaser.GameObjects.Text[] = [];
 
   constructor() {
     super('Roster');
@@ -117,6 +118,12 @@ export class RosterScene extends Phaser.Scene {
     this.page = p;
     const tint = Phaser.Display.Color.HexStringToColor(c.palette.primary).color;
     p.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0b0b0e, 1).setInteractive());
+    const panel = elementPanel(this, id);
+    if (panel) {
+      const bgImg = this.add.image(W / 2, H / 2, panel);
+      bgImg.setScale(Math.max(W / bgImg.width, H / bgImg.height)).setAlpha(0.3);
+      p.add(bgImg);
+    }
     p.add(this.add.image(940, 560, 'fx:glow').setTint(tint).setDisplaySize(1300, 1100).setAlpha(0.42));
     p.add(text(this, W - 40, 150, view === 'dossier' ? 'DOSSIER' : 'DOCUMENT', { size: 150, font: 'display', bold: true, color: '#ffffff', spacing: 20 }).setOrigin(1, 0.5).setAlpha(0.035));
     p.add(backButton(this, () => {
@@ -132,7 +139,7 @@ export class RosterScene extends Phaser.Scene {
   private overview(p: Phaser.GameObjects.Container, c: CharacterDef): void {
     const save = saves.get();
     const o = save.roster[c.id];
-    const st = allyStats(c.base, o.level, o.resonance);
+    const st = allyStats(c.base, effectiveLevel(o), o.resonance);
 
     p.add(livingPortrait(this, 930, H + 30, ensurePortrait(this, c.id), 0.9, 1000, 900));
 
@@ -152,30 +159,53 @@ export class RosterScene extends Phaser.Scene {
     });
     p.add(text(this, lx, 392, 'Personal Stats  ▸', { size: 28, font: 'display', color: CSS.creamDim, spacing: 1 }));
     p.add(this.add.rectangle(lx, 432, 470, 1, C.gold, 0.35).setOrigin(0, 0.5));
+    const statRows: Phaser.GameObjects.Text[] = [];
     ([['heal', 'HP', st.hp], ['attack', 'ATK', st.atk], ['shield', 'DEF', st.def]] as const).forEach(([icon, k, v], i) => {
       const y = 470 + i * 52;
       p.add(this.add.rectangle(lx, y, 470, 44, 0x121116, 0.75).setOrigin(0, 0.5));
       p.add(this.add.image(lx + 26, y, `icon:${icon}`).setDisplaySize(28, 28));
       p.add(text(this, lx + 52, y, k, { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
-      p.add(text(this, lx + 450, y, v.toLocaleString('en-US'), { size: 26, bold: true, color: CSS.cream }).setOrigin(1, 0.5));
+      const vt = text(this, lx + 450, y, v.toLocaleString('en-US'), { size: 26, bold: true, color: CSS.cream }).setOrigin(1, 0.5);
+      statRows.push(vt);
+      p.add(vt);
     });
-    const ly = 660;
-    p.add(text(this, lx, ly, 'Level', { size: 26, font: 'display', color: CSS.creamDim }));
-    p.add(text(this, lx + 100, ly - 6, `${o.level}`, { size: 46, font: 'display', bold: true, color: CSS.cream }));
-    p.add(text(this, lx + 100 + (o.level >= 10 ? 56 : 30), ly + 10, `/ ${MAX_LEVEL}`, { size: 24, color: CSS.creamDim }));
-    const need = expToNext(o.level);
-    p.add(this.add.rectangle(lx, ly + 66, 470, 8, 0x2a2a30).setOrigin(0, 0.5));
-    p.add(this.add.rectangle(lx, ly + 66, o.level >= MAX_LEVEL ? 470 : 470 * Math.min(1, o.exp / need), 8, C.amber).setOrigin(0, 0.5));
-    p.add(text(this, lx + 470, ly + 92, o.level >= MAX_LEVEL ? 'MAX' : `${o.exp} / ${need} EXP`, { size: 20, color: CSS.creamDim }).setOrigin(1, 0.5));
-    p.add(text(this, lx, ly + 140, 'Resonance', { size: 24, font: 'display', color: CSS.creamDim }));
+    p.add(text(this, lx, 640, `${insightLabel(o.insight)}  ·  Lv ${o.level} / ${levelCap(o.insight)}`, { size: 26, font: 'display', color: CSS.goldLight }));
+    const ly = 690;
+    p.add(text(this, lx, ly, 'Resonance', { size: 24, font: 'display', color: CSS.creamDim }));
     for (let i = 0; i < MAX_RESONANCE; i++) {
-      p.add(this.add.image(lx + 180 + i * 40, ly + 154, 'icon:star4').setDisplaySize(30, 30).setTint(i < o.resonance ? 0xb886e0 : 0x3a3a42));
+      p.add(this.add.image(lx + 180 + i * 40, ly + 14, 'icon:star4').setDisplaySize(30, 30).setTint(i < o.resonance ? 0xb886e0 : 0x3a3a42));
     }
+    this.statRows = statRows;
 
     // ---- right: verses + actions
     const rx = 1420;
-    p.add(text(this, rx, 150, 'Verses', { size: 30, font: 'display', bold: true, color: CSS.cream, spacing: 2 }));
-    p.add(this.add.rectangle(rx, 190, 440, 1, C.gold, 0.35).setOrigin(0, 0.5));
+    // Level / Insight boxes with "+" buttons (the reference's top-right pair).
+    const box = (bx: number, label: string, value: string, sub: string, onClick: () => void, dot: boolean) => {
+      const b = this.add.container(bx, 172);
+      b.add(this.add.rectangle(0, 0, 214, 84, 0xefe6d2, 0.96).setOrigin(0, 0.5));
+      b.add(this.add.rectangle(160, 0, 54, 84, C.amber).setOrigin(0, 0.5));
+      b.add(this.add.image(187, 0, 'icon:plus').setDisplaySize(30, 30));
+      b.add(text(this, 14, -20, label, { size: 22, font: 'display', color: CSS.paperText }).setOrigin(0, 0.5));
+      b.add(this.add.rectangle(14, 2, 132, 1, 0x2a241c, 0.4).setOrigin(0, 0.5));
+      const vt = text(this, 14, 22, value, { size: 26, bold: true, color: CSS.paperText }).setOrigin(0, 0.5);
+      b.add(vt);
+      b.add(text(this, 18 + vt.width, 26, sub, { size: 16, color: CSS.paperSub }).setOrigin(0, 0.5));
+      if (dot) b.add(this.add.circle(208, -36, 8, C.danger).setStrokeStyle(2, 0xffffff));
+      // Content is drawn from x = 0 (left edge); a container's hit box is centred, so shift it.
+      b.setSize(214, 84).setInteractive({ useHandCursor: true });
+      b.input!.hitArea.setTo(107, 0, 214, 84);
+      b.on('pointerup', () => {
+        audio.sfx('tap');
+        onClick();
+      });
+      p.add(b);
+    };
+    const cap = levelCap(o.insight);
+    const ist = insightState(save, c.id);
+    box(rx, 'Level', `${o.level}`, `/${cap}`, () => this.openLevelUp(p, c, statRows), o.level < cap && maxAffordableLevel(save, c.id) > o.level);
+    box(rx + 228, 'Insight', ['0', 'I', 'II', 'III'][o.insight], `/${['0', 'I', 'II', 'III'][maxInsight(c.rarity)]}`, () => this.openInsight(p, c), ist === 'ready');
+    p.add(text(this, rx, 250, 'Verses', { size: 30, font: 'display', bold: true, color: CSS.cream, spacing: 2 }));
+    p.add(this.add.rectangle(rx, 290, 440, 1, C.gold, 0.35).setOrigin(0, 0.5));
     const info = this.add.container(0, 0);
     p.add(info);
     const verses = [...c.verses, c.finale];
@@ -184,16 +214,16 @@ export class RosterScene extends Phaser.Scene {
       info.removeAll(true);
       cards.forEach((cv, j) => cv.setSelected(j === k));
       const v = verses[k];
-      const box = this.add.rectangle(rx, 560, 440, 230, 0x121116, 0.85).setOrigin(0, 0).setStrokeStyle(1, 0xe8dcc0, 0.2);
-      const t = text(this, rx + 20, 574, v.name, { size: 30, font: 'display', bold: true, color: v.finale ? CSS.gold : CSS.goldLight });
+      const box = this.add.rectangle(rx, 548, 440, 250, 0x121116, 0.85).setOrigin(0, 0).setStrokeStyle(1, 0xe8dcc0, 0.2);
+      const t = text(this, rx + 20, 562, v.name, { size: 30, font: 'display', bold: true, color: v.finale ? CSS.gold : CSS.goldLight });
       if (t.width > 400) t.setScale(400 / t.width);
-      const ty = text(this, rx + 20, 616, v.finale ? 'Finale' : TYPE_LABEL[v.type], { size: 22, italic: true, color: v.finale ? CSS.gold : TYPE_CSS[v.type] });
-      const d = text(this, rx + 20, 650, describeVerse(v, 1), { size: 22, color: CSS.cream, wrap: 400, lineSpacing: 2 });
+      const ty = text(this, rx + 20, 604, v.finale ? 'Finale' : TYPE_LABEL[v.type], { size: 22, italic: true, color: v.finale ? CSS.gold : TYPE_CSS[v.type] });
+      const d = text(this, rx + 20, 638, describeVerse(v, 1), { size: 22, color: CSS.cream, wrap: 400, lineSpacing: 2 });
       info.add([box, t, ty, d]);
     };
     verses.forEach((v, k) => {
       const card: Card = { cid: -1 - k, ownerUid: '', verseId: v.id, rank: 1, lit: false, finale: !!v.finale };
-      const cv = new CardView(this, rx + 70 + k * 150, 370, card, c.id).setScale(0.5);
+      const cv = new CardView(this, rx + 70 + k * 150, 416, card, c.id).setScale(0.5);
       cv.setInteractive({ useHandCursor: true });
       cv.on('pointerup', () => {
         audio.sfx('tap');
@@ -223,6 +253,201 @@ export class RosterScene extends Phaser.Scene {
     const q = text(this, 930, H - 50, `“${c.quote}”`, { size: 26, italic: true, color: CSS.cream, wrap: 760, align: 'center', shadow: true }).setOrigin(0.5);
     p.add(this.add.rectangle(930, H - 50, Math.min(840, q.width + 80), q.height + 24, 0x000000, 0.55));
     p.add(q);
+  }
+
+  // ===================================================================== level up / insight
+
+  /** Cream side panel (the reference's level-up sheet) with a close cross. */
+  private sheet(p: Phaser.GameObjects.Container, title: string): Phaser.GameObjects.Container {
+    const s = this.add.container(0, 0);
+    s.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.001).setInteractive());
+    const x0 = 1290;
+    const bg = this.add.graphics();
+    bg.fillStyle(0xefe6d2, 0.98).fillRect(x0, 100, W - x0, H - 100);
+    bg.fillGradientStyle(0xefe6d2, 0xf2b8a0, 0xefe6d2, 0xf2b8a0, 0, 0.55, 0, 0.55).fillRect(x0 + 300, 100, W - x0 - 300, H - 100);
+    s.add(bg);
+    s.add(this.add.tileSprite(x0 + (W - x0) / 2, H / 2 + 50, W - x0, H - 100, 'fx:grain').setAlpha(0.06));
+    s.add(text(this, x0 + 40, 140, title, { size: 34, font: 'display', bold: true, color: CSS.paperText, spacing: 3 }));
+    s.add(this.closeCross(W - 54, 146, () => {
+      s.destroy();
+      this.statRows.forEach((t) => t.setData('preview', null));
+    }));
+    // currency strip
+    const save = saves.get();
+    (['dust', 'sovereign'] as ItemId[]).forEach((id, i) => {
+      const cx = x0 + 60 + i * 230;
+      s.add(this.add.image(cx, H - 60, `item:${id}`).setDisplaySize(52, 52));
+      s.add(text(this, cx + 34, H - 60, formatQty(save.items[id]), { size: 24, bold: true, color: CSS.paperText }).setOrigin(0, 0.5));
+    });
+    p.add(s);
+    return s;
+  }
+
+  private closeCross(x: number, y: number, onClick: () => void): Phaser.GameObjects.Container {
+    const c = this.add.container(x, y);
+    const g = this.add.graphics();
+    g.lineStyle(3, 0x2a241c, 0.9).lineBetween(-14, -14, 14, 14).lineBetween(14, -14, -14, 14);
+    c.add(g);
+    c.setSize(56, 56).setInteractive({ useHandCursor: true });
+    c.on('pointerup', () => {
+      audio.sfx('back');
+      onClick();
+    });
+    return c;
+  }
+
+  /** Triangle emblem filled to show progress through the current Insight tier. */
+  private triangle(cx: number, cy: number, fill: number): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    const h = 190;
+    const w = 220;
+    const pts = [new Phaser.Math.Vector2(cx, cy - h / 2), new Phaser.Math.Vector2(cx + w / 2, cy + h / 2), new Phaser.Math.Vector2(cx - w / 2, cy + h / 2)];
+    g.fillStyle(0xd8cdb4, 1).fillPoints(pts, true);
+    const fy = cy + h / 2 - h * fill;
+    const t = (fy - (cy - h / 2)) / h;
+    g.fillStyle(0x8a2a2a, 1).fillPoints([
+      new Phaser.Math.Vector2(cx - (w / 2) * t, fy), new Phaser.Math.Vector2(cx + (w / 2) * t, fy), pts[1], pts[2],
+    ], true);
+    g.lineStyle(3, 0x2a241c, 0.85).strokePoints(pts, true);
+    g.lineStyle(1.5, 0x2a241c, 0.5).strokeTriangle(cx, cy - h / 2 + 26, cx + w / 2 - 24, cy + h / 2 - 12, cx - w / 2 + 24, cy + h / 2 - 12);
+    g.lineStyle(2, 0xefe6d2, 0.9).strokeTriangle(cx, cy + 10, cx + 26, cy + 52, cx - 26, cy + 52);
+    return g;
+  }
+
+  private openLevelUp(p: Phaser.GameObjects.Container, c: CharacterDef, statRows: Phaser.GameObjects.Text[]): void {
+    const save = saves.get();
+    const o = save.roster[c.id];
+    const cap = levelCap(o.insight);
+    const s = this.sheet(p, 'Level Up');
+    const cx = 1290 + (W - 1290) / 2;
+    s.add(this.triangle(cx, 330, (o.level - 1) / (cap - 1)));
+    s.add(text(this, cx, 460, 'Lv', { size: 26, font: 'display', color: CSS.paperText }).setOrigin(0.5));
+    s.add(this.add.rectangle(cx, 520, W - 1290 - 60, 1, 0x8a2a2a, 0.6));
+    const dial = this.add.container(0, 0);
+    s.add(dial);
+    let target = Math.min(cap, o.level + 1);
+    const best = maxAffordableLevel(save, c.id);
+    const costT = this.add.container(0, 0);
+    s.add(costT);
+    const st0 = allyStats(c.base, effectiveLevel(o), o.resonance);
+    const draw = () => {
+      dial.removeAll(true);
+      costT.removeAll(true);
+      for (let k = -2; k <= 2; k++) {
+        const lv = target + k;
+        if (lv < o.level || lv > cap) continue;
+        const on = k === 0;
+        const t = text(this, cx + k * 90, 520, String(lv), { size: on ? 46 : 30, font: 'display', color: on ? CSS.paperText : CSS.paperSub }).setOrigin(0.5);
+        t.setInteractive({ useHandCursor: true }).on('pointerup', () => {
+          target = lv;
+          draw();
+        });
+        dial.add(t);
+      }
+      dial.add(this.add.rectangle(cx, 520, 86, 86).setStrokeStyle(2.5, 0x8a2a2a));
+      dial.add(this.add.triangle(cx, 470, 0, 0, 16, 0, 8, 10, 0x8a2a2a));
+      dial.add(this.add.triangle(cx, 570, 0, 10, 16, 10, 8, 0, 0x8a2a2a));
+      // arrows
+      const arrow = (x: number, d: number) => {
+        const a = text(this, x, 520, d < 0 ? '‹' : '›', { size: 56, color: '#8a2a2a' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        a.on('pointerup', () => {
+          target = Phaser.Math.Clamp(target + d, Math.min(cap, o.level + 1), cap);
+          draw();
+        });
+        dial.add(a);
+      };
+      arrow(cx - 270, -1);
+      arrow(cx + 270, 1);
+      const mx = this.add.container(cx + 170, 610);
+      mx.add(this.add.rectangle(0, 0, 150, 40, 0xffffff, 0.8).setStrokeStyle(1, 0x8a8578));
+      mx.add(text(this, 0, 0, `Max  Lv.${Math.max(best, Math.min(cap, o.level + 1))}`, { size: 20, color: CSS.paperText }).setOrigin(0.5));
+      mx.setSize(150, 40).setInteractive({ useHandCursor: true }).on('pointerup', () => {
+        target = Math.max(Math.min(cap, o.level + 1), best);
+        draw();
+      });
+      dial.add(mx);
+      if (o.level >= cap) {
+        costT.add(text(this, cx, 720, insightState(save, c.id) === 'max' ? 'Fully raised' : 'Level cap reached — raise Insight', { size: 28, italic: true, color: CSS.paperSub }).setOrigin(0.5));
+        statRows.forEach((r, i) => r.setText([st0.hp, st0.atk, st0.def][i].toLocaleString('en-US')).setColor(CSS.cream));
+        return;
+      }
+      const cost = levelCost(o, target);
+      (['dust', 'sovereign'] as ItemId[]).forEach((id, i) => {
+        const x = cx - 150 + i * 220;
+        const ok = save.items[id] >= cost[id as 'dust' | 'sovereign'];
+        costT.add(this.add.rectangle(x + 30, 700, 200, 70, 0xffffff, 0.55).setStrokeStyle(1, 0x8a8578, 0.6));
+        costT.add(this.add.image(x - 30, 700, `item:${id}`).setDisplaySize(60, 60).setInteractive({ useHandCursor: true }).on('pointerup', () => this.itemInfo(id)));
+        costT.add(text(this, x + 10, 700, formatQty(cost[id as 'dust' | 'sovereign']), { size: 26, bold: true, color: ok ? CSS.paperText : '#c0392b' }).setOrigin(0, 0.5));
+      });
+      const ok = affordable(save, cost);
+      const btn = new Button(this, cx, 820, {
+        w: 300, h: 76, label: 'Level Up', style: ok ? 'amber' : 'cream', size: 32, sfx: ok ? 'levelup' : 'deny',
+        onClick: () => {
+          if (!levelUp(save, c.id, target)) {
+            toast(this, 'Not enough materials — visit the Pawnshop', 'glimmer');
+            return;
+          }
+          saves.commit();
+          toast(this, `${c.name.split(' ')[0]} reached Lv ${target}`, c.mood);
+          this.openCharacter(c.id);
+        },
+      });
+      costT.add(btn);
+      const st1 = allyStats(c.base, effectiveLevel({ insight: o.insight, level: target }), o.resonance);
+      statRows.forEach((r, i) => r.setText(`${[st0.hp, st0.atk, st0.def][i].toLocaleString('en-US')}  ▸ ${[st1.hp, st1.atk, st1.def][i].toLocaleString('en-US')}`).setColor('#9be8ad'));
+    };
+    draw();
+  }
+
+  private openInsight(p: Phaser.GameObjects.Container, c: CharacterDef): void {
+    const save = saves.get();
+    const o = save.roster[c.id];
+    const s = this.sheet(p, 'Insight');
+    const cx = 1290 + (W - 1290) / 2;
+    const state = insightState(save, c.id);
+    s.add(this.triangle(cx, 320, o.insight / maxInsight(c.rarity)));
+    const R = ['0', 'I', 'II', 'III'];
+    if (state === 'max') {
+      s.add(text(this, cx, 480, `${insightLabel(o.insight)} — fully awakened`, { size: 30, font: 'display', color: CSS.paperText }).setOrigin(0.5));
+      return;
+    }
+    s.add(text(this, cx, 470, `Insight ${R[o.insight]}  ▸  ${R[o.insight + 1]}`, { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5));
+    s.add(text(this, cx, 516, `Level cap ${levelCap(o.insight)} ▸ ${levelCap(o.insight + 1)}  ·  level resets to 1, stats are kept`, { size: 20, italic: true, color: CSS.paperSub }).setOrigin(0.5));
+    const cost = insightCost(o.insight + 1);
+    Object.entries(cost).forEach(([id, n], i) => {
+      const x = cx - 180 + (i % 3) * 180;
+      const have = save.items[id as ItemId];
+      s.add(this.add.rectangle(x, 640, 150, 150, 0xffffff, 0.5).setStrokeStyle(1, 0x8a8578, 0.6));
+      s.add(this.add.image(x, 620, `item:${id}`).setDisplaySize(92, 92).setInteractive({ useHandCursor: true }).on('pointerup', () => this.itemInfo(id as ItemId)));
+      s.add(text(this, x, 692, `${formatQty(have)} / ${formatQty(n as number)}`, { size: 20, bold: true, color: have >= (n as number) ? CSS.paperText : '#c0392b' }).setOrigin(0.5));
+    });
+    const msg = state === 'needsLevel' ? `Reach Lv ${levelCap(o.insight)} first` : state === 'short' ? 'Not enough materials' : '';
+    if (msg) s.add(text(this, cx, 760, msg, { size: 24, italic: true, color: '#9a3a2a' }).setOrigin(0.5));
+    s.add(new Button(this, cx, 830, {
+      w: 300, h: 76, label: 'Insight', style: state === 'ready' ? 'amber' : 'cream', size: 32, sfx: state === 'ready' ? 'reveal5' : 'deny',
+      onClick: () => {
+        if (!raiseInsight(save, c.id)) return;
+        saves.commit();
+        toast(this, `${c.name.split(' ')[0]} reached ${insightLabel(o.insight)}`, c.mood);
+        this.openCharacter(c.id);
+      },
+    }));
+  }
+
+  /** Item detail card (name, lore, how to get it). */
+  private itemInfo(id: ItemId): void {
+    const it = ITEMS[id];
+    const save = saves.get();
+    const c = this.add.container(0, 0).setDepth(400);
+    c.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive().on('pointerup', () => c.destroy()));
+    c.add(this.add.rectangle(W / 2, H / 2, 900, 330, 0xefe6d2).setStrokeStyle(2, 0x9a8660));
+    c.add(this.add.circle(W / 2 - 320, H / 2 - 20, 90, 0xf2b8a0, 0.5));
+    c.add(this.add.image(W / 2 - 320, H / 2 - 20, `item:${id}`).setDisplaySize(150, 150));
+    c.add(text(this, W / 2 - 200, H / 2 - 130, it.name, { size: 36, font: 'display', bold: true, color: CSS.paperText }));
+    c.add(text(this, W / 2 - 200, H / 2 - 76, it.blurb, { size: 22, color: CSS.paperText, wrap: 600, lineSpacing: 4 }));
+    c.add(text(this, W / 2 - 200, H / 2 + 70, `Source: ${it.source}`, { size: 22, italic: true, color: CSS.paperSub }));
+    c.add(text(this, W / 2 - 320, H / 2 + 120, `Inventory: ${formatQty(save.items[id])}`, { size: 20, color: CSS.paperSub }).setOrigin(0.5));
+    c.add(this.closeCross(W / 2 + 420, H / 2 - 135, () => c.destroy()));
   }
 
   // ===================================================================== dossier

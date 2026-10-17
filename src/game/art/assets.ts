@@ -28,7 +28,7 @@ export function idleVideoUrl(id: string): string | null {
   return hit && idleSupported() ? hit[1] : null;
 }
 
-export type ArtFolder = 'characters' | 'heads' | 'battle' | 'enemies' | 'bg' | 'cards' | 'banners' | 'ui';
+export type ArtFolder = 'characters' | 'heads' | 'battle' | 'enemies' | 'bg' | 'cards' | 'banners' | 'ui' | 'idle';
 
 function keyFor(path: string): string | null {
   const m = path.match(/assets\/art\/([^/]+)\/([^/]+)\.(png|jpe?g|webp)$/i);

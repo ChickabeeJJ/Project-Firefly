@@ -6,7 +6,8 @@ import { CHAPTERS, STAGES, getStage } from '../data/stages';
 import type { StageDef } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { frontierStage, isUnlocked, REWARDS, stageExp } from '../systems/progression';
+import { frontierStage, isUnlocked, REWARDS } from '../systems/progression';
+import { formatQty, fromLegacyLevel, insightLabel, stageItems } from '../systems/growth';
 import { CINEMATICS } from '../data/story';
 import { goToStage } from '../systems/storyFlow';
 import { Atmosphere, Button, fadeIn, goTo, ornament, text } from '../ui/kit';
@@ -128,11 +129,20 @@ export class StoryScene extends Phaser.Scene {
     const lx = -w / 2 + 50;
     c.add(text(this, lx, -122, `${s.id}${s.boss ? '  ·  BOSS' : ''}`, { size: 28, font: 'display', bold: true, color: s.boss ? '#a8322a' : CSS.paperSub, spacing: 3 }));
     c.add(text(this, lx, -82, s.name, { size: 50, font: 'display', bold: true, color: CSS.paperText }));
-    c.add(text(this, lx, -12, `Recommended Lv ${s.level}   ·   Round limit ${s.roundLimit}   ·   ${s.waves.length} wave${s.waves.length > 1 ? 's' : ''}`, { size: 26, color: CSS.paperSub }));
+    const rec = fromLegacyLevel(s.level, 4);
+    c.add(text(this, lx, -12, `Recommended ${insightLabel(rec.insight)} Lv ${rec.level}   ·   Round limit ${s.roundLimit}   ·   ${s.waves.length} wave${s.waves.length > 1 ? 's' : ''}`, { size: 26, color: CSS.paperSub }));
     const cleared = s.id in save.stars;
     const reward = cleared ? `+${REWARDS.repeatClear} Glimmer` : `+${REWARDS.firstClear} Glimmer first clear (+${REWARDS.perfectBonus} for ★★★)`;
     c.add(this.add.image(lx + 20, 44, 'icon:glimmer').setDisplaySize(40, 40));
-    c.add(text(this, lx + 50, 44, `${reward}   ·   +${stageExp(s)} EXP each`, { size: 26, color: CSS.paperText }).setOrigin(0, 0.5));
+    const rt = text(this, lx + 50, 44, reward, { size: 26, color: CSS.paperText }).setOrigin(0, 0.5);
+    c.add(rt);
+    let ix = lx + 50 + rt.width + 40;
+    for (const [id, n] of Object.entries(stageItems(s.level, s.chapter, !cleared, false))) {
+      c.add(this.add.image(ix, 44, `item:${id}`).setDisplaySize(46, 46));
+      const q = text(this, ix + 26, 44, `×${formatQty(n as number)}`, { size: 22, bold: true, color: CSS.paperText }).setOrigin(0, 0.5);
+      c.add(q);
+      ix += 26 + q.width + 26;
+    }
     const goals = `★ Win   ★ Within ${s.starRounds} rounds   ★ No one falls`;
     c.add(text(this, lx, 90, goals, { size: 26, color: '#9a5a2a' }));
     if (s.rule) {

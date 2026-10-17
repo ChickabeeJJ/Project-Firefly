@@ -47,7 +47,7 @@ export function performRite(save: SaveData, count: number, rng: Rng): RiteResult
     const char = rng.pick(pool);
     const owned = save.roster[char.id];
     if (!owned) {
-      save.roster[char.id] = { level: 1, exp: 0, resonance: 0 };
+      save.roster[char.id] = { level: 1, insight: 0, resonance: 0 };
       results.push({ id: char.id, rarity, isNew: true, resonance: 0, refund: 0 });
     } else if (owned.resonance < MAX_RESONANCE) {
       owned.resonance++;

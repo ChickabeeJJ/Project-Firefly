@@ -7,7 +7,7 @@ import { CHAPTERS, STAGES } from '../data/stages';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel } from '../systems/achievements';
-import { Atmosphere, fadeIn, goTo, text } from '../ui/kit';
+import { Atmosphere, fadeIn, goTo, softPress, text } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
@@ -47,7 +47,7 @@ export class MenuScene extends Phaser.Scene {
     shade.fillRect(0, 0, W, H);
     new Atmosphere(this, { depth: 60, fireflies: 5 });
 
-    stagePortrait(this, 1450, H + 30, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 1080, 1000).setDepth(10);
+    stagePortrait(this, 1500, H + 30, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 1040, 900).setDepth(10);
 
     this.buildHeader();
     this.buildCarousel();
@@ -152,35 +152,61 @@ export class MenuScene extends Phaser.Scene {
 
   private buildGrid(): void {
     const items: [string, string, () => void][] = [
-      ['atlas', 'Atlas', () => openAtlas(this)],
-      ['trophy', 'Achievements', () => openAchievements(this, () => this.refreshBadge())],
       ['roster', 'Troupe', () => goTo(this, 'Roster')],
       ['story', 'Story', () => goTo(this, 'Story')],
-      ['notice', 'Notice', () => openNotice(this)],
       ['summon', 'Lantern Rite', () => goTo(this, 'Summon')],
-      ['gear', 'Settings', () => this.openSettings()],
+      ['shop', 'Pawnshop', () => goTo(this, 'Shop')],
+      ['atlas', 'Atlas', () => openAtlas(this)],
+      ['trophy', 'Achievements', () => openAchievements(this, () => this.refreshBadge())],
+      ['notice', 'Notice', () => openNotice(this)],
+      ['profile', 'Profile', () => openProfile(this)],
       ['gramophone', 'Gramophone', () => openGramophone(this)],
+      ['gear', 'Settings', () => this.openSettings()],
     ];
-    const tw = 210;
-    const th = 170;
+    const tw = 176;
+    const th = 150;
+    const gap = 14;
+    const x0 = 80;
+    const y0 = 650;
+    text(this, x0, y0 - 34, 'OPTIONS', { size: 22, font: 'display', bold: true, color: CSS.goldLight, spacing: 8 }).setOrigin(0, 0.5).setDepth(40);
+    this.add.rectangle(x0 + 150, y0 - 34, 5 * tw + 4 * gap - 150, 1, C.gold, 0.35).setOrigin(0, 0.5).setDepth(40);
     items.forEach(([icon, label, go], i) => {
-      const x = 80 + tw / 2 + (i % 4) * (tw + 20);
-      const y = 640 + th / 2 + Math.floor(i / 4) * (th + 20);
+      const x = x0 + tw / 2 + (i % 5) * (tw + gap);
+      const y = y0 + th / 2 + Math.floor(i / 5) * (th + gap);
       const c = this.add.container(x, y).setDepth(40);
-      c.add(this.add.nineslice(0, 0, 'ui:dark', undefined, tw, th, 12, 12, 12, 12).setAlpha(0.85));
-      c.add(this.add.image(0, -20, `icon:${icon}`).setDisplaySize(84, 84));
-      c.add(text(this, 0, 52, label, { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 1 }).setOrigin(0.5));
+      const g = this.add.graphics();
+      g.fillStyle(0x0b0c10, 0.6).fillRect(-tw / 2, -th / 2, tw, th);
+      g.lineStyle(1.5, C.gold, 0.55).strokeRect(-tw / 2, -th / 2, tw, th);
+      g.lineStyle(1, C.gold, 0.22).strokeRect(-tw / 2 + 6, -th / 2 + 6, tw - 12, th - 12);
+      // corner lozenges
+      for (const [cx, cy] of [[-tw / 2, -th / 2], [tw / 2, -th / 2], [-tw / 2, th / 2], [tw / 2, th / 2]]) {
+        g.fillStyle(C.gold, 0.8).fillPoints([new Phaser.Math.Vector2(cx, cy - 5), new Phaser.Math.Vector2(cx + 5, cy), new Phaser.Math.Vector2(cx, cy + 5), new Phaser.Math.Vector2(cx - 5, cy)], true);
+      }
+      const halo = this.add.image(0, -18, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(150, 120).setAlpha(0.12);
+      const ic = this.add.image(0, -18, `icon:${icon}`).setDisplaySize(72, 72).setAlpha(0.88);
+      const lb = text(this, 0, 48, label.toUpperCase(), { size: 17, font: 'display', bold: true, color: CSS.cream, spacing: 3 }).setOrigin(0.5);
+      if (lb.width > tw - 20) lb.setScale((tw - 20) / lb.width);
+      const under = this.add.rectangle(0, 64, 0, 1.5, C.gold, 0.9);
+      c.add([g, halo, ic, lb, under]);
       if (icon === 'trophy') {
-        this.badge = this.add.circle(tw / 2 - 22, -th / 2 + 22, 11, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
+        this.badge = this.add.circle(tw / 2 - 18, -th / 2 + 18, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
         c.add(this.badge);
       }
       c.setSize(tw, th).setInteractive({ useHandCursor: true });
-      c.on('pointerover', () => c.setScale(1.05));
-      c.on('pointerout', () => c.setScale(1));
-      c.on('pointerup', () => {
-        audio.sfx('tap');
-        go();
+      c.on('pointerover', () => {
+        this.tweens.add({ targets: under, width: tw - 60, duration: 180, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: halo, alpha: 0.32, duration: 180 });
+        ic.setAlpha(1);
       });
+      c.on('pointerout', () => {
+        this.tweens.add({ targets: under, width: 0, duration: 160 });
+        this.tweens.add({ targets: halo, alpha: 0.12, duration: 160 });
+        ic.setAlpha(0.88);
+      });
+      softPress(c, go, 'tap', 1.03);
+      // staggered entrance
+      c.setAlpha(0).setY(y + 18);
+      this.tweens.add({ targets: c, alpha: 1, y, duration: 320, delay: 120 + i * 40, ease: 'Cubic.easeOut' });
     });
     this.refreshBadge();
   }

@@ -180,6 +180,8 @@ export interface Cinematic {
   name: string;
   bg: SceneBg;
   tone?: 'warm' | 'cold' | 'dawn';
+  /** Clock stamp shown as the scene opens. */
+  clock?: string;
   shots: Shot[];
 }
 

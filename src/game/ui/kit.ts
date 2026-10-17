@@ -40,6 +40,42 @@ export function text(scene: Phaser.Scene, x: number, y: number, str: string, o: 
   return t;
 }
 
+/**
+ * Subtle press feedback shared by every clickable: a thin gold ring that widens and fades,
+ * plus a soft glow. Coordinates are world space.
+ */
+export function pressFx(scene: Phaser.Scene, x: number, y: number, size = 90, depth = 4000): void {
+  const ring = scene.add.circle(x, y, size * 0.3).setStrokeStyle(2, C.gold, 0.85).setDepth(depth);
+  scene.tweens.add({ targets: ring, radius: size * 0.62, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+  const g = scene.add.image(x, y, 'fx:glow').setTint(0xffe6b0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.1, size * 1.1).setAlpha(0.35).setDepth(depth);
+  scene.tweens.add({ targets: g, alpha: 0, duration: 320, onComplete: () => g.destroy() });
+}
+
+/** Makes a container behave like a soft physical button: lift on hover, dip on press, ring on release. */
+export function softPress(c: Phaser.GameObjects.Container, onClick: () => void, sfx: Sfx = 'tap', lift = 1.04): void {
+  const scene = c.scene;
+  let down = false;
+  const base = c.scale;
+  c.on('pointerover', () => scene.tweens.add({ targets: c, scale: base * lift, duration: 140, ease: 'Sine.easeOut' }));
+  c.on('pointerout', () => {
+    down = false;
+    scene.tweens.add({ targets: c, scale: base, duration: 160, ease: 'Sine.easeOut' });
+  });
+  c.on('pointerdown', () => {
+    down = true;
+    scene.tweens.add({ targets: c, scale: base * 0.96, duration: 80, ease: 'Sine.easeOut' });
+  });
+  c.on('pointerup', () => {
+    if (!down) return;
+    down = false;
+    scene.tweens.add({ targets: c, scale: base * lift, duration: 140, ease: 'Back.easeOut' });
+    const m = c.getWorldTransformMatrix();
+    pressFx(scene, m.tx, m.ty, Math.min(220, Math.max(c.width, c.height) * base));
+    audio.sfx(sfx);
+    onClick();
+  });
+}
+
 export type ButtonStyle = 'amber' | 'cream' | 'dark' | 'gold';
 
 const BTN_TEX: Record<ButtonStyle, string> = { amber: 'ui:btnAmber', cream: 'ui:btnCream', dark: 'ui:btnDark', gold: 'ui:btnGold' };
@@ -70,12 +106,15 @@ export class Button extends Phaser.GameObjects.Container {
     const style = o.style ?? 'amber';
     this.bg = scene.add.nineslice(0, 0, BTN_TEX[style], undefined, o.w, o.h, 16, 16, 16, 16);
     this.add(this.bg);
-    const iconW = o.icon ? 44 : 0;
+    const iconOnly = !!o.icon && !o.label;
+    const iconW = o.icon && !iconOnly ? 44 : 0;
     const ly = o.sub ? -10 : 0;
     this.label = text(scene, iconW / 2, ly, o.label, { size: o.size ?? 32, font: 'display', bold: true, color: BTN_TEXT[style], spacing: 2 }).setOrigin(0.5);
     this.add(this.label);
     if (o.icon) {
-      const ic = scene.add.image(this.label.x - this.label.width / 2 - 28, ly, `icon:${o.icon}`).setDisplaySize(44, 44);
+      // Icon-only buttons (✕, back) sit dead centre; otherwise the icon leads the label.
+      const isz = iconOnly ? Math.min(o.w, o.h) * 0.56 : 44;
+      const ic = scene.add.image(iconOnly ? 0 : this.label.x - this.label.width / 2 - 28, ly, `icon:${o.icon}`).setDisplaySize(isz, isz);
       this.add(ic);
     }
     if (o.sub) {
@@ -84,20 +123,22 @@ export class Button extends Phaser.GameObjects.Container {
     }
     this.setSize(o.w, o.h);
     this.setInteractive({ useHandCursor: true });
-    this.on('pointerover', () => this.enabled && this.setScale(1.03));
+    this.on('pointerover', () => this.enabled && scene.tweens.add({ targets: this, scale: 1.03, duration: 120, ease: 'Sine.easeOut' }));
     this.on('pointerout', () => {
       this.pressed = false;
-      this.setScale(1);
+      scene.tweens.add({ targets: this, scale: 1, duration: 140, ease: 'Sine.easeOut' });
     });
     this.on('pointerdown', () => {
       if (!this.enabled) return;
       this.pressed = true;
-      this.setScale(0.97);
+      scene.tweens.add({ targets: this, scale: 0.96, duration: 70, ease: 'Sine.easeOut' });
     });
     this.on('pointerup', () => {
       if (!this.pressed) return;
       this.pressed = false;
-      this.setScale(1.03);
+      scene.tweens.add({ targets: this, scale: 1.03, duration: 160, ease: 'Back.easeOut' });
+      const m = this.getWorldTransformMatrix();
+      pressFx(scene, m.tx, m.ty, Math.min(220, Math.max(o.w, o.h) * 1.1));
       audio.sfx(o.sfx ?? 'tap');
       o.onClick();
     });

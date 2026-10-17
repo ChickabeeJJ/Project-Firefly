@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { idleVideoUrl, isDropIn } from '../art/assets';
+import { dropIn, idleVideoUrl, isDropIn } from '../art/assets';
 
 // Brings still character art to life without extra frames. The texture is cut into thin
 // horizontal strips and every strip is shifted and stretched each frame: the feet stay planted
@@ -140,47 +140,61 @@ export interface StagePortrait {
 }
 
 export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId: string, key: string, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): StagePortrait {
-  const still = livingPortrait(scene, x, y, key, proceduralScale, paintedHeight, maxWidth);
   const url = idleVideoUrl(charId);
+  const posterKey = url ? dropIn(scene, 'idle', `${charId}_poster`) : null;
+  if (!url || !posterKey) {
+    const still = livingPortrait(scene, x, y, key, proceduralScale, paintedHeight, maxWidth);
+    const api: StagePortrait = {
+      hit: still.hit,
+      pose: () => still.pose(4, 0.006, 200, 140),
+      setDepth(d) {
+        still.setDepth(d);
+        return api;
+      },
+    };
+    return api;
+  }
+  // Idle-loop characters start on the loop's own first frame (the poster), so when the video
+  // takes over there is nothing to see change: same pixels, same size, same place.
+  const poster = scene.add.image(x, y, posterKey).setOrigin(0.5, 1);
+  const k = Math.min(paintedHeight / poster.height, maxWidth / poster.width);
+  poster.setScale(k);
+  const hit = scene.add.zone(x, y - poster.displayHeight / 2, poster.displayWidth * 0.6, poster.displayHeight * 0.9);
+  const v = scene.add.video(x, y).setOrigin(0.5, 1).setAlpha(0);
   const api: StagePortrait = {
-    hit: still.hit,
-    pose: () => still.pose(14, 0.03, 160, 120),
+    hit,
+    pose: () => {
+      const target = v.alpha >= 1 ? v : poster;
+      const sy = target.scaleY;
+      scene.tweens.add({ targets: target, scaleY: sy * 1.004, y: y - 2, duration: 200, yoyo: true, ease: 'Sine.easeInOut', onComplete: () => target.setScale(target.scaleX, sy).setY(y) });
+    },
     setDepth(d) {
-      still.setDepth(d);
-      video?.setDepth(d);
+      poster.setDepth(d);
+      v.setDepth(d + 0.01);
+      hit.setDepth(d + 0.02);
       return api;
     },
   };
-  let video: Phaser.GameObjects.Video | undefined;
-  if (!url) return api;
-  // The still stays on screen until the loop's first frame arrives, then cross-fades out.
-  video = scene.add.video(x, y).setOrigin(0.5, 1).setAlpha(0).setDepth(still.depth);
-  const v = video;
   let shown = false;
   const reveal = () => {
     const w = v.video?.videoWidth ?? 0;
     const h = v.video?.videoHeight ?? 0;
-    if (shown || !w || !h) return;
+    if (shown || !w || !h || v.video!.currentTime <= 0) return;
     shown = true;
-    v.setDisplaySize(w, h).setScale(Math.min(paintedHeight / h, maxWidth / w));
-    scene.tweens.add({ targets: v, alpha: 1, duration: 400 });
-    scene.tweens.add({ targets: still, alpha: 0, duration: 400, onComplete: () => still.setVisible(false) });
+    v.setDisplaySize(w, h).setScale(k * (poster.width / w));
+    scene.tweens.add({ targets: v, alpha: 1, duration: 700, ease: 'Sine.easeInOut', onComplete: () => poster.setVisible(false) });
   };
-  v.on(Phaser.GameObjects.Events.VIDEO_CREATED, reveal);
   v.on(Phaser.GameObjects.Events.VIDEO_TEXTURE, reveal);
-  v.on(Phaser.GameObjects.Events.VIDEO_PLAYING, reveal);
+  v.on(Phaser.GameObjects.Events.VIDEO_PLAYING, () => scene.time.delayedCall(60, reveal));
   v.loadURL(url, true);
-  // Play the (ping-pong) loop once, then rest on its first frame — which matches the still —
-  // for a few seconds before the next breath, so the idle never feels like a stuck GIF.
+  // Play the (ping-pong) loop once, then rest on its first frame for a few seconds before the
+  // next breath, so the idle never feels like a stuck GIF.
   v.play(false);
   v.on(Phaser.GameObjects.Events.VIDEO_COMPLETE, () => {
+    reveal();
     scene.time.delayedCall(Phaser.Math.Between(2600, 4200), () => {
       if (v.active) v.play(false);
     });
   });
-  api.pose = () => {
-    if (!v.visible || v.alpha < 1) return still.pose(14, 0.03, 160, 120);
-    scene.tweens.add({ targets: v, scaleY: v.scaleY * 1.015, scaleX: v.scaleX * 0.995, duration: 140, yoyo: true, ease: 'Sine.easeOut' });
-  };
   return api;
 }

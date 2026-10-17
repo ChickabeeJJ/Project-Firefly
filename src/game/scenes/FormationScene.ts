@@ -4,6 +4,7 @@ import { ensureBg } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { moodRelation } from '../battle/rules';
 import { allyStats } from '../battle/stats';
+import { effectiveLevel } from '../systems/growth';
 import { CHARACTERS, getCharacter } from '../data/characters';
 import { getEnemy } from '../data/enemies';
 import { getStage } from '../data/stages';
@@ -94,7 +95,7 @@ export class FormationScene extends Phaser.Scene {
         const tag = text(this, 0, -PCARD_H / 2 - 26, adv ? '▲ Mood advantage' : '▼ Mood disadvantage', { size: 22, bold: true, color: adv ? CSS.gold : CSS.muted }).setOrigin(0.5);
         card.add(tag);
       }
-      const st = allyStats(c.base, owned.level, owned.resonance);
+      const st = allyStats(c.base, effectiveLevel(owned), owned.resonance);
       card.add(text(this, 0, PCARD_H / 2 + 30, `HP ${st.hp}  ·  ATK ${st.atk}`, { size: 22, color: CSS.creamDim }).setOrigin(0.5));
       card.setInteractive({ useHandCursor: true });
       card.on('pointerover', () => card.setScale(1.01));

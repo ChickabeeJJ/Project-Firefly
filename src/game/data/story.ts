@@ -7,6 +7,7 @@ import type { BioSection, Cinematic } from './types';
 export const CINEMATICS: Cinematic[] = [
   {
     id: 'prologue', name: 'Prologue · The Thirteenth Stroke', bg: 'street', tone: 'cold',
+    clock: '23:59',
     shots: [
       { kind: 'narrate', text: 'Vellmoor. The thirty-first of December, 1929.' },
       { kind: 'narrate', text: 'A city of gaslight and brass, of theatres and tide-clocks — where every street lamp had a name, and every name had a lamp.' },
@@ -30,6 +31,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch1_end', name: 'Chapter I · Curtain Call', bg: 'street', tone: 'warm',
+    clock: '04:12',
     shots: [
       { kind: 'narrate', text: 'Corvid Lane burns bright from end to end. People step out of doorways they had forgotten were theirs, and call each other by name.' },
       { kind: 'line', who: 'odile', text: 'The woman on the theatre balcony, in the violet smoke — she was not Dimmed. She was conducting them.' },
@@ -40,6 +42,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch2_open', name: 'Chapter II · The Velvet Curtain', bg: 'theatre', tone: 'warm',
+    clock: '21:40',
     shots: [
       { kind: 'title', kicker: 'CHAPTER II', title: 'The Velvet Curtain', sub: 'The Royal Gloaming Theatre' },
       { kind: 'narrate', text: 'The Gloaming Theatre was the jewel of Vellmoor. On the last night of 1929 it sold every seat for the New Year’s Gala — the farewell performance of its prima donna, Gloria Ambre.' },
@@ -53,6 +56,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch2_end', name: 'Chapter II · Remember My Name', bg: 'theatre', tone: 'warm',
+    clock: '02:03',
     shots: [
       { kind: 'narrate', text: 'The chandelier of the Gloaming Theatre blazes for the first time in a year. Two thousand people remember, all at once, that they have homes to go to.' },
       { kind: 'line', who: 'marigold', text: 'She went out smiling. She heard her own name sung back to her. That is all any of us want, in the end.' },
@@ -64,6 +68,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch3_open', name: 'Chapter III · The Drowned Docks', bg: 'docks', tone: 'cold',
+    clock: '23:10',
     shots: [
       { kind: 'title', kicker: 'CHAPTER III', title: 'The Drowned Docks', sub: 'Vellmoor harbour · low tide' },
       { kind: 'narrate', text: 'The sea stopped at midnight too. The tide drew out to its lowest ebb, and stayed there. Ships lie on their sides in the mud like sleeping animals.' },
@@ -75,6 +80,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch3_end', name: 'Chapter III · The Last Log', bg: 'docks', tone: 'cold',
+    clock: '05:55',
     shots: [
       { kind: 'narrate', text: 'Keeper Brine’s logbook is the one thing in the lighthouse the Dimming did not swallow. Its final entry is dated the thirty-first of December, 1929. 11:59 pm.' },
       { kind: 'letter', text: 'Mr. Vire came again tonight. He asked me to hold the tide at midnight. His daughter Colette is sick, and the doctor says she will not see the morning. He means to make sure there isn’t one. God forgive me, I said yes.', sign: '— Log of the Breakwater Light' },
@@ -87,6 +93,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch4_open', name: 'Chapter IV · The Clock Without Hands', bg: 'clocktower', tone: 'cold',
+    clock: '22:30',
     shots: [
       { kind: 'title', kicker: 'CHAPTER IV', title: 'The Clock Without Hands', sub: 'Inside the Cathedral Clock' },
       { kind: 'narrate', text: 'The Cathedral Clock stands over Vellmoor like a gravestone with a face. Its hands are gone — torn out, the night it struck thirteen.' },
@@ -99,6 +106,7 @@ export const CINEMATICS: Cinematic[] = [
   },
   {
     id: 'ch4_end', name: 'Chapter IV · Let the Morning Come', bg: 'clocktower', tone: 'cold',
+    clock: '05:59',
     shots: [
       { kind: 'narrate', text: 'The Hourless King kneels among the broken hour hands. Beside him, in a small bed, Colette sleeps — pale and peaceful, exactly as she was at one minute to midnight.' },
       { kind: 'line', who: 'wren', text: 'Aldous. A crow brought me this a year ago. It was addressed “to whoever stops the clock.” I never opened it. I think it was meant for you.' },
@@ -172,4 +180,76 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Maps That End', text: 'Every map he has drawn since the thirteenth stroke ends at midnight, in ink he did not put there. All but one. That map leads up, through the Clock Without Hands, to a dawn no one has seen.' },
     { title: 'North', text: 'He never gets lost. He says it is because he stopped looking for where he is, and started looking for when.' },
   ],
+};
+
+/** Things each Luminary says in the lobby (tap them, or on arrival). Night/first-visit lines are mixed in by the lobby. */
+export const LOBBY_LINES: Record<string, string[]> = {
+  wren: [
+    'Another letter came while you were out. No name on it. They never have names any more.',
+    'The crows are restless. Something on Corvid Lane is remembering itself.',
+    'Hold the lantern a moment? …Careful. It is heavier than it looks. Everyone who ever loved this city is in there.',
+    'I read the letters aloud at night. If someone hears them, the writer is not entirely gone.',
+    'You look tired, Lamplighter. Even lanterns are allowed to rest.',
+  ],
+  odile: [
+    'The stars still have not moved. I have counted them every night for a year.',
+    'Be still. You are carrying more than you think. Let me take some of it.',
+    'I read one future I will not speak of. Do not ask me again — not tonight.',
+    'The sky remembers everything. That is why it is so heavy.',
+    'There. Your fortune: you will be kind to someone tomorrow. It is a small one, but it is true.',
+  ],
+  bastian: [
+    'One, two, three — one, two, three. If I stop counting, I forget I am moving.',
+    'My joints are signed. A.V. Do you think he signed everything he loved?',
+    'Someone cut my strings. I have decided that means I am free, and not that I was dropped.',
+    'Dance with me? …No? Then at least hum. The waltz feels lonely with one.',
+    'I do not sleep. I sit very still and pretend I am a doll again. It is restful.',
+  ],
+  ichabod: [
+    'The sea is holding its breath. I can feel it from here.',
+    'When I was small, I called the tide in early just to watch the boats come home.',
+    'Water remembers time better than people do. That is why it stopped when the clock did.',
+    'If you hear a wave tonight, it was me. Practising.',
+  ],
+  teddy: [
+    'I gave him the key. I have been standing at the bottom of the stairs ever since.',
+    'A good clock does not keep time. It keeps faith.',
+    'Twenty years I wound that clock. My hands still turn in my sleep.',
+    'Go on, Lamplighter. I will stand guard. It is the one thing I have never failed at.',
+  ],
+  ottoline: [
+    'Every grain in this glass is a second someone wasted. Shall I tell you how many are yours?',
+    'Check. …Oh, I am not playing against you. I am playing against midnight.',
+    'Twelve strokes, and then one more. I was watching his hands. He only rang twelve.',
+    'Patience, darling. I have all the time in the world. Literally.',
+  ],
+  marigold: [
+    'Every lamp in the Gloaming Theatre was a gift from me. I intend to see them lit again.',
+    'Gloria. Gloria Ambre. I say her name every night so the Dimming cannot have it.',
+    'These roses never wilt. They are waiting for an encore.',
+    'Sit, Lamplighter. A patron never lets a guest stand.',
+  ],
+  hesper: [
+    'Every map of Vellmoor ends at midnight. I am drawing the one that ends at dawn.',
+    'I never get lost. I stopped asking where I am and started asking when.',
+    'North is still north. That is more than most things in this city can say.',
+    'There is a staircase on my newest map that was not there yesterday. Shall we find out where it goes?',
+  ],
+  augustin: [
+    'Everything the Dimming eats, I have already written down. It cannot unwrite me.',
+    'Margins are where the truth hides. Nobody thinks to burn the margins.',
+    'This page is blank. It was a love letter, once. I am trying to remember the words for them.',
+    'Shh. Paper is very loud, if you know how to listen.',
+  ],
+  kit: [
+    'My orrery still turns. Somewhere out there, the planets have not heard the night stopped.',
+    'The cat? She found me. I think she was looking for someone who still travels.',
+    'I have walked every road out of Vellmoor. They all bend back at midnight.',
+    'Pack light, Lamplighter. Hope does not weigh much, but it takes up a lot of room.',
+  ],
+};
+
+export const LOBBY_GREETINGS = {
+  night: 'Still awake? The Dimming never sleeps either.',
+  rite: 'The fireflies are restless tonight. Shall we hold a Lantern Rite?',
 };

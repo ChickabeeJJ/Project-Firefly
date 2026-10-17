@@ -223,6 +223,17 @@ const ICONS: Record<string, IconFn> = {
     }
     line(ctx, lash, c, 3);
   },
+  shop(ctx, c) {
+    // pawnbroker's three balls over a counter
+    for (const [x, y] of [[30, 30], [66, 30], [48, 56]] as const) line(ctx, ellipsePath(x, y, 12, 12), c, 4);
+    const p = new Path2D();
+    p.moveTo(16, 80);
+    p.lineTo(80, 80);
+    p.moveTo(30, 18);
+    p.lineTo(48, 8);
+    p.lineTo(66, 18);
+    line(ctx, p, c, 4);
+  },
   profile(ctx, c) {
     line(ctx, ellipsePath(48, 34, 14, 14), c);
     const b = new Path2D();

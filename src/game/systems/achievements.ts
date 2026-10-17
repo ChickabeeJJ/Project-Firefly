@@ -16,7 +16,7 @@ export interface Achievement {
 
 const totalStars = (s: SaveData) => Object.values(s.stars).reduce((a, b) => a + b, 0);
 const chapterClears = (s: SaveData, ch: number) => STAGES.filter((st) => st.chapter === ch && st.id in s.stars).length;
-const maxLevel = (s: SaveData) => Math.max(...Object.values(s.roster).map((o) => o.level));
+const maxInsight = (s: SaveData) => Math.max(...Object.values(s.roster).map((o) => o.insight));
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first_light', name: 'First Light', desc: 'Finish the tutorial battle.', reward: 100, progress: (s) => [s.stars['1-1'] !== undefined ? 1 : 0, 1] },
@@ -31,8 +31,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'rite_50', name: 'Devoted', desc: 'Light the Lantern 50 times.', reward: 480, progress: (s) => [s.totalPulls, 50] },
   { id: 'troupe_8', name: 'A Full Bill', desc: 'Recruit 8 Luminaries.', reward: 300, progress: (s) => [Object.keys(s.roster).length, 8] },
   { id: 'troupe_all', name: 'The Whole Company', desc: `Recruit all ${CHARACTERS.length} Luminaries.`, reward: 1000, progress: (s) => [Object.keys(s.roster).length, CHARACTERS.length] },
-  { id: 'level_20', name: 'Seasoned', desc: 'Raise a Luminary to Lv 20.', reward: 200, progress: (s) => [maxLevel(s), 20] },
-  { id: 'level_40', name: 'Headliner', desc: 'Raise a Luminary to Lv 40.', reward: 500, progress: (s) => [maxLevel(s), 40] },
+  { id: 'level_20', name: 'Seasoned', desc: 'Raise a Luminary to Insight I.', reward: 200, progress: (s) => [maxInsight(s), 1] },
+  { id: 'level_40', name: 'Headliner', desc: 'Raise a Luminary to Insight II.', reward: 500, progress: (s) => [maxInsight(s), 2] },
   { id: 'atlas_8', name: 'Field Notes', desc: 'Meet 8 kinds of Dimmed.', reward: 200, progress: (s) => [s.seen.length, 8] },
   { id: 'atlas_all', name: 'Complete Atlas', desc: `Meet all ${ENEMIES.length} kinds of Dimmed.`, reward: 600, progress: (s) => [s.seen.length, ENEMIES.length] },
 ];

@@ -10,8 +10,9 @@ import { claimableCount, playerLevel, totalStars } from '../systems/achievements
 import { frontierStage } from '../systems/progression';
 import { goToStage } from '../systems/storyFlow';
 import { RITE } from '../systems/gacha';
-import { Atmosphere, fadeIn, goTo, text, toast } from '../ui/kit';
+import { Atmosphere, fadeIn, goTo, softPress, text, toast } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
+import { LOBBY_GREETINGS, LOBBY_LINES } from '../data/story';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 /** The newest Luminaries, advertised on the lobby banner. */
@@ -54,13 +55,16 @@ export class LobbyScene extends Phaser.Scene {
 
     // Leader, centre stage. Painted portraits stand nearly full height.
     const leader = getCharacter(save.team[0]);
-    this.add.image(790, H - 24, 'fx:shadow').setDisplaySize(560, 70).setDepth(19);
-    const lead = stagePortrait(this, 790, H + 40, leader.id, ensurePortrait(this, leader.id), 0.92, 1180, 1260).setDepth(20);
+    this.add.image(810, H - 24, 'fx:shadow').setDisplaySize(520, 64).setDepth(19);
+    const lead = stagePortrait(this, 810, H + 34, leader.id, ensurePortrait(this, leader.id), 0.92, 1110, 1140).setDepth(20);
+    const lines = LOBBY_LINES[leader.id] ?? [leader.quote];
+    let lineAt = Phaser.Math.Between(0, lines.length - 1);
     lead.hit.setInteractive({ useHandCursor: true });
     lead.hit.on('pointerup', () => {
       if (this.hidden) return this.toggleUi();
       lead.pose();
-      this.say(leader.quote);
+      lineAt = (lineAt + 1) % lines.length;
+      this.say(lines[lineAt]);
     });
 
     this.ui = this.add.container(0, 0).setDepth(70);
@@ -74,9 +78,10 @@ export class LobbyScene extends Phaser.Scene {
     });
 
     audio.play(save.settings.track);
+    const hour = new Date().getHours();
     this.time.delayedCall(900, () => this.say(save.totalPulls === 0 && save.glimmer >= RITE.cost * 10
-      ? 'The fireflies are restless tonight. Shall we hold a Lantern Rite?'
-      : 'The Dimming will not wait. Ready when you are.'));
+      ? LOBBY_GREETINGS.rite
+      : hour >= 1 && hour < 5 ? LOBBY_GREETINGS.night : lines[lineAt]));
   }
 
   // ===================================================================== helpers
@@ -94,18 +99,9 @@ export class LobbyScene extends Phaser.Scene {
       this.dots.push(d);
     }
     c.setSize(size + 20, size + (label ? 40 : 10)).setInteractive({ useHandCursor: true });
-    c.on('pointerover', () => {
-      c.setScale(1.07);
-      ic.setAlpha(1);
-    });
-    c.on('pointerout', () => {
-      c.setScale(1);
-      ic.setAlpha(0.72);
-    });
-    c.on('pointerup', () => {
-      audio.sfx('tap');
-      onClick();
-    });
+    c.on('pointerover', () => ic.setAlpha(1));
+    c.on('pointerout', () => ic.setAlpha(0.72));
+    softPress(c, onClick, 'tap', 1.06);
     this.ui.add(c);
     return c;
   }
@@ -129,7 +125,7 @@ export class LobbyScene extends Phaser.Scene {
     const id = text(this, 126, 68, `ID  ${save.playerId}`, { size: 22, color: CSS.creamDim, spacing: 1 });
     c.add([plate, ring, lv, lvl, name, id]);
     c.setSize(440, 112).setInteractive({ useHandCursor: true });
-    c.input!.hitArea.setTo(0, 0, 440, 112);
+    c.input!.hitArea.setTo(220, 56, 440, 112);
     c.on('pointerup', () => {
       audio.sfx('tap');
       openProfile(this);
@@ -155,6 +151,7 @@ export class LobbyScene extends Phaser.Scene {
     items.forEach(([icon, label, go, dot], i) => this.iconButton(76, 316 + i * 104, icon, label, go, 64, !!dot));
     this.iconButton(184, 316, 'menu', 'Menu', () => goTo(this, 'Menu'), 64);
     this.iconButton(184, 420, 'eye', 'Hide', () => this.toggleUi(), 64);
+    this.iconButton(184, 524, 'shop', 'Shop', () => goTo(this, 'Shop'), 64);
     this.refreshDotsLater();
   }
 
@@ -197,7 +194,7 @@ export class LobbyScene extends Phaser.Scene {
       return t;
     };
     pill(RIGHT_X - COL_W / 2 + pw / 2, 'star4', `${totalStars(save)} / ${STAGES.length * 3}`, () => goTo(this, 'Story'));
-    this.glimmerText = pill(RIGHT_X + COL_W / 2 - pw / 2, 'glimmer', save.glimmer.toLocaleString('en-US'), () => openAchievements(this, () => this.refreshDots()));
+    this.glimmerText = pill(RIGHT_X + COL_W / 2 - pw / 2, 'glimmer', save.glimmer.toLocaleString('en-US'), () => goTo(this, 'Shop'));
   }
 
   // ===================================================================== right column
@@ -252,12 +249,7 @@ export class LobbyScene extends Phaser.Scene {
       c.add(text(this, -tw / 2 + 18, 18, label, { size: 30, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5));
       c.add(text(this, -tw / 2 + 20, -30, sub, { size: 17, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
       c.setSize(tw, 118).setInteractive({ useHandCursor: true });
-      c.on('pointerover', () => c.setScale(1.03));
-      c.on('pointerout', () => c.setScale(1));
-      c.on('pointerup', () => {
-        audio.sfx('tap');
-        go();
-      });
+      softPress(c, () => { go(); }, 'tap', 1.03);
       this.ui.add(c);
     };
     tile(left + tw / 2, 'story', 'Story', `${CHAPTERS.length} chapters`, () => goTo(this, 'Story'));
@@ -283,12 +275,7 @@ export class LobbyScene extends Phaser.Scene {
       text(this, -COL_W / 2 + 24, 26, pulls > 0 ? `Glimmer for ${pulls} light${pulls > 1 ? 's' : ''}` : 'Clear stages to earn Glimmer', { size: 19, italic: true, color: CSS.firefly }).setOrigin(0, 0.5),
     ]);
     rite.setSize(COL_W, 132).setInteractive({ useHandCursor: true });
-    rite.on('pointerover', () => rite.setScale(1.02));
-    rite.on('pointerout', () => rite.setScale(1));
-    rite.on('pointerup', () => {
-      audio.sfx('tap');
-      goTo(this, 'Summon');
-    });
+    softPress(rite, () => { goTo(this, 'Summon'); }, 'tap', 1.02);
     this.ui.add(rite);
   }
 
@@ -311,12 +298,7 @@ export class LobbyScene extends Phaser.Scene {
     c.add([g, k, t, st, enter, arrow]);
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     this.tweens.add({ targets: arrow, x: arrow.x + 5, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    c.on('pointerover', () => c.setScale(1.03));
-    c.on('pointerout', () => c.setScale(1));
-    c.on('pointerup', () => {
-      audio.sfx('tap');
-      onClick();
-    });
+    softPress(c, () => { onClick(); }, 'tap', 1.03);
     this.ui.add(c);
   }
 
@@ -361,7 +343,7 @@ export class LobbyScene extends Phaser.Scene {
     const t = text(this, 0, 0, line, { size: 28, italic: true, color: CSS.paperText, wrap: 360 });
     const w = t.width + 44;
     const h = t.height + 30;
-    const c = this.add.container(1030, 150).setDepth(80);
+    const c = this.add.container(960, 150).setDepth(80);
     c.add([this.add.nineslice(0, 0, 'ui:paperPlain', undefined, w, h, 12, 12, 12, 12).setOrigin(0), t.setPosition(22, 15)]);
     c.add(this.add.triangle(30, h + 8, 0, 0, 28, 0, 0, 20, C.paper));
     c.setAlpha(0);

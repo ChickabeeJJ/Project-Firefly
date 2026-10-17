@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { dropIn } from '../art/assets';
 import { ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { chooseAutoAction } from '../battle/autoplay';
@@ -12,6 +13,7 @@ import { getStage } from '../data/stages';
 import type { StageDef, StatusId } from '../data/types';
 import { C, CSS, H, MOOD_COLOR, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
+import { effectiveLevel, insightLabel } from '../systems/growth';
 import { platform } from '../platform/PlatformAdapter';
 import { applyBattleResult } from '../systems/progression';
 import { BattleFx } from '../ui/BattleFx';
@@ -144,8 +146,8 @@ export class BattleScene extends Phaser.Scene {
     this.engine = new BattleEngine({
       stage: this.stage,
       team: team.map((id) => {
-        const o = save.roster[id] ?? { level: 1, resonance: 0 };
-        return { charId: id, level: o.level, resonance: o.resonance };
+        const o = save.roster[id] ?? { level: 1, insight: 0, resonance: 0 };
+        return { charId: id, level: effectiveLevel(o), resonance: o.resonance };
       }),
       seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0,
       script: guided ? TUTORIAL_SCRIPT : undefined,
@@ -178,14 +180,18 @@ export class BattleScene extends Phaser.Scene {
   // ===================================================================== HUD
 
   private buildHud(): void {
-    const panel = this.add.nineslice(40, 34, 'ui:dark', undefined, 470, 112, 12, 12, 12, 12).setOrigin(0).setDepth(300);
-    this.waveText = text(this, 64, 52, '', { size: 28, font: 'display', bold: true, color: CSS.cream, spacing: 2 }).setDepth(301);
-    this.roundText = text(this, 270, 52, '', { size: 28, font: 'display', bold: true, color: CSS.cream, spacing: 2 }).setDepth(301);
-    const intelLabel = text(this, 64, 108, 'Battle Intel', { size: 26, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(301);
-    this.add.image(64 + intelLabel.width + 26, 108, 'icon:intel').setDisplaySize(32, 32).setDepth(301);
-    this.add.zone(40 + 235, 90, 470, 112).setDepth(302).setInteractive({ useHandCursor: true })
+    // Thin, translucent strip like the reference: plain text over a soft dark gradient.
+    const strip = this.add.graphics().setDepth(300);
+    strip.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.55, 0, 0.55, 0);
+    strip.fillRect(0, 30, 560, 104);
+    this.add.rectangle(40, 86, 400, 1, 0xe8dcc0, 0.25).setOrigin(0, 0.5).setDepth(301);
+    this.waveText = text(this, 44, 44, '', { size: 26, color: CSS.cream, spacing: 1 }).setDepth(301);
+    this.roundText = text(this, 230, 44, '', { size: 26, color: CSS.cream, spacing: 1 }).setDepth(301);
+    const intelLabel = text(this, 44, 110, 'Battle Intel', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(301);
+    this.add.image(44 + intelLabel.width + 24, 110, 'icon:intel').setDisplaySize(28, 28).setDepth(301).setAlpha(0.8);
+    this.add.zone(240, 90, 440, 110).setDepth(302).setInteractive({ useHandCursor: true })
       .on('pointerup', () => { audio.sfx('tap'); this.openPause('intel'); });
-    void panel;
+    this.buildLighting();
 
     this.buildLantern();
 
@@ -213,10 +219,29 @@ export class BattleScene extends Phaser.Scene {
     this.refreshRoundText();
   }
 
+  /** Warm key light from the upper left, drifting dust in the shafts, darker floor (reference lighting). */
+  private buildLighting(): void {
+    const warm = this.stage.bg === 'docks' || this.stage.bg === 'clocktower' ? 0xbfd0e8 : 0xffd49a;
+    for (let i = 0; i < 3; i++) {
+      const ray = this.add.image(-120 + i * 260, -80, 'fx:beam').setOrigin(0, 0.5).setDepth(8)
+        .setRotation(0.62 + i * 0.07).setDisplaySize(1500 + i * 200, 180 + i * 60).setTint(warm).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.09);
+      this.tweens.add({ targets: ray, alpha: 0.16, duration: 4200 + i * 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
+    const floor = this.add.graphics().setDepth(9);
+    floor.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.55, 0.55);
+    floor.fillRect(0, H * 0.72, W, H * 0.28);
+    const sky = this.add.graphics().setDepth(9);
+    sky.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.35, 0.35, 0, 0);
+    sky.fillRect(0, 0, W, 180);
+  }
+
   private buildLantern(): void {
     const c = this.add.container(110, 236).setDepth(300);
     this.lanternGlow = this.add.image(0, 0, 'fx:glow').setTint(C.firefly).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(230, 230).setAlpha(0);
-    const icon = this.add.image(0, 0, 'icon:summon').setDisplaySize(104, 104);
+    const painted = dropIn(this, 'ui', 'lantern1');
+    const icon = this.add.image(0, painted ? -10 : 0, painted ?? 'icon:summon');
+    if (painted) icon.setScale(150 / icon.height);
+    else icon.setDisplaySize(104, 104);
     c.add([this.lanternGlow, icon]);
     for (let i = 0; i < LANTERN.capacity; i++) {
       const p = this.add.image(78 + i * 40, 22, 'fx:firefly').setScale(0.75);
@@ -250,8 +275,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private refreshRoundText(): void {
-    this.waveText.setText(`WAVE ${this.engine.wave + 1}/${this.engine.waveCount}`);
-    this.roundText.setText(`ROUND ${Math.max(1, this.engine.round)}/${this.stage.roundLimit}`);
+    this.waveText.setText(`Wave: ${this.engine.wave + 1}/${this.engine.waveCount}`);
+    this.roundText.setText(`Round: ${Math.max(1, this.engine.round)}/${this.stage.roundLimit}`);
   }
 
   // ===================================================================== flow
@@ -340,6 +365,7 @@ export class BattleScene extends Phaser.Scene {
           await this.playEffects(effects, 140);
           break;
         case 'waveClear':
+          this.consumeAllSlots();
           if (e.wave + 1 < this.engine.waveCount) await this.fx.banner(`WAVE ${e.wave + 2}`, 'The Dimming gathers again');
           break;
         case 'waveSpawn':
@@ -395,12 +421,15 @@ export class BattleScene extends Phaser.Scene {
           this.syncTarget();
           break;
         case 'victory':
+          this.consumeAllSlots();
           await this.finish(true, e.rounds, e.fallen);
           return;
         case 'defeat':
+          this.consumeAllSlots();
           await this.finish(false, this.engine.round, this.engine.fallen, e.reason);
           return;
         case 'roundEnd':
+          this.consumeAllSlots();
           break;
         default:
           await this.playEffects([e, ...effects]);
@@ -412,6 +441,13 @@ export class BattleScene extends Phaser.Scene {
     let k = from;
     while (k < this.slotItems.length && this.slotItems[k].getData('move')) k++;
     return k;
+  }
+
+  /** Any queued action that was cancelled (wave cleared, battle over) drops its card at once. */
+  private consumeAllSlots(): void {
+    this.slotItems.forEach((it, k) => {
+      if (it && (it as Phaser.GameObjects.Container).alpha > 0.3) this.consumeSlot(k);
+    });
   }
 
   private consumeSlot(k: number): void {
@@ -715,7 +751,9 @@ export class BattleScene extends Phaser.Scene {
     }
     const c = this.add.container(0, 0).setDepth(720);
     const w = 500;
-    const title = text(this, 24, 18, `${u.name}  ·  Lv ${u.level}`, { size: 28, font: 'display', bold: true, color: u.side === 'enemy' ? '#f0b8a8' : CSS.goldLight });
+    const own = u.side === 'ally' ? saves.get().roster[u.defId] : undefined;
+    const lvTxt = own ? `${insightLabel(own.insight)} Lv ${own.level}` : `Lv ${u.level}`;
+    const title = text(this, 24, 18, `${u.name}  ·  ${lvTxt}`, { size: 28, font: 'display', bold: true, color: u.side === 'enemy' ? '#f0b8a8' : CSS.goldLight });
     c.add(title);
     let y = 18 + title.height + 6;
     for (const l of lines) {
@@ -1003,7 +1041,7 @@ export class BattleScene extends Phaser.Scene {
     for (let k = 0; k < this.engine.beats; k++) {
       const p = this.slotPos(k);
       const bonus = k >= 3;
-      const f = this.add.image(p.x, p.y, 'card:back').setScale(SLOT_SCALE).setDepth(240).setAlpha(0.9);
+      const f = this.add.image(p.x, p.y, 'card:back').setScale(SLOT_SCALE).setDepth(240).setAlpha(0.62);
       if (bonus) f.setTint(0xe8f8a0);
       f.setInteractive({ useHandCursor: true });
       f.on('pointerup', () => {

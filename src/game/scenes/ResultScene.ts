@@ -6,7 +6,7 @@ import { getCharacter } from '../data/characters';
 import { getStage, nextStageId } from '../data/stages';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { expToNext } from '../systems/progression';
+import { formatQty } from '../systems/growth';
 import { RITE } from '../systems/gacha';
 import { goToStage, storyAfter } from '../systems/storyFlow';
 import { Atmosphere, Button, fadeIn, goTo, ornament, text } from '../ui/kit';
@@ -73,32 +73,27 @@ export class ResultScene extends Phaser.Scene {
     y += 210;
 
     if (d.won) {
-      text(this, rx - 330, y, 'TEAM', { size: 24, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5).setDepth(61);
-      d.outcome.levelUps.forEach((lu, i) => {
-        const xx = rx - 230 + i * 230;
-        const owned = save.roster[lu.id];
-        this.add.image(xx, y + 64, `head:${lu.id}`).setDisplaySize(84, 84).setDepth(61);
-        text(this, xx + 54, y + 40, `Lv ${lu.to}`, { size: 28, bold: true, color: lu.to > lu.from ? CSS.goldLight : CSS.cream }).setOrigin(0, 0.5).setDepth(61);
-        const bw = 120;
-        this.add.rectangle(xx + 54, y + 78, bw, 10, 0x2a2a30).setOrigin(0, 0.5).setDepth(61);
-        const fill = this.add.rectangle(xx + 54, y + 78, 0, 10, C.gold).setOrigin(0, 0.5).setDepth(61);
-        this.tweens.add({ targets: fill, width: bw * Math.min(1, owned.exp / expToNext(owned.level)), duration: 700, delay: 900 });
-        text(this, xx + 54, y + 104, `+${lu.expGained} EXP`, { size: 22, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(61);
-        if (lu.to > lu.from) {
-          const up = text(this, xx, y + 4, 'LEVEL UP', { size: 22, font: 'display', bold: true, color: CSS.firefly, spacing: 3 }).setOrigin(0.5).setDepth(62).setAlpha(0);
-          this.time.delayedCall(1300 + i * 150, () => {
-            audio.sfx('levelup');
-            this.tweens.add({ targets: up, alpha: 1, y: y - 6, duration: 300 });
-          });
-        }
+      // Team strip (who fought) and reward tiles, as on R1999's victory screen.
+      text(this, rx - 330, y, 'TROUPE', { size: 22, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5).setDepth(61);
+      save.team.forEach((id, i) => {
+        const o = save.roster[id];
+        const xx = rx - 330 + 170 + i * 150;
+        this.add.image(xx, y, `head:${id}`).setDisplaySize(58, 58).setDepth(61);
+        if (o) text(this, xx + 38, y, `Lv ${o.level}`, { size: 22, color: CSS.cream }).setOrigin(0, 0.5).setDepth(61);
       });
-      y += 160;
-      const reward = this.add.container(rx - 330, y).setDepth(61);
-      reward.add(this.add.image(24, 0, 'icon:glimmer').setDisplaySize(52, 52));
-      reward.add(text(this, 60, 0, `+${d.outcome.glimmer} Glimmer`, { size: 34, bold: true, color: CSS.firefly }).setOrigin(0, 0.5));
-      if (d.outcome.firstClear) reward.add(text(this, 330, 0, 'First clear', { size: 24, italic: true, color: CSS.goldLight }).setOrigin(0, 0.5));
-      reward.setAlpha(0);
-      this.tweens.add({ targets: reward, alpha: 1, delay: 1100, duration: 300 });
+      y += 70;
+      text(this, rx - 330, y, d.outcome.firstClear ? 'REWARDS  ·  FIRST CLEAR' : 'REWARDS', { size: 22, font: 'display', bold: true, color: d.outcome.firstClear ? CSS.goldLight : CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5).setDepth(61);
+      y += 80;
+      const tiles: [string, number][] = [['icon:glimmer', d.outcome.glimmer], ...Object.entries(d.outcome.items).map(([k, v]) => [`item:${k}`, v as number] as [string, number])];
+      tiles.forEach(([key, qty], i) => {
+        const tx = rx - 330 + 54 + i * 124;
+        const t = this.add.container(tx, y).setDepth(61).setAlpha(0);
+        t.add(this.add.rectangle(0, 0, 108, 108, 0x15131a, 0.85).setStrokeStyle(1.5, C.gold, 0.55));
+        t.add(this.add.image(0, -8, key).setDisplaySize(key.startsWith('icon') ? 54 : 78, key.startsWith('icon') ? 54 : 78));
+        t.add(this.add.rectangle(0, 40, 108, 26, 0x000000, 0.6));
+        t.add(text(this, 0, 40, formatQty(qty), { size: 20, bold: true, color: CSS.cream }).setOrigin(0.5));
+        this.tweens.add({ targets: t, alpha: 1, y: { from: y + 16, to: y }, delay: 1000 + i * 120, duration: 300, ease: 'Cubic.easeOut' });
+      });
     } else {
       text(this, rx - 330, y + 10, d.reason === 'time'
         ? 'The night ran out of rounds. Spend Beats on the strongest Verses and save Finales for the toughest foes.'

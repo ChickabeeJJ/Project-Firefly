@@ -28,14 +28,15 @@ function modal(scene: Phaser.Scene, title: string, w: number, h: number, onClose
   const orn = ornament(scene, W / 2, y0 + 96, Math.min(560, w - 200));
   const x = scene.add.image(x0 + w - 50, y0 + 50, 'icon:close').setDisplaySize(48, 48).setInteractive({ useHandCursor: true });
   c.add([dim, panel, t, orn, x]);
-  c.setAlpha(0);
-  scene.tweens.add({ targets: c, alpha: 1, duration: 180 });
+  // Open: the sheet rises a few pixels as it fades in; the backdrop dims separately.
+  c.setAlpha(0).setY(22);
+  scene.tweens.add({ targets: c, alpha: 1, y: 0, duration: 260, ease: 'Cubic.easeOut' });
   let closed = false;
   const close = () => {
     if (closed) return;
     closed = true;
     audio.sfx('back');
-    scene.tweens.add({ targets: c, alpha: 0, duration: 160, onComplete: () => c.destroy() });
+    scene.tweens.add({ targets: c, alpha: 0, y: 14, duration: 180, ease: 'Cubic.easeIn', onComplete: () => c.destroy() });
     onClose?.();
   };
   x.on('pointerup', close);
