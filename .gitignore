@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# Reference footage stays local: it is study material, never part of the game bundle.
+assets/reference/*
+!assets/reference/README.md
+qa/screens/
+qa/*.png
