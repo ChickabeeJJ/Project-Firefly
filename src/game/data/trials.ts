@@ -8,7 +8,7 @@ export interface TrialFamily {
   id: string;
   mode: 'resource' | 'insight';
   name: string;
-  /** Two-letter code shown on the card, like the reference's "ME1 × M2E". */
+  /** Place name pinned to the card's photograph. */
   code: string;
   item: string;
   blurb: string;
@@ -20,32 +20,32 @@ export interface TrialFamily {
 
 export const TRIAL_FAMILIES: TrialFamily[] = [
   {
-    id: 'ember', mode: 'resource', name: 'Ember Analysis', code: 'WD1 × E2A', item: 'dust', bg: 'street',
+    id: 'ember', mode: 'resource', name: 'Ember Analysis', code: 'Corvid Lane', item: 'dust', bg: 'street',
     blurb: 'Sift the ash of burnt-out lamps on Corvid Lane. Whatever still glows is Wick Dust.',
     pool: ['mothling', 'usher', 'hound', 'lampeater'], boss: 'lampeater',
   },
   {
-    id: 'mint', mode: 'resource', name: 'The Brass Mint', code: 'BS1 × M2T', item: 'sovereign', bg: 'clocktower',
+    id: 'mint', mode: 'resource', name: 'The Brass Mint', code: 'Under the Clock', item: 'sovereign', bg: 'clocktower',
     blurb: 'The old mint under the clock still strikes thirteen-hour coins. The Dimmed guard the presses.',
     pool: ['cogspider', 'pendulum', 'mannequin', 'chimewisp'], boss: 'pendulum',
   },
   {
-    id: 'hollow', mode: 'insight', name: 'Moth Hollow', code: 'MW1 × H1W', item: 'moth', bg: 'street',
+    id: 'hollow', mode: 'insight', name: 'Moth Hollow', code: 'Corvid Lane', item: 'moth', bg: 'street',
     blurb: 'Where the moths sleep by day, their shed scales drift like snow.',
     pool: ['mothling', 'lampeater', 'usher'], boss: 'lampeater',
   },
   {
-    id: 'wings', mode: 'insight', name: 'Velvet Wings', code: 'VT2 × W2S', item: 'velvet', bg: 'theatre',
+    id: 'wings', mode: 'insight', name: 'Velvet Wings', code: 'The Gloaming', item: 'velvet', bg: 'theatre',
     blurb: 'Backstage at the Gloaming, the seats are unpicking themselves thread by thread.',
     pool: ['widow', 'mannequin', 'hound'], boss: 'widow',
   },
   {
-    id: 'pools', mode: 'insight', name: 'Tide Pools', code: 'TG3 × P3L', item: 'tide', bg: 'docks',
+    id: 'pools', mode: 'insight', name: 'Tide Pools', code: 'The Breakwater', item: 'tide', bg: 'docks',
     blurb: 'Sea glass glitters in pools the tide forgot. Something sings beneath them.',
     pool: ['gullwraith', 'siren', 'stevedore'], boss: 'siren',
   },
   {
-    id: 'works', mode: 'insight', name: 'Spring Works', code: 'MC4 × S4W', item: 'spring', bg: 'clocktower',
+    id: 'works', mode: 'insight', name: 'Spring Works', code: 'The Clock Tower', item: 'spring', bg: 'clocktower',
     blurb: 'The clock’s spare mainsprings, still wound tight with stolen hours.',
     pool: ['cogspider', 'chimewisp', 'pendulum'], boss: 'chimewisp',
   },

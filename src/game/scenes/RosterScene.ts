@@ -171,7 +171,7 @@ export class RosterScene extends Phaser.Scene {
     });
     p.add(text(this, lx, 640, `${insightLabel(o.insight)}  ·  Lv ${o.level} / ${levelCap(o.insight)}`, { size: 26, font: 'display', color: CSS.goldLight }));
     const ly = 690;
-    p.add(text(this, lx, ly, 'Resonance', { size: 24, font: 'display', color: CSS.creamDim }));
+    p.add(text(this, lx, ly, 'Echo', { size: 24, font: 'display', color: CSS.creamDim }));
     for (let i = 0; i < MAX_RESONANCE; i++) {
       p.add(this.add.image(lx + 180 + i * 40, ly + 14, 'icon:star4').setDisplaySize(30, 30).setTint(i < o.resonance ? 0xb886e0 : 0x3a3a42));
     }
@@ -203,7 +203,7 @@ export class RosterScene extends Phaser.Scene {
     const cap = levelCap(o.insight);
     const ist = insightState(save, c.id);
     box(rx, 'Level', `${o.level}`, `/${cap}`, () => this.openLevelUp(p, c, statRows), o.level < cap && maxAffordableLevel(save, c.id) > o.level);
-    box(rx + 228, 'Insight', ['0', 'I', 'II', 'III'][o.insight], `/${['0', 'I', 'II', 'III'][maxInsight(c.rarity)]}`, () => this.openInsight(p, c), ist === 'ready');
+    box(rx + 228, 'Kindle', ['0', 'I', 'II', 'III'][o.insight], `/${['0', 'I', 'II', 'III'][maxInsight(c.rarity)]}`, () => this.openInsight(p, c), ist === 'ready');
     p.add(text(this, rx, 250, 'Verses', { size: 30, font: 'display', bold: true, color: CSS.cream, spacing: 2 }));
     p.add(this.add.rectangle(rx, 290, 440, 1, C.gold, 0.35).setOrigin(0, 0.5));
     const info = this.add.container(0, 0);
@@ -297,20 +297,27 @@ export class RosterScene extends Phaser.Scene {
   }
 
   /** Triangle emblem filled to show progress through the current Insight tier. */
-  private triangle(cx: number, cy: number, fill: number): Phaser.GameObjects.Graphics {
+  /** Progress lantern: a brass lantern whose glass fills with amber light as the Luminary grows. */
+  private lanternGauge(cx: number, cy: number, fill: number): Phaser.GameObjects.Graphics {
     const g = this.add.graphics();
-    const h = 190;
-    const w = 220;
-    const pts = [new Phaser.Math.Vector2(cx, cy - h / 2), new Phaser.Math.Vector2(cx + w / 2, cy + h / 2), new Phaser.Math.Vector2(cx - w / 2, cy + h / 2)];
-    g.fillStyle(0xd8cdb4, 1).fillPoints(pts, true);
-    const fy = cy + h / 2 - h * fill;
-    const t = (fy - (cy - h / 2)) / h;
-    g.fillStyle(0x8a2a2a, 1).fillPoints([
-      new Phaser.Math.Vector2(cx - (w / 2) * t, fy), new Phaser.Math.Vector2(cx + (w / 2) * t, fy), pts[1], pts[2],
-    ], true);
-    g.lineStyle(3, 0x2a241c, 0.85).strokePoints(pts, true);
-    g.lineStyle(1.5, 0x2a241c, 0.5).strokeTriangle(cx, cy - h / 2 + 26, cx + w / 2 - 24, cy + h / 2 - 12, cx - w / 2 + 24, cy + h / 2 - 12);
-    g.lineStyle(2, 0xefe6d2, 0.9).strokeTriangle(cx, cy + 10, cx + 26, cy + 52, cx - 26, cy + 52);
+    const bw = 116;
+    const bh = 140;
+    const top = cy - bh / 2 + 10;
+    // Hanging ring and cap.
+    g.lineStyle(4, 0x6a5232, 1).strokeCircle(cx, top - 50, 11);
+    g.fillStyle(0x6a5232, 1).fillTriangle(cx - bw / 2 - 12, top - 4, cx + bw / 2 + 12, top - 4, cx, top - 40);
+    g.fillStyle(0x8a6c40, 1).fillRect(cx - bw / 2 - 14, top - 8, bw + 28, 10);
+    // Glass, then light rising from the wick.
+    g.fillStyle(0xe8dfcc, 1).fillRect(cx - bw / 2, top, bw, bh);
+    const lh = bh * Phaser.Math.Clamp(fill, 0, 1);
+    g.fillGradientStyle(0xffd27a, 0xffd27a, 0xd8742a, 0xd8742a, 0.95, 0.95, 1, 1).fillRect(cx - bw / 2, top + bh - lh, bw, lh);
+    // Flame.
+    g.fillStyle(0xfff2c8, fill > 0 ? 1 : 0.4).fillEllipse(cx, top + bh - 30, 16, 30);
+    // Frame: panes and posts.
+    g.lineStyle(4, 0x5a4428, 1).strokeRect(cx - bw / 2, top, bw, bh);
+    g.lineStyle(2, 0x5a4428, 0.8).lineBetween(cx - bw / 6, top, cx - bw / 6, top + bh).lineBetween(cx + bw / 6, top, cx + bw / 6, top + bh);
+    g.fillStyle(0x8a6c40, 1).fillRect(cx - bw / 2 - 14, top + bh - 2, bw + 28, 12);
+    g.fillStyle(0x6a5232, 1).fillRect(cx - bw / 2 + 6, top + bh + 10, bw - 12, 10);
     return g;
   }
 
@@ -320,7 +327,7 @@ export class RosterScene extends Phaser.Scene {
     const cap = levelCap(o.insight);
     const s = this.sheet(p, 'Level Up');
     const cx = 1290 + (W - 1290) / 2;
-    s.add(this.triangle(cx, 330, (o.level - 1) / (cap - 1)));
+    s.add(this.lanternGauge(cx, 330, (o.level - 1) / (cap - 1)));
     s.add(text(this, cx, 460, 'Lv', { size: 26, font: 'display', color: CSS.paperText }).setOrigin(0.5));
     s.add(this.add.rectangle(cx, 520, W - 1290 - 60, 1, 0x8a2a2a, 0.6));
     const dial = this.add.container(0, 0);
@@ -367,7 +374,7 @@ export class RosterScene extends Phaser.Scene {
       });
       dial.add(mx);
       if (o.level >= cap) {
-        costT.add(text(this, cx, 720, insightState(save, c.id) === 'max' ? 'Fully raised' : 'Level cap reached — raise Insight', { size: 28, italic: true, color: CSS.paperSub }).setOrigin(0.5));
+        costT.add(text(this, cx, 720, insightState(save, c.id) === 'max' ? 'Fully raised' : 'Level cap reached — Kindle them', { size: 28, italic: true, color: CSS.paperSub }).setOrigin(0.5));
         statRows.forEach((r, i) => r.setText([st0.hp, st0.atk, st0.def][i].toLocaleString('en-US')).setColor(CSS.cream));
         return;
       }
@@ -402,16 +409,16 @@ export class RosterScene extends Phaser.Scene {
   private openInsight(p: Phaser.GameObjects.Container, c: CharacterDef): void {
     const save = saves.get();
     const o = save.roster[c.id];
-    const s = this.sheet(p, 'Insight');
+    const s = this.sheet(p, 'Kindle');
     const cx = 1290 + (W - 1290) / 2;
     const state = insightState(save, c.id);
-    s.add(this.triangle(cx, 320, o.insight / maxInsight(c.rarity)));
+    s.add(this.lanternGauge(cx, 320, o.insight / maxInsight(c.rarity)));
     const R = ['0', 'I', 'II', 'III'];
     if (state === 'max') {
       s.add(text(this, cx, 480, `${insightLabel(o.insight)} — fully awakened`, { size: 30, font: 'display', color: CSS.paperText }).setOrigin(0.5));
       return;
     }
-    s.add(text(this, cx, 470, `Insight ${R[o.insight]}  ▸  ${R[o.insight + 1]}`, { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5));
+    s.add(text(this, cx, 470, `Kindle ${R[o.insight]}  ▸  ${R[o.insight + 1]}`, { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5));
     s.add(text(this, cx, 516, `Level cap ${levelCap(o.insight)} ▸ ${levelCap(o.insight + 1)}  ·  level resets to 1, stats are kept`, { size: 20, italic: true, color: CSS.paperSub }).setOrigin(0.5));
     const cost = insightCost(o.insight + 1);
     Object.entries(cost).forEach(([id, n], i) => {
@@ -424,7 +431,7 @@ export class RosterScene extends Phaser.Scene {
     const msg = state === 'needsLevel' ? `Reach Lv ${levelCap(o.insight)} first` : state === 'short' ? 'Not enough materials' : '';
     if (msg) s.add(text(this, cx, 760, msg, { size: 24, italic: true, color: '#9a3a2a' }).setOrigin(0.5));
     s.add(new Button(this, cx, 830, {
-      w: 300, h: 76, label: 'Insight', style: state === 'ready' ? 'amber' : 'cream', size: 32, sfx: state === 'ready' ? 'reveal5' : 'deny',
+      w: 300, h: 76, label: 'Kindle', style: state === 'ready' ? 'amber' : 'cream', size: 32, sfx: state === 'ready' ? 'reveal5' : 'deny',
       onClick: () => {
         if (!raiseInsight(save, c.id)) return;
         saves.commit();

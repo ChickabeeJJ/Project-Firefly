@@ -1,7 +1,7 @@
 import { SAGAS } from './saga';
 import type { BioSection, Cinematic } from './types';
 
-// The story of Firefly Nocturne. Character ids are internal (wren = Corvin, odile = Seraphine,
+// The story of Project Firefly. Character ids are internal (wren = Corvin, odile = Seraphine,
 // bastian = Columbine, ichabod = Lucien, teddy = Aldric, ottoline = Ophelia, marigold = Valerian,
 // hesper = Elias). Stage-by-stage dialogue lives with each stage in stages.ts.
 
@@ -125,7 +125,7 @@ const BASE_CINEMATICS: Cinematic[] = [
       { kind: 'line', who: 'ottoline', text: 'Twelve strokes, and then one more. But Vire only ever rang twelve. I was there. I was watching his hands.' },
       { kind: 'line', who: 'ottoline', text: 'So who rang the thirteenth?' },
       { kind: 'narrate', text: 'In Corvin’s satchel, a new letter arrives. The envelope is blank. The paper is blank. Only the wax seal is real — a clock face with thirteen hours.' },
-      { kind: 'title', kicker: 'TO BE CONTINUED', title: 'The Thirteenth Bell', sub: 'Firefly Nocturne · Chapter V' },
+      { kind: 'title', kicker: 'TO BE CONTINUED', title: 'The Thirteenth Bell', sub: 'Project Firefly · Chapter V' },
     ],
   },
 ];

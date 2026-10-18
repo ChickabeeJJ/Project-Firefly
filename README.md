@@ -1,4 +1,4 @@
-# Firefly Nocturne (Project Firefly)
+# Project Firefly
 
 A card-incantation battler for CrazyGames, inspired by the feel of *Reverse: 1999* with its own
 world, characters, art and signature mechanic.

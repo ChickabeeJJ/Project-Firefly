@@ -232,7 +232,7 @@ export class StoryScene extends Phaser.Scene {
 
   /** Bottom tab bar, as in the reference: Story · Resource · Insight. */
   private tabBar(): void {
-    const tabs: [Mode, string, string][] = [['story', 'Story', 'story'], ['resource', 'Resource', 'shop'], ['insight', 'Insight', 'eye']];
+    const tabs: [Mode, string, string][] = [['story', 'Story', 'story'], ['resource', 'Supplies', 'shop'], ['insight', 'Kindling', 'eye']];
     const bar = this.add.container(W / 2, H - 46).setDepth(95);
     const light = this.mode !== 'story' && !this.family;
     const g = this.add.graphics();
@@ -269,8 +269,8 @@ export class StoryScene extends Phaser.Scene {
     const vg = this.add.graphics();
     vg.fillGradientStyle(0x6a6458, 0x6a6458, 0x6a6458, 0x6a6458, 0.0, 0.0, 0.35, 0.35).fillRect(0, H * 0.55, W, H * 0.45);
     new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Lobby') }).setDepth(90);
-    text(this, W - 70, 70, this.mode === 'resource' ? 'RESOURCE' : 'INSIGHT', { size: 40, font: 'display', bold: true, color: '#3a342c', spacing: 10 }).setOrigin(1, 0.5);
-    text(this, W - 70, 116, this.mode === 'resource' ? 'Wick Dust and Brass Sovereigns, for levelling up' : 'Materials for raising Insight', { size: 22, italic: true, color: '#6a6458' }).setOrigin(1, 0.5);
+    text(this, W - 70, 70, this.mode === 'resource' ? 'SUPPLIES' : 'KINDLING', { size: 40, font: 'display', bold: true, color: '#3a342c', spacing: 10 }).setOrigin(1, 0.5);
+    text(this, W - 70, 116, this.mode === 'resource' ? 'Wick Dust and Brass Sovereigns, for levelling up' : 'Materials for Kindling your Luminaries', { size: 22, italic: true, color: '#6a6458' }).setOrigin(1, 0.5);
     const fams = TRIAL_FAMILIES.filter((f) => f.mode === this.mode);
     const gap = fams.length > 2 ? 450 : 640;
     fams.forEach((f, i) => {
@@ -290,16 +290,22 @@ export class StoryScene extends Phaser.Scene {
     const open = trialUnlocked(save, levels[0]);
     const done = levels.filter((t) => trialCleared(save, t)).length;
     const c = this.add.container(x, y).setScale(s);
-    // Vinyl record behind the photo.
-    const rec = this.add.graphics();
-    rec.fillStyle(0x0c0c0e, 1).fillCircle(0, 0, 190);
-    rec.lineStyle(1, 0x2a2a2e, 0.9);
-    for (let r = 60; r < 186; r += 9) rec.strokeCircle(0, 0, r);
-    rec.fillStyle(0xc8501e, 1).fillCircle(0, 0, 46);
-    rec.fillStyle(0x0c0c0e, 1).fillCircle(0, 0, 6);
-    c.add(rec);
-    if (open) this.tweens.add({ targets: rec, angle: 360, duration: 9000, repeat: -1 });
-    rec.setPosition(120, 10);
+    // A brass thirteen-hour clock face behind the photo; its hand sweeps while the trial is open.
+    const dial = this.add.graphics();
+    dial.fillStyle(0x2a2016, 1).fillCircle(0, 0, 190);
+    dial.fillStyle(0xd8c49a, 1).fillCircle(0, 0, 176);
+    dial.lineStyle(3, 0x8a6c40, 1).strokeCircle(0, 0, 176).strokeCircle(0, 0, 150);
+    for (let k = 0; k < 13; k++) {
+      const an = (k / 13) * Math.PI * 2 - Math.PI / 2;
+      dial.lineStyle(k === 12 ? 6 : 3, k === 12 ? 0x8a2a2a : 0x3a2a18, 1).lineBetween(Math.cos(an) * 152, Math.sin(an) * 152, Math.cos(an) * 172, Math.sin(an) * 172);
+    }
+    dial.setPosition(120, 10);
+    c.add(dial);
+    const hand = this.add.graphics();
+    hand.fillStyle(0x2a2016, 1).fillRect(-4, -140, 8, 150).fillCircle(0, 0, 12);
+    hand.setPosition(120, 10);
+    c.add(hand);
+    if (open) this.tweens.add({ targets: hand, angle: 360, duration: 13000, repeat: -1 });
     // The photograph.
     const photo = this.add.container(-40, 20).setAngle(-2.5);
     photo.add(this.add.rectangle(4, 8, 400, 320, 0x000000, 0.25));
@@ -309,8 +315,8 @@ export class StoryScene extends Phaser.Scene {
     img.setCrop((img.width - 372 / img.scaleX) / 2, (img.height - 262 / img.scaleY) / 2, 372 / img.scaleX, 262 / img.scaleY);
     photo.add(img);
     photo.add(this.add.rectangle(0, 10, 372, 262, 0x000000, open ? 0.05 : 0.55));
-    const code = text(this, 176, -136, f.code, { size: 24, font: 'display', bold: true, color: '#141414' }).setOrigin(1, 0.5);
-    photo.add(this.add.rectangle(188, -136, code.width + 26, 34, 0xffffff, 0.92).setOrigin(1, 0.5));
+    const code = text(this, 176, -136, f.code, { size: 22, font: 'letter', italic: true, color: '#2a1d10' }).setOrigin(1, 0.5);
+    photo.add(this.add.rectangle(188, -136, code.width + 26, 34, 0xf2e6c8, 0.95).setOrigin(1, 0.5).setAngle(2));
     photo.add(code);
     c.add(photo);
     // Title, overlapping the photo's left edge.
@@ -372,7 +378,7 @@ export class StoryScene extends Phaser.Scene {
     // Detail panel (right), as the reference's stage card.
     const px = W - 60;
     const d = this.add.container(0, 0).setDepth(60);
-    d.add(text(this, px, 120, `LP ${String(sel.index).padStart(2, '0')}`, { size: 34, font: 'display', color: CSS.cream }).setOrigin(1, 0.5));
+    d.add(text(this, px, 120, `No. ${String(sel.index).padStart(2, '0')}`, { size: 34, font: 'display', color: CSS.cream }).setOrigin(1, 0.5));
     d.add(text(this, px, 190, sel.name, { size: 60, font: 'display', color: CSS.cream, shadow: true }).setOrigin(1, 0.5));
     const rec = fromLegacyLevel(sel.level, 4);
     const rl = text(this, px - 520, 262, 'Recommended:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5);

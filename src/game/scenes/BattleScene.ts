@@ -187,7 +187,7 @@ export class BattleScene extends Phaser.Scene {
     this.add.rectangle(40, 86, 400, 1, 0xe8dcc0, 0.25).setOrigin(0, 0.5).setDepth(301);
     this.waveText = text(this, 44, 44, '', { size: 26, color: CSS.cream, spacing: 1 }).setDepth(301);
     this.roundText = text(this, 230, 44, '', { size: 26, color: CSS.cream, spacing: 1 }).setDepth(301);
-    const intelLabel = text(this, 44, 110, 'Battle Intel', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(301);
+    const intelLabel = text(this, 44, 110, 'Field Notes', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(301);
     this.add.image(44 + intelLabel.width + 24, 110, 'icon:intel').setDisplaySize(28, 28).setDepth(301).setAlpha(0.8);
     this.add.zone(240, 90, 440, 110).setDepth(302).setInteractive({ useHandCursor: true })
       .on('pointerup', () => { audio.sfx('tap'); this.openPause('intel'); });

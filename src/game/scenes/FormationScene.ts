@@ -50,7 +50,7 @@ export class FormationScene extends Phaser.Scene {
     const s = this.stage;
     const x = 80;
     let y = 160;
-    text(this, x, y, s.mode ? `${s.mode === 'resource' ? 'RESOURCE' : 'INSIGHT'} · ${stageCode(s)}` : s.id, { size: 30, font: 'display', bold: true, color: CSS.goldLight, spacing: 3 });
+    text(this, x, y, s.mode ? `${s.mode === 'resource' ? 'SUPPLIES' : 'KINDLING'} · ${stageCode(s)}` : s.id, { size: 30, font: 'display', bold: true, color: CSS.goldLight, spacing: 3 });
     text(this, x, y + 36, s.name, { size: 46, font: 'display', bold: true, color: CSS.cream, shadow: true, wrap: 760 });
     y += 140;
     text(this, x, y, 'GOALS', { size: 26, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 });

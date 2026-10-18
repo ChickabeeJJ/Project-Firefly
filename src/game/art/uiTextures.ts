@@ -109,7 +109,7 @@ function cardBack(): HTMLCanvasElement {
   return canvas;
 }
 
-/** The Firefly Nocturne emblem: a lantern inside a lozenge with radiating ticks. */
+/** The Project Firefly emblem: a lantern inside a lozenge with radiating ticks. */
 export function lanternEmblem(ctx: Ctx, x: number, y: number, s: number, color: string): void {
   ctx.save();
   ctx.translate(x, y);

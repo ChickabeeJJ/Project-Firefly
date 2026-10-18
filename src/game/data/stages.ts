@@ -318,5 +318,5 @@ export function nextStageId(id: string): string | null {
 
 /** Display code for a stage: "1-3" for the story, "LP 02" for trials. */
 export function stageCode(s: StageDef): string {
-  return s.mode ? `LP ${String(s.index).padStart(2, '0')}` : s.id;
+  return s.mode ? `No. ${String(s.index).padStart(2, '0')}` : s.id;
 }

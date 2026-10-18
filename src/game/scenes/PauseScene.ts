@@ -102,7 +102,7 @@ export class PauseScene extends Phaser.Scene {
         w: 216, h: 60, label: 'Import save', style: 'dark', size: 22, onClick: () => {
           void saves.importFile().then((ok) => {
             if (!ok) {
-              toast(this, 'That file is not a Firefly Nocturne save');
+              toast(this, 'That file is not a Project Firefly save');
               return;
             }
             toast(this, 'Save loaded');
@@ -124,7 +124,7 @@ export class PauseScene extends Phaser.Scene {
         },
       });
       new Button(this, x + pw / 2 - 50, y - ph / 2 + 50, { w: 64, h: 64, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: () => this.close() });
-      text(this, x, y + ph / 2 - 36, 'Firefly Nocturne · Vellmoor, 1929', { size: 22, italic: true, color: CSS.paperSub }).setOrigin(0.5);
+      text(this, x, y + ph / 2 - 36, 'Project Firefly · Vellmoor, 1929', { size: 22, italic: true, color: CSS.paperSub }).setOrigin(0.5);
     }
   }
 
@@ -135,7 +135,7 @@ export class PauseScene extends Phaser.Scene {
     const x0 = W / 2 - pw / 2;
     const y0 = H / 2 - ph / 2;
     this.add.nineslice(W / 2, H / 2, 'ui:dark', undefined, pw, ph, 14, 14, 14, 14);
-    text(this, W / 2, y0 + 56, 'BATTLE INTEL', { size: 46, font: 'display', bold: true, color: CSS.goldLight, spacing: 10 }).setOrigin(0.5);
+    text(this, W / 2, y0 + 56, 'FIELD NOTES', { size: 46, font: 'display', bold: true, color: CSS.goldLight, spacing: 10 }).setOrigin(0.5);
     ornament(this, W / 2, y0 + 100, 520);
     new Button(this, x0 + pw - 60, y0 + 56, { w: 68, h: 68, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: () => this.close() });
 

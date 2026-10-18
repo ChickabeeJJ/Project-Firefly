@@ -19,6 +19,7 @@ async function loadFonts(): Promise<void> {
 
 /** Lore cards shown while loading, in the manner of the reference's loading screens. */
 const LORE: { title: string; text: string }[] = [
+  { title: 'Project Firefly', text: 'Pencilled on the back of an envelope no one has opened: every time somebody is forgotten, a firefly goes up. Catch them all, and keep them safe until the morning can find them.' },
   { title: 'The Thirteenth Stroke', text: 'At midnight on the last night of 1929 the Cathedral Clock struck twelve, and then once more. There is no thirteenth hour. That night, Vellmoor found one.' },
   { title: 'The Dimming', text: 'What the fog swallows, the world forgets: faces, names, whole streets. Even the letters people wrote to one another fade to blank paper.' },
   { title: 'Luminaries', text: 'A few people remembered too fiercely to be forgotten. Their memories still glow — enough to light a lantern, or to burn a hole in the dark.' },
@@ -27,7 +28,7 @@ const LORE: { title: string; text: string }[] = [
   { title: 'Wick Dust', text: 'Ash from a wick that burned through the Dimming still remembers being light. Feed it to a Luminary and they grow brighter.' },
 ];
 
-const VERSION = 'V1.4 · Vellmoor 1929';
+const VERSION = 'Project Firefly · V1.5';
 
 /** Startup: loading screen over the painted lighthouse, then a title card that waits for a tap. */
 export class BootScene extends Phaser.Scene {
@@ -101,7 +102,7 @@ export class BootScene extends Phaser.Scene {
     this.bar = this.add.rectangle(0, H - 70, 1, 2, 0xf2e2c0, 0.95).setOrigin(0, 0.5);
     this.barGlow = this.add.image(0, H - 70, 'fx:glow').setTint(0xffe6b0).setDisplaySize(60, 18).setAlpha(0.8);
     if (!this.textures.exists('fx:glow')) this.barGlow.setVisible(false);
-    this.status = text(this, W / 2, H - 38, 'Loading the night (no data is sent while loading), please wait …', { size: 20, color: CSS.creamDim }).setOrigin(0.5);
+    this.status = text(this, W / 2, H - 38, 'Trimming the wicks · please wait …', { size: 20, color: CSS.creamDim }).setOrigin(0.5);
   }
 
   private progress(p: number, msg?: string): void {
@@ -116,10 +117,10 @@ export class BootScene extends Phaser.Scene {
     const ui = this.add.container(0, 0).setAlpha(0);
     const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.38);
     const glow = this.add.image(W / 2, H / 2 - 70, 'fx:glow').setTint(0xffd27a).setDisplaySize(1500, 520).setAlpha(0.18).setBlendMode(Phaser.BlendModes.ADD);
-    const name = text(this, W / 2, H / 2 - 110, 'FIREFLY', { size: 150, font: 'display', color: '#f4ead4', spacing: 18, shadow: true }).setOrigin(0.5);
-    const sub = text(this, W / 2, H / 2 + 20, 'N O C T U R N E', { size: 46, font: 'display', color: '#e8d6b0', spacing: 10, shadow: true }).setOrigin(0.5);
-    const rule = this.add.rectangle(W / 2, H / 2 + 74, 520, 1, 0xe8dcc0, 0.6).setScale(0, 1);
-    const tag = text(this, W / 2, H / 2 + 110, 'Vellmoor · the night without end', { size: 26, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    const sub = text(this, W / 2, H / 2 - 210, 'P R O J E C T', { size: 40, font: 'display', color: '#e8d6b0', spacing: 10, shadow: true }).setOrigin(0.5);
+    const name = text(this, W / 2, H / 2 - 80, 'FIREFLY', { size: 170, font: 'display', color: '#f4ead4', spacing: 18, shadow: true }).setOrigin(0.5);
+    const rule = this.add.rectangle(W / 2, H / 2 + 40, 520, 1, 0xe8dcc0, 0.6).setScale(0, 1);
+    const tag = text(this, W / 2, H / 2 + 80, 'Vellmoor · the night without end', { size: 26, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     const start = text(this, W / 2, H - 150, 'S T A R T', { size: 30, font: 'display', color: CSS.cream, spacing: 6, shadow: true }).setOrigin(0.5);
     ui.add([veil, glow, name, sub, rule, tag, start]);
     this.tweens.add({ targets: [this.bar, this.barGlow, this.status, ...this.lore], alpha: 0, duration: 500 });

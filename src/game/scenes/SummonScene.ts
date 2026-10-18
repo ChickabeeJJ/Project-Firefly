@@ -153,7 +153,7 @@ export class SummonScene extends Phaser.Scene {
     rib.fillStyle(0xc8a24a, 0.5).fillRect(420, 820, 6, 58);
     ui.add(rib);
     ui.add(this.add.image(468, 849, 'icon:star4').setDisplaySize(36, 36).setTint(0xf2e2b0));
-    ui.add(text(this, 500, 849, banner.featured ? 'DISPLAYED LUMINARIES RATE UP!!' : 'EVERY LUMINARY ANSWERS THE LIGHT', { size: 40, italic: true, bold: true, color: '#f4ead4', spacing: 2, shadow: true }).setOrigin(0, 0.5));
+    ui.add(text(this, 500, 849, banner.featured ? 'FEATURED LUMINARIES BURN BRIGHTER' : 'EVERY LUMINARY ANSWERS THE LIGHT', { size: 40, italic: true, bold: true, color: '#f4ead4', spacing: 2, shadow: true }).setOrigin(0, 0.5));
     const ms = bannerTimeLeft();
     const left = Math.max(1, RITE.pity - save.pity);
     const timeStr = banner.featured ? `Time Left: ${Math.floor(ms / 864e5)}D ${Math.floor(ms / 36e5) % 24}H ${Math.floor(ms / 6e4) % 60}M` : 'Always open';
@@ -218,7 +218,7 @@ export class SummonScene extends Phaser.Scene {
     c.add(g);
     c.add(this.add.image(-w / 2 + 44, 0, 'icon:glimmer').setDisplaySize(52, 52));
     c.add(text(this, -w / 2 + 76, 0, `${cost}`, { size: 24, bold: true, color: primary ? '#fff2e0' : CSS.paperText }).setOrigin(0, 0.5));
-    c.add(text(this, w / 2 - 24, 0, `Summon ×${count}`, { size: 38, color: primary ? '#fff6ec' : CSS.paperText }).setOrigin(1, 0.5));
+    c.add(text(this, w / 2 - 24, 0, `Light ×${count}`, { size: 38, color: primary ? '#fff6ec' : CSS.paperText }).setOrigin(1, 0.5));
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     if (save.glimmer < cost) c.setAlpha(0.6);
     else if (primary) this.tweens.add({ targets: c, scale: 1.025, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -256,8 +256,8 @@ export class SummonScene extends Phaser.Scene {
     const rules = [
       `★5  ${(RITE.rates[5] * 100).toFixed(0)}%   ·   ★4  ${(RITE.rates[4] * 100).toFixed(0)}%   ·   ★3  ${((1 - RITE.rates[5] - RITE.rates[4]) * 100).toFixed(0)}%   per light`,
       `A ★5 is guaranteed on the ${RITE.pity}th light without one (shared across banners).`,
-      banner.featured ? 'Displayed Luminaries take half of the results of their rarity.' : 'Every Luminary of a rarity is equally likely.',
-      `Duplicates raise Resonance (+6% HP and ATK, up to ${MAX_RESONANCE}); beyond that, +${RITE.dupeRefund} Glimmer.`,
+      banner.featured ? 'Featured Luminaries take half of the results of their rarity.' : 'Every Luminary of a rarity is equally likely.',
+      `Duplicates deepen a Luminary’s Echo (+6% HP and ATK, up to ${MAX_RESONANCE}); beyond that, +${RITE.dupeRefund} Glimmer.`,
     ];
     rules.forEach((r, i) => c.add(text(this, x0, y + i * 36, r, { size: 23, color: i === 0 ? CSS.goldLight : CSS.cream })));
     y += rules.length * 36 + 24;
@@ -533,7 +533,7 @@ export class SummonScene extends Phaser.Scene {
       const name = text(this, 1260, 400, c.name, { size: 74, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
       const title = text(this, 1264, 470, c.title, { size: 34, italic: true, color: RARITY_CSS[res.rarity] }).setOrigin(0, 0.5);
       const stars = rarityStars(this, 1360, 540, res.rarity, 40, res.rarity === 5 ? 0xf0c25a : res.rarity === 4 ? 0xb98ae0 : 0xa9b4c2);
-      const note = res.isNew ? 'NEW LUMINARY' : res.refund ? `Resonance maxed — +${res.refund} Glimmer` : `Resonance ${res.resonance}`;
+      const note = res.isNew ? 'NEW LUMINARY' : res.refund ? `Echo full — +${res.refund} Glimmer` : `Echo ${res.resonance}`;
       const tag = text(this, 1264, 610, note, { size: 32, font: 'display', bold: true, color: res.isNew ? CSS.firefly : CSS.goldLight, spacing: 3 }).setOrigin(0, 0.5);
       const quote = text(this, 1264, 680, `“${c.quote}”`, { size: 28, italic: true, color: CSS.creamDim, wrap: 560 }).setOrigin(0, 0);
       const tap = text(this, W / 2, H - 50, 'Tap to continue', { size: 26, italic: true, color: CSS.muted }).setOrigin(0.5);
@@ -585,7 +585,7 @@ export class SummonScene extends Phaser.Scene {
       root.add(pc);
       this.tweens.add({ targets: pc, alpha: 1, y, duration: 320, delay: i * 70, ease: 'Cubic.easeOut' });
       if (!res.isNew) {
-        const t = text(this, x, y + (n === 1 ? 256 : 170), res.refund ? `+${res.refund} Glimmer` : `Resonance ${res.resonance}`, { size: 24, bold: true, color: CSS.goldLight }).setOrigin(0.5).setAlpha(0);
+        const t = text(this, x, y + (n === 1 ? 256 : 170), res.refund ? `+${res.refund} Glimmer` : `Echo ${res.resonance}`, { size: 24, bold: true, color: CSS.goldLight }).setOrigin(0.5).setAlpha(0);
         root.add(t);
         this.tweens.add({ targets: t, alpha: 1, delay: 400 + i * 70, duration: 300 });
       }

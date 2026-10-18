@@ -395,6 +395,9 @@ const END: Cinematic = {
     { kind: 'line', who: 'wren', text: 'There’s a second page. It’s for you.' },
     { kind: 'letter', text: 'Papa — I heard you talking to the doctor. Please don’t be sad. I am not afraid of the morning. Let it come, and I will watch it with you, I promise. And Papa… let someone else dance now.', sign: '— Colette Vire, 31 December 1929' },
     { kind: 'letter', text: 'P.S. I have never seen a sunrise. Mrs. Pruitt says they are mostly orange. I would like to see one, please, with you, and not be told it is overrated. P.P.S. Columbine may keep the red dress.', sign: '— C.' },
+    { kind: 'letter', text: 'P.P.P.S. On the back is PROJECT FIREFLY. It is my project. Mrs. Pruitt says every time somebody is forgotten a firefly goes up, so I am going to catch them all in a jar and keep them safe until the morning can find them. If I can’t finish it, whoever stops the clock has to. That is the rule.', sign: '— C.V., Head of Project Firefly' },
+    { kind: 'line', who: 'wren', text: 'Project Firefly. …I have been working for her for a year, and I never knew her name.' },
+    { kind: 'line', who: 'bastian', text: 'The lantern. Every light we caught. It was her jar all along.' },
     { kind: 'line', who: 'hourless', text: 'She wrote this before midnight. She knew. She knew, and I… I stopped the whole world so that I would never have to read it.' },
     { kind: 'narrate', text: 'For a while there is no sound in the clock but the dust not falling. Then, a long way below, through four hundred and thirteen steps of stone, the sound of the verger’s congregation singing something, very badly, in the nave.' },
     { kind: 'line', who: 'hourless', text: 'I never let her see one. Ten years. I drew the curtains at five every morning of her life. Her mother died at sunrise, and I could not — I could not bear to have it in the house.' },
@@ -497,7 +500,7 @@ const END: Cinematic = {
     { kind: 'line', who: 'wren', text: 'No sender. No address. No ink.' },
     { kind: 'line', who: 'wren', text: '…And it’s warm. Like a letter that has only just been written.' },
     { kind: 'bell', strokes: 1, ominous: true, text: 'Somewhere in Vellmoor — not from the Cathedral — a bell strikes once.' },
-    { kind: 'title', kicker: 'TO BE CONTINUED', title: 'The Thirteenth Bell', sub: 'Firefly Nocturne · Chapter V' },
+    { kind: 'title', kicker: 'TO BE CONTINUED', title: 'The Thirteenth Bell', sub: 'Project Firefly · Chapter V' },
   ],
 };
 

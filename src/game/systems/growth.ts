@@ -22,7 +22,7 @@ export interface ItemDef {
 }
 
 export const ITEMS: Record<ItemId, ItemDef> = {
-  dust: { id: 'dust', name: 'Wick Dust', icon: 'item:dust', blurb: 'Ash from a wick that burned through the Dimming. It still remembers being light — feed it to a Luminary and they grow brighter.', source: 'Any stage · Pawnshop' },
+  dust: { id: 'dust', name: 'Wick Dust', icon: 'item:dust', blurb: 'Ash from a wick that burned through the Dimming, kept stoppered in glass. It still remembers being light — feed it to a Luminary and they grow brighter.', source: 'Any stage · Pawnshop' },
   sovereign: { id: 'sovereign', name: 'Brass Sovereign', icon: 'item:sovereign', blurb: 'Pre-Dimming coinage, stamped with a clock that has thirteen hours. Every trade in Vellmoor still runs on them.', source: 'Any stage · Pawnshop' },
   moth: { id: 'moth', name: 'Moth-Wing Scale', icon: 'item:moth', blurb: 'A dusty scale shed by a Mothling. Ground fine, it lets a Luminary see further into the dark.', source: 'Chapter 1 stages · Pawnshop' },
   velvet: { id: 'velvet', name: 'Velvet Thread', icon: 'item:velvet', blurb: 'Unpicked from a seat of the Gloaming Theatre. Strong enough to hold a memory in place.', source: 'Chapter 2 stages · Pawnshop' },
@@ -184,7 +184,7 @@ export function buy(save: SaveData, offerId: string): boolean {
 
 const ROMAN = ['0', 'I', 'II', 'III'];
 export function insightLabel(insight: number): string {
-  return `Insight ${ROMAN[insight] ?? insight}`;
+  return `Kindle ${ROMAN[insight] ?? insight}`;
 }
 
 export function formatQty(n: number): string {

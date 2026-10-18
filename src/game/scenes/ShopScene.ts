@@ -8,7 +8,7 @@ import { Atmosphere, Button, fadeIn, goTo, softPress, text, toast } from '../ui/
 
 const TABS: { id: string; name: string; items: ItemId[]; blurb: string }[] = [
   { id: 'pawn', name: 'Pawnshop', items: ['dust', 'sovereign'], blurb: 'Old Marlowe trades in anything that still remembers being light.' },
-  { id: 'insight', name: 'Curio Cabinet', items: ['moth', 'velvet', 'tide', 'spring'], blurb: 'Relics from every corner of the Dimming, for Insight.' },
+  { id: 'insight', name: 'Curio Cabinet', items: ['moth', 'velvet', 'tide', 'spring'], blurb: 'Relics from every corner of the Dimming, for Kindling.' },
 ];
 
 /** The Pawnshop: buy growth materials with Glimmer (R1999's Pawnshop / material shops). */

@@ -85,7 +85,7 @@ class SaveService {
     const blob = new Blob([JSON.stringify(this.data, null, 1)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `firefly-nocturne-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `project-firefly-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
