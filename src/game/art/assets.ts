@@ -35,15 +35,25 @@ function keyFor(path: string): string | null {
   return m ? `hf:${m[1]}/${m[2].toLowerCase()}` : null;
 }
 
+/** URL of one drop-in image, e.g. ('bg', 'loading'), or null. */
+export function dropInUrl(folder: ArtFolder, id: string): string | null {
+  const hit = Object.entries(FILES).find(([p]) => keyFor(p) === `hf:${folder}/${id}`);
+  return hit ? hit[1] : null;
+}
+
 /** Queue every drop-in image and wait for them (no-op when the folder is empty). */
-export function loadDropInArt(scene: Phaser.Scene): Promise<void> {
+export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => void): Promise<void> {
   const entries = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
-    .filter((e): e is readonly [string, string] => !!e[0]);
+    .filter((e): e is readonly [string, string] => !!e[0] && !scene.textures.exists(e[0]));
   if (entries.length === 0) return Promise.resolve();
   return new Promise((resolve) => {
     for (const [key, url] of entries) scene.load.image(key, url);
-    scene.load.once(Phaser.Loader.Events.COMPLETE, () => resolve());
+    if (onProgress) scene.load.on(Phaser.Loader.Events.PROGRESS, onProgress);
+    scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
+      scene.load.off(Phaser.Loader.Events.PROGRESS);
+      resolve();
+    });
     scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (f: Phaser.Loader.File) => console.warn('[art] failed to load', f.key));
     scene.load.start();
   });

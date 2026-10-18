@@ -1,13 +1,13 @@
 import Phaser from 'phaser';
 import { audio, type Sfx } from '../audio/AudioController';
-import { C, CSS, FONT_BODY, FONT_DISPLAY, H, W } from '../config/theme';
+import { C, CSS, FONT_BODY, FONT_DISPLAY, FONT_LETTER, H, W } from '../config/theme';
 
 // Shared UI building blocks. Everything is sized for the 1920×1080 logical canvas; the smallest
 // body text is 24 px so it stays legible in the 907×510 embed.
 
 export interface TextOpts {
   size?: number;
-  font?: 'display' | 'body';
+  font?: 'display' | 'body' | 'letter';
   color?: string;
   bold?: boolean;
   italic?: boolean;
@@ -22,7 +22,7 @@ export interface TextOpts {
 
 export function text(scene: Phaser.Scene, x: number, y: number, str: string, o: TextOpts = {}): Phaser.GameObjects.Text {
   const style: Phaser.Types.GameObjects.Text.TextStyle = {
-    fontFamily: o.font === 'display' ? FONT_DISPLAY : FONT_BODY,
+    fontFamily: o.font === 'display' ? FONT_DISPLAY : o.font === 'letter' ? FONT_LETTER : FONT_BODY,
     fontSize: `${o.size ?? 28}px`,
     color: o.color ?? CSS.cream,
     fontStyle: `${o.italic ? 'italic ' : ''}${o.bold ? 'bold' : ''}`.trim() || 'normal',

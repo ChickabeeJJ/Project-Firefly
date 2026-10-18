@@ -5,6 +5,8 @@ export const H = 1080;
 
 export const FONT_DISPLAY = 'Cinzel, Georgia, serif';
 export const FONT_BODY = 'Spectral, Georgia, serif';
+/** Period typeface for letters and handwritten notes. */
+export const FONT_LETTER = "'IM Fell English', Spectral, Georgia, serif";
 
 export const C = {
   // Deep background / structural shadow

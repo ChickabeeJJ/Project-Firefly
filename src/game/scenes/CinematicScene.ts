@@ -5,6 +5,7 @@ import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { getStage } from '../data/stages';
 import { getCinematic } from '../data/story';
+import { LETTER_H, LETTER_W, letterPaperCanvas } from '../art/letterPaper';
 import type { SceneBg, Shot } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
@@ -365,45 +366,61 @@ export class CinematicScene extends Phaser.Scene {
   private letter(str: string, sign: string): void {
     this.clearUi();
     this.dimCast(true);
-    const c = this.add.container(W / 2, H / 2 + 40).setAngle(-1.5).setAlpha(0);
-    const paper = this.add.nineslice(0, 0, 'ui:paperPlain', undefined, 980, 540, 14, 14, 14, 14);
-    const edge = this.add.rectangle(0, 0, 940, 500).setStrokeStyle(1.5, 0x9a8660, 0.55);
-    const seal = this.add.circle(0, -270, 30, 0x8a1e22).setStrokeStyle(3, 0x5a0e10);
-    const sealMark = text(this, 0, -270, 'V', { size: 30, font: 'display', bold: true, color: '#e8b0a0' }).setOrigin(0.5);
-    const body = text(this, -430, -200, '', { size: 33, italic: true, color: '#2a221a', wrap: 860, lineSpacing: 10 });
-    const sig = text(this, 430, 210, sign, { size: 28, italic: true, color: '#5a4a38' }).setOrigin(1, 0.5).setAlpha(0);
-    c.add([paper, edge, seal, sealMark, body, sig]);
+    if (!this.textures.exists('ui:letterPaper')) this.textures.addCanvas('ui:letterPaper', letterPaperCanvas());
+    const shade = this.add.rectangle(W / 2, H / 2, W, H, 0x050302, 0);
+    this.tweens.add({ targets: shade, alpha: 0.55, duration: 500 });
+    this.ui.add(shade);
+    const c = this.add.container(W / 2, H / 2 + 60).setAngle(-1.2).setAlpha(0).setScale(0.96);
+    const paper = this.add.image(0, 0, 'ui:letterPaper');
+    const hw = LETTER_W / 2;
+    const hh = LETTER_H / 2;
+    // Ink: a dark iron-gall brown in a period typeface, slightly uneven.
+    const long = str.length > 260;
+    const body = text(this, -hw + 120, -hh + 92, '', { size: long ? 30 : 34, font: 'letter', italic: true, color: '#2e1d0e', wrap: LETTER_W - 210, lineSpacing: long ? 8 : 12 });
+    body.setShadow(0, 0, 'rgba(46,29,14,0.35)', 1.5, false, true);
+    const sig = text(this, hw - 90, hh - 70, sign, { size: 32, font: 'letter', italic: true, color: '#3a2412' }).setOrigin(1, 0.5).setAlpha(0).setAngle(-3);
+    sig.setShadow(0, 0, 'rgba(46,29,14,0.35)', 1.5, false, true);
+    const blot = this.add.circle(hw - 80 - sig.width - 18, hh - 62, 5, 0x2e1d0e, 0).setScale(1, 0.8);
+    c.add([paper, body, blot, sig]);
     this.ui.add(c);
-    this.tweens.add({ targets: c, alpha: 1, y: H / 2, duration: 500, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: c, alpha: 1, y: H / 2 + 10, scale: 1, angle: -0.6, duration: 650, ease: 'Cubic.easeOut' });
     this.type(body, str, 1);
     const reveal = this.time.addEvent({
       delay: 120, loop: true, callback: () => {
         if (!this.typer) {
-          this.tweens.add({ targets: sig, alpha: 1, duration: 400 });
+          this.tweens.add({ targets: sig, alpha: 1, duration: 700 });
+          this.tweens.add({ targets: blot, fillAlpha: 0.7, duration: 500, delay: 500 });
           reveal.remove();
         }
       },
     });
   }
 
-  /** "· Title ·" on black with a small part line, as the reference opens each story. */
+  /** Chapter card: emblem, kicker, title and a gilt rule that opens from the centre. */
   private title(kicker: string, title: string, sub?: string): void {
     this.clearUi();
     this.dimCast(true);
     const black = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0);
-    const t = text(this, W / 2, H / 2 - 20, `·  ${title}  ·`, { size: 64, color: CSS.cream, spacing: 2 }).setOrigin(0.5).setAlpha(0);
+    const emblem = this.add.image(W / 2, H / 2 - 190, 'ui:emblem').setScale(0.7).setAlpha(0);
+    const k = text(this, W / 2, H / 2 - 70, kicker, { size: 30, font: 'display', bold: true, color: CSS.gold, spacing: 14 }).setOrigin(0.5).setAlpha(0);
+    const t = text(this, W / 2, H / 2 + 10, title, { size: 92, font: 'display', bold: true, color: CSS.cream, spacing: 4, shadow: true }).setOrigin(0.5).setAlpha(0);
     if (t.width > W - 200) t.setScale((W - 200) / t.width);
-    const mark = text(this, W / 2, H / 2 + 50, '⟡', { size: 26, color: CSS.creamDim }).setOrigin(0.5).setAlpha(0);
-    const k = text(this, W / 2, H / 2 + 110, kicker, { size: 22, color: CSS.creamDim, spacing: 8 }).setOrigin(0.5).setAlpha(0);
-    const s = text(this, W / 2, H / 2 + 150, sub ?? '', { size: 22, italic: true, color: CSS.muted }).setOrigin(0.5).setAlpha(0);
-    this.ui.add([black, t, mark, k, s]);
-    this.tweens.add({ targets: black, alpha: 0.94, duration: 700 });
-    this.tweens.add({ targets: t, alpha: 1, duration: 1100, delay: 400 });
-    this.tweens.add({ targets: [mark, k], alpha: 1, duration: 900, delay: 900 });
-    this.tweens.add({ targets: s, alpha: 1, duration: 900, delay: 1200 });
+    const ruleW = Math.min(W - 240, Math.max(560, t.displayWidth * 0.8));
+    const r = this.add.rectangle(W / 2, H / 2 + 82, ruleW, 2, C.gold, 0.9).setScale(0, 1);
+    const dl = this.add.rectangle(W / 2 - ruleW / 2 - 14, H / 2 + 82, 8, 8, C.gold, 0.9).setAngle(45).setAlpha(0);
+    const dr = this.add.rectangle(W / 2 + ruleW / 2 + 14, H / 2 + 82, 8, 8, C.gold, 0.9).setAngle(45).setAlpha(0);
+    const s = text(this, W / 2, H / 2 + 124, sub ?? '', { size: 32, italic: true, color: CSS.creamDim }).setOrigin(0.5).setAlpha(0);
+    this.ui.add([black, emblem, k, t, r, dl, dr, s]);
+    this.tweens.add({ targets: black, alpha: 0.82, duration: 600 });
+    this.tweens.add({ targets: emblem, alpha: 0.5, duration: 900, delay: 200 });
+    this.tweens.add({ targets: k, alpha: 1, duration: 600, delay: 300 });
+    this.tweens.add({ targets: t, alpha: 1, duration: 900, delay: 500 });
+    this.tweens.add({ targets: r, scaleX: 1, duration: 900, delay: 600, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: [dl, dr], alpha: 1, duration: 400, delay: 1300 });
+    this.tweens.add({ targets: s, alpha: 1, duration: 700, delay: 900 });
     audio.sfx('reveal4');
     this.busy = true;
-    this.time.delayedCall(1700, () => {
+    this.time.delayedCall(1500, () => {
       this.busy = false;
       this.nextMark.setAlpha(1);
       const at = this.i;

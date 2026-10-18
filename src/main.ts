@@ -5,6 +5,8 @@ import '@fontsource/spectral/latin-400.css';
 import '@fontsource/spectral/latin-400-italic.css';
 import '@fontsource/spectral/latin-700.css';
 import '@fontsource/spectral/latin-700-italic.css';
+import '@fontsource/im-fell-english/latin-400.css';
+import '@fontsource/im-fell-english/latin-400-italic.css';
 import { H, W } from './game/config/theme';
 import { audio } from './game/audio/AudioController';
 import { BootScene } from './game/scenes/BootScene';
