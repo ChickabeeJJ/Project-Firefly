@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { PCARD_H, PCARD_W } from '../art/cardArt';
-import { elementPanel, ensureBg, ensurePortrait } from '../art/registry';
+import { elementPanel, ensureBg, ensurePortrait, panelFor } from '../art/registry';
+import { dropIn } from '../art/assets';
 import { audio } from '../audio/AudioController';
 import { describeVerse, TYPE_LABEL } from '../battle/describe';
 import { MAX_RESONANCE } from '../battle/rules';
@@ -13,13 +14,13 @@ import { C, CSS, H, MOOD_CSS, MOOD_NAME, RARITY_CSS, TYPE_CSS, W } from '../conf
 import { saves } from '../persistence/SaveService';
 import { affordable, effectiveLevel, formatQty, insightCost, insightLabel, insightState, ITEMS, type ItemId, levelCap, levelCost, levelUp, maxAffordableLevel, maxInsight, raiseInsight } from '../systems/growth';
 import { CardView } from '../ui/CardView';
-import { Atmosphere, Button, fadeIn, goTo, ornament, rarityStars, text, toast } from '../ui/kit';
+import { Atmosphere, Button, fadeIn, goTo, ornament, rarityStars, scrollable, text, toast } from '../ui/kit';
 import { livingPortrait } from '../ui/LivingSprite';
 import { PortraitCard } from '../ui/PortraitCard';
 
-const COLS = 8;
-const CARD_SCALE = 0.64;
-const GAP = 16;
+const COLS = 6;
+const CARD_SCALE = 0.9;
+const GAP = 26;
 
 /** Text tab with an underline when active (the reference's Level / Rarity tabs). */
 function tab(scene: Phaser.Scene, x: number, y: number, label: string, active: boolean, onClick: () => void): Phaser.GameObjects.Container {
@@ -85,22 +86,27 @@ export class RosterScene extends Phaser.Scene {
       if (this.sort === 'level' && oa && ob && oa.level !== ob.level) return ob.level - oa.level;
       return b.rarity - a.rarity || a.name.localeCompare(b.name);
     });
+    // Six to a row across the full width; the grid scrolls (drag or wheel) when it runs long.
     const cw = PCARD_W * CARD_SCALE;
     const ch = PCARD_H * CARD_SCALE;
     const x0 = (W - (COLS * cw + (COLS - 1) * GAP)) / 2 + cw / 2;
+    const top = 130;
+    const grid = this.add.container(0, 0);
+    const rows = Math.ceil(list.length / COLS);
+    const scroll = scrollable(this, grid, new Phaser.Geom.Rectangle(0, 112, W, H - 112 - 84), rows * (ch + GAP) + 40);
     list.forEach((c, i) => {
       const o = save.roster[c.id];
       const x = x0 + (i % COLS) * (cw + GAP);
-      const rows = Math.ceil(list.length / COLS);
-      const top = 110 + (H - 110 - 90 - (rows * ch + (rows - 1) * (GAP + 10))) / 2;
-      const y = top + ch / 2 + Math.floor(i / COLS) * (ch + GAP + 10);
+      const y = top + ch / 2 + Math.floor(i / COLS) * (ch + GAP);
       const team = save.team.indexOf(c.id);
       const card = new PortraitCard(this, x, y, c.id, { level: o?.level, locked: !o, slot: team >= 0 ? team + 1 : undefined }).setScale(CARD_SCALE);
+      grid.add(card);
       if (o) {
         card.setInteractive({ useHandCursor: true });
-        card.on('pointerover', () => card.setScale(CARD_SCALE * 1.04));
+        card.on('pointerover', () => card.setScale(CARD_SCALE * 1.03));
         card.on('pointerout', () => card.setScale(CARD_SCALE));
         card.on('pointerup', () => {
+          if (scroll.wasDrag()) return;
           audio.sfx('tap');
           this.openCharacter(c.id);
         });
@@ -111,18 +117,20 @@ export class RosterScene extends Phaser.Scene {
 
   // ===================================================================== character page
 
-  private openCharacter(id: string, view: 'overview' | 'dossier' = 'overview'): void {
+  private openCharacter(id: string, view: 'overview' | 'dossier' = 'overview', reopen?: 'levelup'): void {
     this.page?.destroy();
     const c = getCharacter(id);
     const p = this.add.container(0, 0).setDepth(200);
     this.page = p;
     const tint = Phaser.Display.Color.HexStringToColor(c.palette.primary).color;
     p.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0b0b0e, 1).setInteractive());
-    const panel = elementPanel(this, id);
+    // Full-screen element backdrop (ui/charbg_<element>), falling back to the card panel.
+    const panel = dropIn(this, 'ui', `charbg_${panelFor(id)}`) ?? elementPanel(this, id);
     if (panel) {
       const bgImg = this.add.image(W / 2, H / 2, panel);
-      bgImg.setScale(Math.max(W / bgImg.width, H / bgImg.height)).setAlpha(0.3);
+      bgImg.setScale(Math.max(W / bgImg.width, H / bgImg.height)).setAlpha(panel.includes('charbg_') ? 0.85 : 0.3);
       p.add(bgImg);
+      p.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0b0b0e, 0.28));
     }
     p.add(this.add.image(940, 560, 'fx:glow').setTint(tint).setDisplaySize(1300, 1100).setAlpha(0.42));
     p.add(text(this, W - 40, 150, view === 'dossier' ? 'DOSSIER' : 'DOCUMENT', { size: 150, font: 'display', bold: true, color: '#ffffff', spacing: 20 }).setOrigin(1, 0.5).setAlpha(0.035));
@@ -132,7 +140,10 @@ export class RosterScene extends Phaser.Scene {
     }));
     p.add(tab(this, 230, 60, 'Overview', view === 'overview', () => this.openCharacter(id, 'overview')));
     p.add(tab(this, 400, 60, 'Dossier', view === 'dossier', () => this.openCharacter(id, 'dossier')));
-    if (view === 'overview') this.overview(p, c);
+    if (view === 'overview') {
+      this.overview(p, c);
+      if (reopen === 'levelup') this.openLevelUp(p, c, this.statRows, false);
+    }
     else this.dossier(p, c);
   }
 
@@ -141,7 +152,7 @@ export class RosterScene extends Phaser.Scene {
     const o = save.roster[c.id];
     const st = allyStats(c.base, effectiveLevel(o), o.resonance);
 
-    p.add(livingPortrait(this, 930, H + 30, ensurePortrait(this, c.id), 0.9, 1000, 900));
+    p.add(livingPortrait(this, 930, H + 30, ensurePortrait(this, c.id), 0.9, 1080, 1180));
 
     // ---- left: identity + stats
     const lx = 70;
@@ -322,11 +333,12 @@ export class RosterScene extends Phaser.Scene {
     return g;
   }
 
-  private openLevelUp(p: Phaser.GameObjects.Container, c: CharacterDef, statRows: Phaser.GameObjects.Text[]): void {
+  private openLevelUp(p: Phaser.GameObjects.Container, c: CharacterDef, statRows: Phaser.GameObjects.Text[], animate = true): void {
     const save = saves.get();
     const o = save.roster[c.id];
     const cap = levelCap(o.insight);
     const s = this.sheet(p, 'Level Up');
+    if (!animate) s.setAlpha(1);
     const cx = 1290 + (W - 1290) / 2;
     s.add(this.lanternGauge(cx, 330, (o.level - 1) / (cap - 1)));
     s.add(text(this, cx, 460, 'Lv', { size: 26, font: 'display', color: CSS.paperText }).setOrigin(0.5));
@@ -338,6 +350,40 @@ export class RosterScene extends Phaser.Scene {
     const costT = this.add.container(0, 0);
     s.add(costT);
     const st0 = allyStats(c.base, effectiveLevel(o), o.resonance);
+    // Drag the slider to choose the target level (the dial, arrows and Max still work too).
+    // Built once, outside the redrawn dial, so a drag is never interrupted.
+    const lo = Math.min(cap, o.level + 1);
+    const sx0 = cx - 240;
+    const sw = 480;
+    const sy = 616;
+    const slider = this.add.container(0, 0).setVisible(o.level < cap);
+    s.add(slider);
+    const bestFrac = cap > lo ? Phaser.Math.Clamp((best - lo) / (cap - lo), 0, 1) : 0;
+    slider.add(this.add.rectangle(sx0, sy, sw, 6, 0x8a8578, 0.35).setOrigin(0, 0.5));
+    if (best >= lo) slider.add(this.add.rectangle(sx0, sy, sw * bestFrac, 6, 0x6a9a5a, 0.55).setOrigin(0, 0.5));
+    const fill = this.add.rectangle(sx0, sy, 0, 6, 0x8a2a2a, 0.9).setOrigin(0, 0.5);
+    const knob = this.add.circle(sx0, sy, 16, 0xefe6d2).setStrokeStyle(3, 0x8a2a2a);
+    slider.add([fill, knob]);
+    slider.add(text(this, sx0, sy + 28, `Lv ${lo}`, { size: 18, color: CSS.paperSub }).setOrigin(0, 0.5));
+    slider.add(text(this, sx0 + sw, sy + 28, `Lv ${cap}`, { size: 18, color: CSS.paperSub }).setOrigin(1, 0.5));
+    const track = this.add.rectangle(sx0 + sw / 2, sy, sw + 40, 64, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+    slider.add(track);
+    this.input.setDraggable(track);
+    const syncSlider = () => {
+      const f = cap > lo ? (target - lo) / (cap - lo) : 1;
+      fill.width = sw * f;
+      knob.x = sx0 + sw * f;
+    };
+    const pick = (px: number) => {
+      const lv = Math.round(lo + Phaser.Math.Clamp((px - sx0) / sw, 0, 1) * (cap - lo));
+      if (lv !== target) {
+        target = lv;
+        audio.sfx('tap');
+        draw();
+      }
+    };
+    track.on('pointerdown', (ptr: Phaser.Input.Pointer) => pick(ptr.x));
+    track.on('drag', (ptr: Phaser.Input.Pointer) => pick(ptr.x));
     const draw = () => {
       dial.removeAll(true);
       costT.removeAll(true);
@@ -366,7 +412,8 @@ export class RosterScene extends Phaser.Scene {
       };
       arrow(cx - 270, -1);
       arrow(cx + 270, 1);
-      const mx = this.add.container(cx + 170, 610);
+      syncSlider();
+      const mx = this.add.container(cx + 170, 680);
       mx.add(this.add.rectangle(0, 0, 150, 40, 0xffffff, 0.8).setStrokeStyle(1, 0x8a8578));
       mx.add(text(this, 0, 0, `Max  Lv.${Math.max(best, Math.min(cap, o.level + 1))}`, { size: 20, color: CSS.paperText }).setOrigin(0.5));
       mx.setSize(150, 40).setInteractive({ useHandCursor: true }).on('pointerup', () => {
@@ -383,12 +430,12 @@ export class RosterScene extends Phaser.Scene {
       (['dust', 'sovereign'] as ItemId[]).forEach((id, i) => {
         const x = cx - 150 + i * 220;
         const ok = save.items[id] >= cost[id as 'dust' | 'sovereign'];
-        costT.add(this.add.rectangle(x + 30, 700, 200, 70, 0xffffff, 0.55).setStrokeStyle(1, 0x8a8578, 0.6));
-        costT.add(this.add.image(x - 30, 700, `item:${id}`).setDisplaySize(60, 60).setInteractive({ useHandCursor: true }).on('pointerup', () => this.itemInfo(id)));
-        costT.add(text(this, x + 10, 700, formatQty(cost[id as 'dust' | 'sovereign']), { size: 26, bold: true, color: ok ? CSS.paperText : '#c0392b' }).setOrigin(0, 0.5));
+        costT.add(this.add.rectangle(x + 30, 756, 200, 70, 0xffffff, 0.55).setStrokeStyle(1, 0x8a8578, 0.6));
+        costT.add(this.add.image(x - 30, 756, `item:${id}`).setDisplaySize(60, 60).setInteractive({ useHandCursor: true }).on('pointerup', () => this.itemInfo(id)));
+        costT.add(text(this, x + 10, 756, formatQty(cost[id as 'dust' | 'sovereign']), { size: 26, bold: true, color: ok ? CSS.paperText : '#c0392b' }).setOrigin(0, 0.5));
       });
       const ok = affordable(save, cost);
-      const btn = new Button(this, cx, 820, {
+      const btn = new Button(this, cx, 866, {
         w: 300, h: 76, label: 'Level Up', style: ok ? 'amber' : 'cream', size: 32, sfx: ok ? 'levelup' : 'deny',
         onClick: () => {
           if (!levelUp(save, c.id, target)) {
@@ -397,7 +444,8 @@ export class RosterScene extends Phaser.Scene {
           }
           saves.commit();
           toast(this, `${c.name.split(' ')[0]} reached Lv ${target}`, c.mood);
-          this.openCharacter(c.id);
+          // Rebuild the page with the new numbers but keep the Level Up sheet open.
+          this.openCharacter(c.id, 'overview', 'levelup');
         },
       });
       costT.add(btn);

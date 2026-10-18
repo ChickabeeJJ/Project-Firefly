@@ -107,25 +107,27 @@ export class SummonScene extends Phaser.Scene {
     // Banner tabs.
     BANNERS.forEach((b, i) => ui.add(this.bannerTab(b, 180, 250 + i * 150, b.id === banner.id)));
 
-    // Title, R1999-style: huge display type with a gilt slash.
-    const words = banner.name.toUpperCase().split(' ');
-    const l1 = words.slice(0, Math.ceil(words.length / 2)).join(' ');
-    const l2 = words.slice(Math.ceil(words.length / 2)).join(' ');
-    const t1 = text(this, 420, 400, l1, { size: 96, font: 'display', bold: true, color: '#f2ead8', spacing: 4, shadow: true });
-    const t2 = text(this, 520, 510, l2, { size: 112, font: 'display', bold: true, color: '#f2ead8', spacing: 4, shadow: true });
-    const slash = this.add.rectangle(520, 625, Math.max(t2.width, 420), 3, C.gold, 0.9).setOrigin(0, 0.5).setScale(0, 1);
-    const blurb = text(this, 524, 650, banner.blurb, { size: 24, italic: true, color: CSS.creamDim, wrap: 520, shadow: true });
-    ui.add([t1, t2, slash, blurb]);
-    [t1, t2].forEach((t, i) => {
-      t.setAlpha(0).setX(t.x - 30);
-      this.tweens.add({ targets: t, alpha: 1, x: t.x + 30, duration: 700, delay: 150 + i * 120, ease: 'Cubic.easeOut' });
+    // Title block, left-aligned on one column: kicker, name, gilt rule, blurb.
+    const X = 430;
+    const kicker = text(this, X + 4, 430, banner.featured ? 'EVENT RITE  ·  LIMITED' : 'STANDARD RITE  ·  ALWAYS OPEN', { size: 22, font: 'display', color: CSS.goldLight, spacing: 6, shadow: true }).setOrigin(0, 0.5);
+    const title = text(this, X, 510, banner.name.toUpperCase(), { size: 84, font: 'display', bold: true, color: '#f2ead8', spacing: 3, shadow: true }).setOrigin(0, 0.5);
+    if (title.width > 700) title.setScale(700 / title.width);
+    const slash = this.add.rectangle(X + 4, 578, Math.min(560, title.displayWidth), 2, C.gold, 0.9).setOrigin(0, 0.5).setScale(0, 1);
+    const diamond = this.add.rectangle(X + 4 + Math.min(560, title.displayWidth) + 14, 578, 9, 9, C.gold, 0.9).setAngle(45).setAlpha(0);
+    const blurb = text(this, X + 4, 606, banner.blurb, { size: 25, italic: true, color: CSS.cream, wrap: 560, lineSpacing: 4, shadow: true });
+    ui.add([kicker, title, slash, diamond, blurb]);
+    [kicker, title, blurb].forEach((t, i) => {
+      const x0 = t.x;
+      t.setAlpha(0).setX(x0 - 30);
+      this.tweens.add({ targets: t, alpha: 1, x: x0, duration: 700, delay: 120 + i * 120, ease: 'Cubic.easeOut' });
     });
     this.tweens.add({ targets: slash, scaleX: 1, duration: 900, delay: 350, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: diamond, alpha: 1, duration: 400, delay: 1100 });
 
     // Featured name plate, set under the title so it never covers the art.
     if (banner.featured) {
       const fc = getCharacter(banner.featured);
-      const row = this.add.container(450, 760);
+      const row = this.add.container(434, 750);
       row.add(this.add.image(24, 0, `icon:${fc.mood}`).setDisplaySize(64, 64));
       const nm = text(this, 66, -4, fc.name.split(' ')[0], { size: 54, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
       row.add(nm);

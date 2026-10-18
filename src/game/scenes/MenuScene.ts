@@ -163,7 +163,7 @@ export class MenuScene extends Phaser.Scene {
       ['gramophone', 'Gramophone', () => openGramophone(this)],
       ['gear', 'Settings', () => this.openSettings()],
     ];
-    const ART: Record<string, string> = { roster: 'troupe', story: 'story', shop: 'pawnshop', atlas: 'atlas', trophy: 'achievements', notice: 'notice', profile: 'profile', gramophone: 'gramophone', gear: 'settings' };
+    const ART: Record<string, string> = { summon: 'rite', roster: 'troupe', story: 'story', shop: 'pawnshop', atlas: 'atlas', trophy: 'achievements', notice: 'notice', profile: 'profile', gramophone: 'gramophone', gear: 'settings' };
     const tw = 176;
     const th = 150;
     const gap = 14;
@@ -177,10 +177,11 @@ export class MenuScene extends Phaser.Scene {
       const c = this.add.container(x, y).setDepth(40);
       const art = ART[icon] && this.textures.exists(`menu:${ART[icon]}`) ? `menu:${ART[icon]}` : null;
       if (art) {
-        // Painted button: the art carries its own name plate.
-        const halo = this.add.image(0, -10, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 160).setAlpha(0);
-        const im = this.add.image(0, 0, art).setDisplaySize(th + 14, th + 14);
-        c.add([halo, im]);
+        // Painted button with its name set beneath in the book face.
+        const halo = this.add.image(0, -16, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 160).setAlpha(0);
+        const im = this.add.image(0, -16, art).setDisplaySize(th - 22, th - 22);
+        const lb = text(this, 0, th / 2 - 8, label, { size: 21, italic: true, color: CSS.cream, shadow: true }).setOrigin(0.5);
+        c.add([halo, im, lb]);
         if (icon === 'trophy') {
           this.badge = this.add.circle(tw / 2 - 26, -th / 2 + 14, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
           c.add(this.badge);

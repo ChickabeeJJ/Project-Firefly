@@ -200,6 +200,11 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'The Gilded Cage', text: 'Her birdcage has no lock and has never had one. The doves fly out with names tied to their feet, and come back with the people who had forgotten them.' },
     { title: 'Rainwater', text: 'She heals with water that remembers falling. It is not the same as the sea, she admits. But it has never once refused her.' },
   ],
+  delphine: [
+    { title: 'The Lantern Wyrm', text: 'Ysolde Nivelle came down from the cold peaks above Vellmoor the winter before the Dimming, carrying a lantern with a whole night sky shut inside it. The city took her for a story. She let it.' },
+    { title: 'The Hoard', text: 'Dragons keep what shines. Ysolde keeps only one thing: a star that fell into her lantern as a child and has never once gone out. When the city went dark, she was the only one who did not notice.' },
+    { title: 'Scales', text: 'Her skin goes to frost-white scale at the wrists and ankles when she is angry, or afraid, or — she will deny this — very happy.' },
+  ],
 };
 
 /** Things each Luminary says in the lobby (tap them, or on arrival). Night/first-visit lines are mixed in by the lobby. */
@@ -273,6 +278,13 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'The cage is never locked. They come back because they choose to. So do I.',
     'Rainwater remembers falling. If you listen, it will tell you where it has been.',
     'You have been carrying something heavy all night. Set it down here, just for a moment.',
+  ],
+  delphine: [
+    'Do not touch the lantern. …You may look. Looking is free. Touching is a dragon matter.',
+    'I counted every light in the city once, from the mountain. There were nine thousand and four. I mean to have them all back.',
+    'My scales itch when the weather turns. Or when someone is kind to me. It is very inconvenient.',
+    'A hoard is only a list of things you could not bear to lose. Mine is short. You are on it.',
+    'The star in here fell when I was small. I caught it. It has been sulking ever since.',
   ],
 };
 

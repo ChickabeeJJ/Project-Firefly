@@ -11,6 +11,7 @@ import { TRIAL_FAMILIES, trialsOf, type TrialFamily } from '../data/trials';
 import { formatQty, fromLegacyLevel, insightLabel, ITEMS, type ItemId, stageItems } from '../systems/growth';
 import { CINEMATICS } from '../data/story';
 import { goToStage } from '../systems/storyFlow';
+import { deskPaperCanvas } from '../art/letterPaper';
 import { Atmosphere, Button, fadeIn, goTo, ornament, scrollable, softPress, text } from '../ui/kit';
 
 type Mode = 'story' | 'resource' | 'insight';
@@ -258,16 +259,9 @@ export class StoryScene extends Phaser.Scene {
   /** Trial families as torn photographs over vinyl records, on a pale sketch-paper desk. */
   private renderCards(): void {
     const save = saves.get();
-    this.add.rectangle(W / 2, H / 2, W, H, 0xdedad2);
-    const sk = this.add.graphics();
-    sk.lineStyle(1, 0x8a8478, 0.18);
-    for (let i = 0; i < 26; i++) {
-      const x = Math.random() * W;
-      const y = Math.random() * H;
-      sk.lineBetween(x, y, x + 80 + Math.random() * 220, y + (Math.random() - 0.5) * 60);
-    }
-    const vg = this.add.graphics();
-    vg.fillGradientStyle(0x6a6458, 0x6a6458, 0x6a6458, 0x6a6458, 0.0, 0.0, 0.35, 0.35).fillRect(0, H * 0.55, W, H * 0.45);
+    // An old cartographer's desk: aged paper, foxing, a faded map grid and coffee rings.
+    if (!this.textures.exists('ui:deskPaper')) this.textures.addCanvas('ui:deskPaper', deskPaperCanvas());
+    this.add.image(W / 2, H / 2, 'ui:deskPaper');
     new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Lobby') }).setDepth(90);
     text(this, W - 70, 70, this.mode === 'resource' ? 'SUPPLIES' : 'KINDLING', { size: 40, font: 'display', bold: true, color: '#3a342c', spacing: 10 }).setOrigin(1, 0.5);
     text(this, W - 70, 116, this.mode === 'resource' ? 'Wick Dust and Brass Sovereigns, for levelling up' : 'Materials for Kindling your Luminaries', { size: 22, italic: true, color: '#6a6458' }).setOrigin(1, 0.5);
@@ -321,8 +315,8 @@ export class StoryScene extends Phaser.Scene {
     c.add(photo);
     // Title, overlapping the photo's left edge.
     const words = f.name.split(' ');
-    const t1 = text(this, -250, -150, words[0], { size: 54, font: 'display', bold: true, color: '#141414', stroke: '#f6f2ea', strokeThickness: 8 });
-    const t2 = text(this, -210, -92, `× ${words.slice(1).join(' ')}`, { size: 42, font: 'display', bold: true, color: '#141414', stroke: '#f6f2ea', strokeThickness: 8 });
+    const t1 = text(this, -250, -150, words[0], { size: 54, font: 'display', bold: true, color: '#1e1710', stroke: '#efe4cc', strokeThickness: 3 });
+    const t2 = text(this, -210, -92, `× ${words.slice(1).join(' ')}`, { size: 42, font: 'display', bold: true, color: '#1e1710', stroke: '#efe4cc', strokeThickness: 3 });
     c.add([t1, t2]);
     // Item medallion.
     c.add(this.add.circle(150, 150, 62, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));

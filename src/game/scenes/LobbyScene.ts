@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { dropIn } from '../art/assets';
-import { ensureBg, ensurePortrait } from '../art/registry';
+import { ensureBg, ensurePortrait, FACE_POINTS } from '../art/registry';
 import { clockFaceCanvas, clockHandCanvas } from '../art/clockFace';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS, getCharacter } from '../data/characters';
@@ -9,7 +9,6 @@ import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel, totalStars } from '../systems/achievements';
 import { frontierStage } from '../systems/progression';
-import { goToStage } from '../systems/storyFlow';
 import { RITE } from '../systems/gacha';
 import { Atmosphere, fadeIn, goTo, softPress, text, toast } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
@@ -38,6 +37,7 @@ export class LobbyScene extends Phaser.Scene {
   private glimmerText!: Phaser.GameObjects.Text;
   private dots: Phaser.GameObjects.Arc[] = [];
   private hidden = false;
+  private face = { x: 960, y: 260 };
   private hands: Phaser.GameObjects.Image[] = [];
   private clockTime!: Phaser.GameObjects.Text;
   private clockDate!: Phaser.GameObjects.Text;
@@ -58,7 +58,13 @@ export class LobbyScene extends Phaser.Scene {
     // Leader, centre stage. Painted portraits stand nearly full height.
     const leader = getCharacter(save.team[0]);
     this.add.image(810, H - 24, 'fx:shadow').setDisplaySize(520, 64).setDepth(19);
-    const lead = stagePortrait(this, 810, H + 34, leader.id, ensurePortrait(this, leader.id), 0.92, 1110, 1140).setDepth(20);
+    const leadKey = ensurePortrait(this, leader.id);
+    const lead = stagePortrait(this, 810, H + 34, leader.id, leadKey, 0.92, 1110, 1140).setDepth(20);
+    // Speech bubble anchor: just beside the leader's face.
+    const fr = this.textures.getFrame(leadKey);
+    const k = Math.min(1110 / fr.height, 1140 / fr.width);
+    const [fx, fy] = FACE_POINTS[leader.id] ?? [0.5, 0.14];
+    this.face = { x: 810 - (fr.width * k) / 2 + fx * fr.width * k, y: H + 34 - fr.height * k + fy * fr.height * k };
     const lines = LOBBY_LINES[leader.id] ?? [leader.quote];
     let lineAt = Phaser.Math.Between(0, lines.length - 1);
     lead.hit.setInteractive({ useHandCursor: true });
@@ -160,7 +166,7 @@ export class LobbyScene extends Phaser.Scene {
       ['gramophone', 'gramophone', () => openGramophone(this)],
       ['settings', 'gear', () => this.openSettings()],
     ];
-    row.forEach(([art, icon, go], i) => this.artButton(92 + i * 104, 206, art, icon, '', go, 96));
+    row.forEach(([art, icon, go], i) => this.artButton(84 + i * 92, 200, art, icon, '', go, 74));
   }
 
   private buildLeftColumn(): void {
@@ -171,9 +177,9 @@ export class LobbyScene extends Phaser.Scene {
       ['atlas', 'atlas', 'Atlas', () => openAtlas(this)],
       ['troupe', 'roster', 'Troupe', () => goTo(this, 'Roster')],
       ['pawnshop', 'shop', 'Shop', () => goTo(this, 'Shop')],
-      ['', 'menu', 'Menu', () => goTo(this, 'Menu')],
+      ['menu', 'menu', 'Menu', () => goTo(this, 'Menu')],
     ];
-    items.forEach(([art, icon, label, go, dot], i) => this.artButton(96, 314 + i * 98, art, icon, label, go, 112, !!dot));
+    items.forEach(([art, icon, label, go, dot], i) => this.artButton(84, 300 + i * 92, art, icon, label, go, 82, !!dot));
     this.refreshDotsLater();
   }
 
@@ -250,6 +256,8 @@ export class LobbyScene extends Phaser.Scene {
       promo.add(fit(text(this, tx, 24, 'answering the Lantern Rite', { size: 18, italic: true, color: CSS.creamDim }), room));
     }
     promo.add(this.add.rectangle(0, 0, COL_W, 132).setStrokeStyle(1.5, 0xe8dcc0, 0.55));
+    // A pasted poster stirring in a draught: a slow, tiny rock either side of its tilt.
+    this.tweens.add({ targets: promo, angle: { from: -3.1, to: -1.9 }, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     promo.setSize(COL_W, 132).setInteractive({ useHandCursor: true });
     promo.on('pointerup', () => {
       audio.sfx('tap');
@@ -260,7 +268,7 @@ export class LobbyScene extends Phaser.Scene {
     // Admission ticket: chapter + next stage, with a torn-off "Enter" stub.
     this.ticket(x, 372, allClear ? 'EVERY LAMP IS LIT' : `CHAPTER ${stage.chapter} · ${chapter.name.toUpperCase()}`,
       allClear ? 'Replay any stage' : `${stage.id}  ${stage.name}`,
-      () => (allClear ? goTo(this, 'Story') : goToStage(this, stage.id)));
+      () => goTo(this, 'Story', allClear ? {} : { stageId: stage.id }));
 
     // Two outlined tiles.
     const tw = (COL_W - 18) / 2;
@@ -290,7 +298,14 @@ export class LobbyScene extends Phaser.Scene {
       wheel.lineBetween(Math.cos(a) * 18, Math.sin(a) * 18, Math.cos(a) * 56, Math.sin(a) * 56);
     }
     this.tweens.add({ targets: wheel, angle: 360, duration: 18000, repeat: -1 });
-    const icon = this.add.image(COL_W / 2 - 90, 0, 'icon:summon').setDisplaySize(44, 44);
+    const riteArt = this.textures.exists('menu:rite');
+    const icon = riteArt
+      ? this.add.image(COL_W / 2 - 84, 0, 'menu:rite').setDisplaySize(150, 150)
+      : this.add.image(COL_W / 2 - 90, 0, 'icon:summon').setDisplaySize(44, 44);
+    if (riteArt) {
+      wheel.setVisible(false);
+      this.tweens.add({ targets: icon, angle: { from: -3, to: 3 }, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     const pulls = Math.floor(save.glimmer / RITE.cost);
     rite.add([glow, plate, wheel, icon,
       text(this, -COL_W / 2 + 22, -18, 'Lantern Rite', { size: 36, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5),
@@ -311,12 +326,14 @@ export class LobbyScene extends Phaser.Scene {
     g.fillStyle(0xefe6d2, 0.96).fillRect(-w / 2, -h / 2, w, h);
     g.lineStyle(1.5, 0x2a241c, 0.35).strokeRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16);
     for (let i = -h / 2 + 10; i < h / 2 - 6; i += 9) g.fillStyle(0x2a241c, 0.4).fillCircle(w / 2 - stub, i, 1.6);
-    const room = w - stub - 44;
-    const k = fit(text(this, -w / 2 + 22, -30, head, { size: 15, font: 'display', bold: true, color: CSS.amber, spacing: 2 }), room);
-    const t = fit(text(this, -w / 2 + 20, -6, 'ENTER THE STAGE', { size: 34, font: 'display', bold: true, color: CSS.paperText }), room);
-    const st = fit(text(this, -w / 2 + 22, 30, sub, { size: 18, italic: true, color: CSS.paperSub }), room);
-    const enter = text(this, w / 2 - stub / 2, -2, 'Enter', { size: 30, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5);
-    const arrow = this.add.image(w / 2 - stub / 2, 30, 'icon:back').setDisplaySize(22, 22).setFlipX(true).setTint(0x2a241c);
+    // Three clean lines on the left (chapter · title · next stage); the stub holds only an arrow.
+    const room = w - stub - 50;
+    const lx = -w / 2 + 26;
+    const k = fit(text(this, lx, -32, head, { size: 15, font: 'display', bold: true, color: CSS.amber, spacing: 2 }).setOrigin(0, 0.5), room);
+    const t = fit(text(this, lx, 2, 'Enter the Stage', { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0, 0.5), room);
+    const st = fit(text(this, lx, 36, sub, { size: 18, italic: true, color: CSS.paperSub }).setOrigin(0, 0.5), room);
+    const enter = this.add.circle(w / 2 - stub / 2, 0, 30, 0x2a241c, 0.9);
+    const arrow = this.add.image(w / 2 - stub / 2 + 2, 0, 'icon:back').setDisplaySize(26, 26).setFlipX(true).setTint(0xefe6d2);
     c.add([g, k, t, st, enter, arrow]);
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     this.tweens.add({ targets: arrow, x: arrow.x + 5, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -376,9 +393,16 @@ export class LobbyScene extends Phaser.Scene {
     const t = text(this, 0, 0, line, { size: 28, italic: true, color: CSS.paperText, wrap: 360 });
     const w = t.width + 44;
     const h = t.height + 30;
-    const c = this.add.container(960, 150).setDepth(80);
+    // Beside the face: to its right if there is room before the menus, otherwise to its left.
+    const right = this.face.x + 90 + w < 1360;
+    const bx = right ? this.face.x + 90 : this.face.x - 90 - w;
+    const by = Phaser.Math.Clamp(this.face.y - h - 20, 40, H - h - 40);
+    const c = this.add.container(bx, by).setDepth(80);
     c.add([this.add.nineslice(0, 0, 'ui:paperPlain', undefined, w, h, 12, 12, 12, 12).setOrigin(0), t.setPosition(22, 15)]);
-    c.add(this.add.triangle(30, h + 8, 0, 0, 28, 0, 0, 20, C.paper));
+    // Tail points back down towards the mouth.
+    const tx = right ? 0 : w;
+    const dir = right ? -1 : 1;
+    c.add(this.add.triangle(tx, h - 14, 0, 0, 0, 22, dir * 34, 30, C.paper).setOrigin(0, 0));
     c.setAlpha(0);
     this.tweens.add({ targets: c, alpha: 1, duration: 220, yoyo: true, hold: 4200, onComplete: () => c.destroy() });
     this.bubble = c;

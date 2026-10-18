@@ -195,3 +195,74 @@ export function letterPaperCanvas(seed = 1929): HTMLCanvasElement {
   ctx.restore();
   return canvas;
 }
+
+/** Full-screen aged paper for the Supplies / Kindling desks: sepia stock, foxing, a faint map grid. */
+export function deskPaperCanvas(W = 1920, H = 1080): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(W, H);
+  const rnd = seeded(1931);
+  const base = ctx.createRadialGradient(W * 0.5, H * 0.45, 120, W / 2, H / 2, W * 0.75);
+  base.addColorStop(0, '#ece0c4');
+  base.addColorStop(0.65, '#ddcba4');
+  base.addColorStop(1, '#a88c5c');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, W, H);
+  // Faded survey grid and compass lines.
+  ctx.strokeStyle = rgba('#6a5032', 0.07);
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 96) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 96) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = rgba('#6a5032', 0.1);
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.82, H * 0.78);
+    ctx.lineTo(W * 0.82 + Math.cos(a) * 900, H * 0.78 + Math.sin(a) * 900);
+    ctx.stroke();
+  }
+  // Pencil sketch strokes.
+  ctx.strokeStyle = rgba('#3a2a18', 0.12);
+  for (let i = 0; i < 40; i++) {
+    const x = rnd() * W;
+    const y = rnd() * H;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x + 60 + rnd() * 120, y + (rnd() - 0.5) * 80, x + 120 + rnd() * 240, y + (rnd() - 0.5) * 60);
+    ctx.stroke();
+  }
+  // Foxing and stains.
+  for (let i = 0; i < 260; i++) {
+    const x = rnd() * W;
+    const y = rnd() * H;
+    const r = 1 + rnd() * (rnd() < 0.08 ? 18 : 5);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba('#8a5a2a', 0.18 + rnd() * 0.18));
+    g.addColorStop(1, rgba('#8a5a2a', 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (const [x, y, r] of [[W * 0.12, H * 0.82, 70], [W * 0.9, H * 0.18, 56]] as const) {
+    ctx.strokeStyle = rgba('#6a3a18', 0.13);
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0.4, Math.PI * 1.85);
+    ctx.stroke();
+  }
+  // Burnt vignette.
+  const rim = ctx.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.68);
+  rim.addColorStop(0, rgba('#2a1808', 0));
+  rim.addColorStop(1, rgba('#2a1808', 0.55));
+  ctx.fillStyle = rim;
+  ctx.fillRect(0, 0, W, H);
+  grain(ctx, W, H, 0.06, 1931);
+  return canvas;
+}

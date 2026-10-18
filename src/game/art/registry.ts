@@ -46,6 +46,12 @@ function size(scene: Phaser.Scene, key: string): { w: number; h: number } {
 }
 
 /** Painted renders whose figure looks to the left; mirrored in battle so the troupe faces the enemy. */
+/** Where each painted Luminary's face sits in their full-body art (fractions of width/height). */
+export const FACE_POINTS: Record<string, [number, number]> = {
+  wren: [0.572, 0.2], odile: [0.495, 0.135], evangeline: [0.45, 0.17], bastian: [0.52, 0.2], augustin: [0.5, 0.08],
+  delphine: [0.56, 0.17], hesper: [0.61, 0.11], ichabod: [0.62, 0.17], kit: [0.54, 0.125], marigold: [0.6, 0.1], ottoline: [0.6, 0.1], teddy: [0.54, 0.085],
+};
+
 export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper', 'kit']);
 
 function facingRight(canvas: HTMLCanvasElement, charId: string): HTMLCanvasElement {
@@ -167,7 +173,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const painted = dropIn(scene, 'ui', `icon_${name}`) ?? dropIn(scene, 'ui', `status_${name}`);
     add(scene, `icon:${name}`, painted ? fitHeight(scene, painted, 128) : iconCanvas(name, ICON_COLORS[name]));
   }
-  for (const id of ['troupe', 'story', 'atlas', 'achievements', 'notice', 'profile', 'gramophone', 'settings', 'pawnshop']) {
+  for (const id of ['troupe', 'story', 'atlas', 'achievements', 'notice', 'profile', 'gramophone', 'settings', 'pawnshop', 'menu', 'rite']) {
     const k = dropIn(scene, 'ui', `menu_${id}`);
     if (k) add(scene, `menu:${id}`, fitHeight(scene, k, 300));
   }

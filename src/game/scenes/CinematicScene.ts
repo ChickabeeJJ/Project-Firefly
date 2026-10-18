@@ -60,6 +60,8 @@ export class CinematicScene extends Phaser.Scene {
   private full = '';
   private typing?: Phaser.GameObjects.Text;
   private busy = false;
+  /** While a beat blocks input, a click calls this to jump to its end instead of being ignored. */
+  private skipBeat: (() => void) | null = null;
   private ending = false;
   private bells = 0;
   private seg = -1;
@@ -140,6 +142,14 @@ export class CinematicScene extends Phaser.Scene {
 
     const boss = data.ids.some((id) => id.startsWith('stage:') && getStage(id.slice(6)).boss);
     audio.play(boss ? 'boss' : data.ids.some((id) => !id.startsWith('stage:')) ? 'rite' : 'lobby');
+    // Upload every speaker's portrait to the GPU up front (a big texture's first draw can
+    // otherwise hitch mid-scene); each is drawn once, invisibly small, then removed.
+    const speakers = new Set(this.beats.flatMap((b) => (b.shot.kind === 'line' ? [b.shot.who] : [])));
+    for (const who of speakers) {
+      if (!CHARACTERS.some((c) => c.id === who)) continue;
+      const warm = this.add.image(0, 0, ensurePortrait(this, who)).setScale(0.002).setAlpha(0.01).setDepth(-1);
+      this.time.delayedCall(120, () => warm.destroy());
+    }
     this.cameras.main.fadeIn(500, 0, 0, 0);
     this.time.delayedCall(450, () => this.advance());
   }
@@ -155,7 +165,13 @@ export class CinematicScene extends Phaser.Scene {
       this.nextMark.setAlpha(1);
       return;
     }
-    if (this.busy) return;
+    if (this.busy) {
+      const ff = this.skipBeat;
+      this.skipBeat = null;
+      ff?.();
+      return;
+    }
+    this.skipBeat = null;
     this.i++;
     if (this.i >= this.beats.length) return this.finish();
     this.nextMark.setAlpha(0);
@@ -181,10 +197,16 @@ export class CinematicScene extends Phaser.Scene {
 
   private wait(ms: number, fn: () => void): void {
     this.busy = true;
-    this.time.delayedCall(ms, () => {
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      ev.remove();
       this.busy = false;
       fn();
-    });
+    };
+    const ev = this.time.delayedCall(ms, go);
+    this.skipBeat = go;
   }
 
   private finish(): void {
@@ -442,12 +464,18 @@ export class CinematicScene extends Phaser.Scene {
     this.tweens.add({ targets: s, alpha: 1, duration: 700, delay: 900 });
     audio.sfx('reveal4');
     this.busy = true;
-    this.time.delayedCall(1500, () => {
+    let done = false;
+    const settle = () => {
+      if (done) return;
+      done = true;
+      ev.remove();
       this.busy = false;
       this.nextMark.setAlpha(1);
       const at = this.i;
       if (this.auto) this.time.delayedCall(1500, () => this.auto && this.i === at && this.advance());
-    });
+    };
+    const ev = this.time.delayedCall(1500, settle);
+    this.skipBeat = settle;
   }
 
   private bell(strokes: number, ominous: boolean, caption?: string): void {
@@ -462,8 +490,9 @@ export class CinematicScene extends Phaser.Scene {
       this.type(t, caption, 1);
     }
     const gap = ominous ? 0 : 320;
+    const events: Phaser.Time.TimerEvent[] = [];
     for (let k = 0; k < strokes; k++) {
-      this.time.delayedCall(k * gap + (ominous ? 700 : 0), () => {
+      events.push(this.time.delayedCall(k * gap + (ominous ? 700 : 0), () => {
         if (!numeral.active) return;
         this.bells = Math.min(13, this.bells + 1);
         numeral.setText(ROMAN[this.bells - 1]).setAlpha(1).setScale(ominous ? 1.6 : 1.25);
@@ -473,13 +502,31 @@ export class CinematicScene extends Phaser.Scene {
         this.tweens.add({ targets: f, alpha: 0, duration: ominous ? 1400 : 280, onComplete: () => f.destroy() });
         this.cameras.main.shake(ominous ? 700 : 120, ominous ? 0.012 : 0.003);
         audio.sfx(ominous ? 'finale' : 'lantern');
-      });
+      }));
     }
     const total = (strokes - 1) * gap + (ominous ? 2300 : 500);
-    this.time.delayedCall(total, () => {
+    let done = false;
+    const settle = (skipped: boolean) => {
+      if (done) return;
+      done = true;
+      const pending = events.filter((e) => e.getRemaining() > 0).length;
+      for (const e of events) e.remove();
+      end.remove();
+      if (skipped && numeral.active) {
+        // Jump to the last stroke so the count still reads right.
+        this.bells = Math.min(13, this.bells + pending);
+        numeral.setText(ROMAN[Math.max(0, this.bells - 1)]).setAlpha(ominous ? 0.85 : 0.25).setScale(1);
+      }
       this.busy = false;
+      if (this.typer && this.typing) {
+        this.typer.remove();
+        this.typer = undefined;
+        this.typing.setText(this.full);
+      }
       if (!caption) this.advance();
-      else if (!this.typer) this.nextMark.setAlpha(1);
-    });
+      else this.nextMark.setAlpha(1);
+    };
+    const end = this.time.delayedCall(total, () => settle(false));
+    this.skipBeat = () => settle(true);
   }
 }
