@@ -130,7 +130,7 @@ export class ResultScene extends Phaser.Scene {
   private leave(then: () => void): void {
     const d = this.data_;
     const owed = d.won ? storyAfter(d.stageId) : null;
-    if (owed) goTo(this, 'Cinematic', { ids: [owed], next: { scene: 'Lobby' } });
+    if (owed) goTo(this, 'Cinematic', { ids: [owed.id], next: owed.chapterEnd ? { scene: 'Lobby' } : { scene: 'Story', data: { stageId: d.stageId } } });
     else then();
   }
 }

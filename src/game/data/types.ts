@@ -189,3 +189,15 @@ export interface BioSection {
   title: string;
   text: string;
 }
+
+/** One chapter's long-form story text (see data/saga). Replaces/extends the base story by id. */
+export interface ChapterSaga {
+  /** Cinematics; an id that already exists in story.ts replaces it, new ids are added. */
+  cinematics: Cinematic[];
+  /** Cinematic id played after first clearing a stage (before returning to the stage list). */
+  interludes: Record<string, string>;
+  /** Pre-battle dialogue per stage id; replaces the stage's intro. */
+  intros: Record<string, DialogueLine[]>;
+  /** One-line closing narration per stage id; replaces the stage's outro. */
+  outros: Record<string, string>;
+}

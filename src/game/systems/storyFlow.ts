@@ -1,6 +1,6 @@
 import type Phaser from 'phaser';
 import { getStage } from '../data/stages';
-import { CHAPTER_ENDINGS, CHAPTER_OPENERS } from '../data/story';
+import { CHAPTER_ENDINGS, CHAPTER_OPENERS, STAGE_INTERLUDES } from '../data/story';
 import { saves } from '../persistence/SaveService';
 import { goTo } from '../ui/kit';
 
@@ -25,10 +25,12 @@ export function goToStage(scene: Phaser.Scene, stageId: string): void {
   else goTo(scene, 'Formation', { stageId });
 }
 
-/** The chapter-ending cinematic owed after winning `stageId`, if any and not yet seen. */
-export function storyAfter(stageId: string): string | null {
-  const id = CHAPTER_ENDINGS[stageId];
-  return id && !seen(id) ? id : null;
+/** Story owed after winning `stageId` (an interlude or the chapter ending), if not yet seen. */
+export function storyAfter(stageId: string): { id: string; chapterEnd: boolean } | null {
+  const end = CHAPTER_ENDINGS[stageId];
+  if (end && !seen(end)) return { id: end, chapterEnd: true };
+  const mid = STAGE_INTERLUDES[stageId];
+  return mid && !seen(mid) ? { id: mid, chapterEnd: false } : null;
 }
 
 /** Brand-new players: prologue, then straight into the guided first battle. */

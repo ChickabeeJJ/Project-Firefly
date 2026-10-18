@@ -1,10 +1,11 @@
+import { SAGAS } from './saga';
 import type { BioSection, Cinematic } from './types';
 
 // The story of Firefly Nocturne. Character ids are internal (wren = Corvin, odile = Seraphine,
 // bastian = Columbine, ichabod = Lucien, teddy = Aldric, ottoline = Ophelia, marigold = Valerian,
 // hesper = Elias). Stage-by-stage dialogue lives with each stage in stages.ts.
 
-export const CINEMATICS: Cinematic[] = [
+const BASE_CINEMATICS: Cinematic[] = [
   {
     id: 'prologue', name: 'Prologue · The Thirteenth Stroke', bg: 'street', tone: 'cold',
     clock: '23:59',
@@ -128,6 +129,20 @@ export const CINEMATICS: Cinematic[] = [
     ],
   },
 ];
+
+/** Base story, with each chapter's long-form saga replacing or adding scenes by id. */
+export const CINEMATICS: Cinematic[] = (() => {
+  const out = [...BASE_CINEMATICS];
+  for (const c of SAGAS.flatMap((s) => s.cinematics)) {
+    const i = out.findIndex((x) => x.id === c.id);
+    if (i >= 0) out[i] = c;
+    else out.push(c);
+  }
+  return out;
+})();
+
+/** Cinematic played after first clearing a (non-boss) stage. */
+export const STAGE_INTERLUDES: Record<string, string> = Object.assign({}, ...SAGAS.map((s) => s.interludes));
 
 export function getCinematic(id: string): Cinematic | undefined {
   return CINEMATICS.find((c) => c.id === id);

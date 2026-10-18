@@ -1,3 +1,4 @@
+import { SAGAS } from './saga';
 import type { StageDef } from './types';
 
 export const CHAPTERS = [
@@ -293,6 +294,13 @@ export const STAGES: StageDef[] = [
   },
 
 ];
+
+for (const saga of SAGAS) {
+  for (const st of STAGES) {
+    if (saga.intros[st.id]) st.intro = saga.intros[st.id];
+    if (saga.outros[st.id]) st.outro = saga.outros[st.id];
+  }
+}
 
 const byId = new Map(STAGES.map((s) => [s.id, s]));
 
