@@ -200,9 +200,14 @@ export class CinematicScene extends Phaser.Scene {
     this.typer?.remove();
     this.typer = undefined;
     this.typing = undefined;
+    // Old words leave at once so two lines never overlap, even on a slow frame; ornaments fade.
     const old = this.ui.list.slice();
     for (const o of old) {
-      this.tweens.add({ targets: o, alpha: 0, duration: 220, onComplete: () => o.destroy() });
+      if (o instanceof Phaser.GameObjects.Text) {
+        o.destroy();
+        continue;
+      }
+      this.tweens.add({ targets: o, alpha: 0, duration: 160, onComplete: () => o.destroy() });
     }
   }
 
