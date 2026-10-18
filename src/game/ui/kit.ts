@@ -90,6 +90,8 @@ export interface ButtonOpts {
   icon?: string;
   sub?: string;
   sfx?: Sfx;
+  /** Label typeface: 'display' (engraved capitals, default) or 'body' (book serif, tighter). */
+  font?: 'display' | 'body';
   onClick: () => void;
 }
 
@@ -109,7 +111,8 @@ export class Button extends Phaser.GameObjects.Container {
     const iconOnly = !!o.icon && !o.label;
     const iconW = o.icon && !iconOnly ? 44 : 0;
     const ly = o.sub ? -10 : 0;
-    this.label = text(scene, iconW / 2, ly, o.label, { size: o.size ?? 32, font: 'display', bold: true, color: BTN_TEXT[style], spacing: 2 }).setOrigin(0.5);
+    const body = o.font === 'body';
+    this.label = text(scene, iconW / 2, ly, o.label, { size: o.size ?? 32, font: body ? 'body' : 'display', bold: !body, italic: body, color: BTN_TEXT[style], spacing: body ? 0 : 1 }).setOrigin(0.5);
     this.add(this.label);
     if (o.icon) {
       // Icon-only buttons (✕, back) sit dead centre; otherwise the icon leads the label.

@@ -24,7 +24,7 @@ export const ICON_COLORS: Record<string, string> = {
 export const BATTLE_DOLL_SCALE = 1;
 export const PORTRAIT_SCALE = 2.4;
 /** Painted portraits are stored at this height (memory cap). */
-const PAINTED_PORTRAIT_H = 1200;
+const PAINTED_PORTRAIT_H = 1600;
 /** Battle height of painted characters before the 0.85 field scale. */
 const PAINTED_DOLL_H = 385;
 /** …and no wider than this (full renders with big props or capes are wide). */
@@ -162,7 +162,15 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   if (crystal) add(scene, 'icon:glimmer', fitHeight(scene, crystal, 128));
   const star = dropIn(scene, 'ui', 'icon_star');
   add(scene, 'icon:starp', star ? fitHeight(scene, star, 128) : iconCanvas('star4', ICON_COLORS.star4));
-  for (const name of ICON_NAMES) add(scene, `icon:${name}`, iconCanvas(name, ICON_COLORS[name]));
+  // Painted element badges (ui/icon_sun…) and status icons (ui/status_might…) replace the line icons.
+  for (const name of ICON_NAMES) {
+    const painted = dropIn(scene, 'ui', `icon_${name}`) ?? dropIn(scene, 'ui', `status_${name}`);
+    add(scene, `icon:${name}`, painted ? fitHeight(scene, painted, 128) : iconCanvas(name, ICON_COLORS[name]));
+  }
+  for (const id of ['troupe', 'story', 'atlas', 'achievements', 'notice', 'profile', 'gramophone', 'settings', 'pawnshop']) {
+    const k = dropIn(scene, 'ui', `menu_${id}`);
+    if (k) add(scene, `menu:${id}`, fitHeight(scene, k, 300));
+  }
   for (const id of ITEM_ICON_IDS) add(scene, `item:${id}`, dropIn(scene, 'ui', `item_${id}`) ? fitHeight(scene, dropIn(scene, 'ui', `item_${id}`)!, 128) : itemIconCanvas(id));
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
@@ -196,9 +204,12 @@ export function ensureBg(scene: Phaser.Scene, id: BgId): string {
 export function ensurePortrait(scene: Phaser.Scene, charId: string): string {
   const painted = dropIn(scene, 'characters', charId);
   if (painted) {
+    const s0 = size(scene, painted);
+    // Art already within budget is used as-is (no second copy in memory).
+    if (s0.h <= PAINTED_PORTRAIT_H) return painted;
     const key = `hfp:${charId}`;
     if (!scene.textures.exists(key)) {
-      const s = size(scene, painted);
+      const s = s0;
       add(scene, key, s.h > PAINTED_PORTRAIT_H ? fitHeight(scene, painted, PAINTED_PORTRAIT_H) : fitHeight(scene, painted, s.h));
     }
     return key;

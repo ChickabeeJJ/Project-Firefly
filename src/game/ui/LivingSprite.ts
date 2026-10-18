@@ -1,37 +1,85 @@
 import Phaser from 'phaser';
 import { dropIn, idleVideoUrl, isDropIn } from '../art/assets';
 
-// Brings still character art to life without extra frames. The texture is cut into thin
-// horizontal strips and every strip is shifted and stretched each frame: the feet stay planted
-// while the body sways, breathes, and hair/cloth ripple upward. `lean` and `squash` are public so
-// battle code can tween them for attacks, hits and casts. Works on WebGL and Canvas alike.
+// Brings still character art to life without extra frames.
+//
+// WebGL: a per-figure post-process shader deforms the art smoothly (no strips, no seams). The
+// figure is treated in regions: the face and torso stay rigid, the chest breathes, the whole body
+// sways a hair's breadth from the feet up, and only the outer edges (hair, capes, ribbons,
+// sleeves) drift, slowly, like cloth in a draught. Canvas: a gentle breathing scale only.
+// `lean` and `squash` are public so battle code can tween them for attacks, hits and casts.
 
 export interface LivingOpts {
-  /** Number of strips (more = smoother bends). */
-  strips?: number;
   /** Horizontal sway at the top of the figure, in texture px. */
   sway?: number;
-  /** Travelling ripple amplitude (hair, capes), in texture px. */
+  /** Drift of hair/cloth at the edges, in texture px. */
   flutter?: number;
-  /** Chest-width breathing, as a fraction (0.02 = 2 %). */
+  /** Chest breathing, as a fraction (0.01 = 1 %). */
   breathe?: number;
   /** Animation speed multiplier. */
   speed?: number;
+  /** Kept for old call sites; unused. */
+  strips?: number;
 }
 
-interface Strip {
-  img: Phaser.GameObjects.Image;
-  y0: number;
-  /** 0 at the top of the texture, 1 at the feet. */
-  v: number;
+const FRAG = `
+precision mediump float;
+uniform sampler2D uMainSampler;
+uniform float uTime;
+uniform vec4 uBounds;   // figure box in render-target uv (x, y of the feet-left corner, w, h)
+uniform vec4 uMotion;   // sway, drift, breathe, lean (fractions of figure height/width)
+uniform float uSquash;
+varying vec2 outTexCoord;
+void main() {
+  vec2 uv = outTexCoord;
+  vec2 p = (uv - uBounds.xy) / uBounds.zw;           // 0..1, y up from the feet
+  float u = clamp(p.y, 0.0, 1.2);
+  float t = uTime;
+  vec2 d = vec2(0.0);
+  // Whole-body sway and action lean, rooted at the feet.
+  float sway = (sin(t * 0.9) * 0.65 + sin(t * 0.37 + 1.3) * 0.35) * uMotion.x + uMotion.w;
+  d.x += sway * u * u;
+  // Breathing: a slow rise of everything above the hips, a little more at the shoulders.
+  float br = sin(t * 1.55) * 0.5 + 0.5;
+  float chest = exp(-pow((p.y - 0.66) / 0.14, 2.0));
+  d.y += (uMotion.z * br * smoothstep(0.35, 0.8, u) + uSquash * u) ;
+  d.x += (p.x - 0.5) * uMotion.z * 1.6 * br * chest;
+  // Hair, capes and ribbons: the outer edges drift; the core (face, torso) never does.
+  float edge = smoothstep(0.14, 0.46, abs(p.x - 0.5));
+  float crown = smoothstep(0.78, 1.0, u) * smoothstep(0.08, 0.3, abs(p.x - 0.5));
+  float w = max(edge * smoothstep(0.08, 0.45, u), crown);
+  vec2 drift = vec2(sin(t * 1.15 + p.y * 2.6 + p.x * 1.7), 0.45 * cos(t * 0.95 + p.y * 2.1 - p.x * 1.3));
+  d += drift * uMotion.y * w;
+  vec2 src = uv - d * uBounds.zw;
+  gl_FragColor = texture2D(uMainSampler, src);
+}`;
+
+/** Per-figure post pipeline; LivingSprite writes its uniforms every frame. */
+export class LivingFX extends Phaser.Renderer.WebGL.Pipelines.PostFXPipeline {
+  time = 0;
+  bounds = [0, 0, 1, 1];
+  motion = [0, 0, 0, 0];
+  squash = 0;
+
+  constructor(game: Phaser.Game) {
+    super({ game, name: 'LivingFX', fragShader: FRAG });
+  }
+
+  onPreRender(): void {
+    this.set1f('uTime', this.time);
+    this.set4f('uBounds', this.bounds[0], this.bounds[1], this.bounds[2], this.bounds[3]);
+    this.set4f('uMotion', this.motion[0], this.motion[1], this.motion[2], this.motion[3]);
+    this.set1f('uSquash', this.squash);
+  }
 }
 
 export class LivingSprite extends Phaser.GameObjects.Container {
-  private strips: Strip[] = [];
+  private readonly img: Phaser.GameObjects.Image;
+  private readonly fx: LivingFX | null = null;
   private readonly texW: number;
   private readonly texH: number;
   private readonly o: Required<LivingOpts>;
-  private readonly phase = Math.random() * Math.PI * 2;
+  private readonly phase = Math.random() * 100;
   private clock = 0;
   /** Extra lean at the top of the figure (texture px, + = right). Tween it for actions. */
   lean = 0;
@@ -42,24 +90,17 @@ export class LivingSprite extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, opts: LivingOpts = {}) {
     super(scene, x, y);
-    this.o = { strips: 24, sway: 4, flutter: 2.5, breathe: 0.012, speed: 1, ...opts };
-    const tex = scene.textures.get(key);
-    // Not tex.get(): adding strip frames makes the first strip the texture's "first frame".
-    const base = tex.get('__BASE');
-    this.texW = base.width;
-    this.texH = base.height;
-    const n = this.o.strips;
-    for (let i = 0; i < n; i++) {
-      const y0 = Math.floor((i * this.texH) / n);
-      const y1 = Math.min(this.texH, Math.floor(((i + 1) * this.texH) / n) + 1);
-      const name = `__ls${n}_${i}`;
-      if (!tex.has(name)) tex.add(name, 0, base.cutX, base.cutY + y0, this.texW, y1 - y0);
-      const img = scene.add.image(0, y0 - this.texH, key, name).setOrigin(0.5, 0);
-      this.add(img);
-      this.strips.push({ img, y0, v: (y0 + (y1 - y0) / 2) / this.texH });
+    this.o = { strips: 0, sway: 4, flutter: 3, breathe: 0.004, speed: 1, ...opts };
+    this.img = scene.add.image(0, 0, key).setOrigin(0.5, 1);
+    this.texW = this.img.width;
+    this.texH = this.img.height;
+    this.add(this.img);
+    if (scene.renderer instanceof Phaser.Renderer.WebGL.WebGLRenderer) {
+      const r = scene.renderer;
+      if (!r.pipelines.getPostPipeline('LivingFX')) r.pipelines.addPostPipeline('LivingFX', LivingFX);
+      this.img.setPostPipeline('LivingFX');
+      this.fx = this.img.getPostPipeline('LivingFX') as LivingFX;
     }
-    // Keep plain images of this texture (Atlas, portraits…) showing the whole picture.
-    tex.firstFrame = '__BASE';
     this.hit = scene.add.zone(0, -this.texH / 2, this.texW * 0.7, this.texH * 0.92);
     this.add(this.hit);
     this.setSize(this.texW, this.texH);
@@ -72,33 +113,35 @@ export class LivingSprite extends Phaser.GameObjects.Container {
   private tick(_time: number, delta: number): void {
     this.clock += (delta / 1000) * this.o.speed;
     const t = this.clock + this.phase;
-    const sway = Math.sin(t * 1.05) * this.o.sway + Math.sin(t * 0.43) * this.o.sway * 0.5;
-    const breath = Math.sin(t * 1.7);
-    const sq = this.squash + breath * 0.006;
-    for (const s of this.strips) {
-      const u = 1 - s.v; // height above the feet
-      const bend = (sway + this.lean) * Math.pow(u, 1.6);
-      const ripple = Math.sin(t * 2.4 - s.v * 8) * this.o.flutter * u * (0.4 + 0.6 * Math.abs(Math.sin(t * 0.7)));
-      const chest = Math.exp(-Math.pow((s.v - 0.38) / 0.16, 2));
-      s.img.x = bend + ripple;
-      s.img.y = (s.y0 - this.texH) * (1 + sq);
-      s.img.scaleY = 1 + sq;
-      s.img.scaleX = 1 + this.o.breathe * breath * chest;
+    if (!this.fx) {
+      // Canvas fallback: breathing only.
+      this.img.scaleY = 1 + this.squash + Math.sin(t * 1.55) * 0.003;
+      this.img.x = this.lean * 0.3;
+      return;
     }
+    const b = this.img.getBounds();
+    const sw = this.scene.scale.width;
+    const sh = this.scene.scale.height;
+    // Render targets are y-up: the box origin is the figure's bottom-left corner.
+    this.fx.bounds = [b.x / sw, 1 - (b.y + b.height) / sh, b.width / sw, b.height / sh];
+    this.fx.time = t;
+    const wFrac = 1 / this.texW;
+    this.fx.motion = [this.o.sway * wFrac, this.o.flutter * wFrac, this.o.breathe, this.lean * wFrac];
+    this.fx.squash = this.squash * 0.5;
   }
 
   setTintFill(color: number): this {
-    for (const s of this.strips) s.img.setTintFill(color);
+    this.img.setTintFill(color);
     return this;
   }
 
   setTint(color: number): this {
-    for (const s of this.strips) s.img.setTint(color);
+    this.img.setTint(color);
     return this;
   }
 
   clearTint(): this {
-    for (const s of this.strips) s.img.clearTint();
+    this.img.clearTint();
     return this;
   }
 
@@ -124,7 +167,7 @@ export class LivingSprite extends Phaser.GameObjects.Container {
  * Painted art is sized by height (capped by width); code-drawn chibis by a plain scale.
  */
 export function livingPortrait(scene: Phaser.Scene, x: number, y: number, key: string, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): LivingSprite {
-  const ls = new LivingSprite(scene, x, y, key, { strips: 36, sway: 5, flutter: 3, breathe: 0.01, speed: 0.8 });
+  const ls = new LivingSprite(scene, x, y, key, { sway: 4, flutter: 5, breathe: 0.0035, speed: 0.8 });
   const s = isDropIn(key) ? Math.min(paintedHeight / ls.height, maxWidth / ls.width) : proceduralScale;
   ls.setScale(s);
   return ls;

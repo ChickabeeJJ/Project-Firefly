@@ -57,7 +57,7 @@ export class UnitView {
     } else {
       // Ground units breathe and sway; painted art gets a little more motion than the chibis.
       const painted = !!(isEnemy ? dropIn(scene, 'enemies', unit.defId) : dropIn(scene, 'battle', unit.defId) ?? dropIn(scene, 'characters', unit.defId));
-      const ls = new LivingSprite(scene, 0, 4, key, { sway: painted ? 5 : 3, flutter: painted ? 3 : 1.5, speed: isEnemy ? 0.8 : 1 });
+      const ls = new LivingSprite(scene, 0, 4, key, { sway: painted ? 3 : 2, flutter: painted ? 4 : 1.5, breathe: 0.004, speed: isEnemy ? 0.8 : 1 });
       ls.setScale(layout.scale);
       this.sprite = ls;
       this.hit = ls.hit;

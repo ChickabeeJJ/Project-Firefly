@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { dropIn } from '../art/assets';
 import { ensureBg, ensurePortrait } from '../art/registry';
+import { clockFaceCanvas, clockHandCanvas } from '../art/clockFace';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS, getCharacter } from '../data/characters';
 import { CHAPTERS, STAGES } from '../data/stages';
@@ -32,12 +33,14 @@ function fit(t: Phaser.GameObjects.Text, maxWidth: number): Phaser.GameObjects.T
  * column on the left, the leader centre stage, currencies top-right, and the way onward on the right.
  */
 export class LobbyScene extends Phaser.Scene {
-  private digits: Phaser.GameObjects.Text[] = [];
   private bubble?: Phaser.GameObjects.Container;
   private ui!: Phaser.GameObjects.Container;
   private glimmerText!: Phaser.GameObjects.Text;
   private dots: Phaser.GameObjects.Arc[] = [];
   private hidden = false;
+  private hands: Phaser.GameObjects.Image[] = [];
+  private clockTime!: Phaser.GameObjects.Text;
+  private clockDate!: Phaser.GameObjects.Text;
 
   constructor() {
     super('Lobby');
@@ -45,7 +48,6 @@ export class LobbyScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    this.digits = [];
     this.dots = [];
     this.bubble = undefined;
     this.hidden = false;
@@ -106,6 +108,26 @@ export class LobbyScene extends Phaser.Scene {
     return c;
   }
 
+  /** Painted menu button (ui/menu_<id>, name plate included) or the line-icon fallback. */
+  private artButton(x: number, y: number, art: string, icon: string, label: string, onClick: () => void, size: number, dot = false): Phaser.GameObjects.Container {
+    if (!art || !this.textures.exists(`menu:${art}`)) return this.iconButton(x, y - 8, icon, label, onClick, Math.round(size * 0.6), dot);
+    const c = this.add.container(x, y);
+    const glow = this.add.image(0, -size * 0.08, 'fx:glow').setTint(0xffd27a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.3, size * 1.1).setAlpha(0);
+    const img = this.add.image(0, 0, `menu:${art}`).setDisplaySize(size, size);
+    c.add([glow, img]);
+    if (dot) {
+      const d = this.add.circle(size * 0.36, -size * 0.36, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
+      c.add(d);
+      this.dots.push(d);
+    }
+    c.setSize(size, size).setInteractive({ useHandCursor: true });
+    c.on('pointerover', () => this.tweens.add({ targets: glow, alpha: 0.35, duration: 180 }));
+    c.on('pointerout', () => this.tweens.add({ targets: glow, alpha: 0, duration: 220 }));
+    softPress(c, onClick, 'tap', 1.06);
+    this.ui.add(c);
+    return c;
+  }
+
   private refreshDots(): void {
     const any = claimableCount(saves.get()) > 0;
     for (const d of this.dots) d.setVisible(any);
@@ -133,25 +155,25 @@ export class LobbyScene extends Phaser.Scene {
     this.ui.add(c);
 
     // Shortcut row under the badge.
-    const row: [string, () => void][] = [
-      ['profile', () => openProfile(this)],
-      ['gramophone', () => openGramophone(this)],
-      ['gear', () => this.openSettings()],
+    const row: [string, string, () => void][] = [
+      ['profile', 'profile', () => openProfile(this)],
+      ['gramophone', 'gramophone', () => openGramophone(this)],
+      ['settings', 'gear', () => this.openSettings()],
     ];
-    row.forEach(([icon, go], i) => this.iconButton(72 + i * 70, 196, icon, '', go, 52));
+    row.forEach(([art, icon, go], i) => this.artButton(92 + i * 104, 206, art, icon, '', go, 96));
   }
 
   private buildLeftColumn(): void {
-    const items: [string, string, () => void, boolean?][] = [
-      ['notice', 'Notice', () => openNotice(this)],
-      ['trophy', 'Tasks', () => openAchievements(this, () => this.refreshDots()), true],
-      ['atlas', 'Atlas', () => openAtlas(this)],
-      ['roster', 'Troupe', () => goTo(this, 'Roster')],
+    // One column of painted buttons (each carries its own name plate).
+    const items: [string, string, string, () => void, boolean?][] = [
+      ['notice', 'notice', 'Notice', () => openNotice(this)],
+      ['achievements', 'trophy', 'Tasks', () => openAchievements(this, () => this.refreshDots()), true],
+      ['atlas', 'atlas', 'Atlas', () => openAtlas(this)],
+      ['troupe', 'roster', 'Troupe', () => goTo(this, 'Roster')],
+      ['pawnshop', 'shop', 'Shop', () => goTo(this, 'Shop')],
+      ['', 'menu', 'Menu', () => goTo(this, 'Menu')],
     ];
-    items.forEach(([icon, label, go, dot], i) => this.iconButton(76, 316 + i * 104, icon, label, go, 64, !!dot));
-    this.iconButton(184, 316, 'menu', 'Menu', () => goTo(this, 'Menu'), 64);
-    this.iconButton(184, 420, 'eye', 'Hide', () => this.toggleUi(), 64);
-    this.iconButton(184, 524, 'shop', 'Shop', () => goTo(this, 'Shop'), 64);
+    items.forEach(([art, icon, label, go, dot], i) => this.artButton(96, 314 + i * 98, art, icon, label, go, 112, !!dot));
     this.refreshDotsLater();
   }
 
@@ -304,37 +326,48 @@ export class LobbyScene extends Phaser.Scene {
 
   // ===================================================================== Nixie clock
 
+  /** Brass carriage clock in the corner, keeping the player's real time (with the lore's 13th mark). */
   private buildClock(): void {
-    // Nixie tubes in the corner, showing the player's real time.
-    const x0 = 72;
-    const y = 990;
-    const c = this.add.container(0, 0);
-    const g = this.add.graphics();
-    g.fillStyle(0x140d09, 0.9).fillRoundedRect(x0 - 30, y + 34, 4 * 54 + 64, 20, 6);
-    c.add(this.add.image(x0 + 100, y - 4, 'fx:glow').setTint(0xff8a3a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(380, 200).setAlpha(0.18));
-    c.add(g);
-    for (let i = 0; i < 4; i++) {
-      const x = x0 + i * 54 + (i > 1 ? 14 : 0);
-      g.fillStyle(0x1a1410, 0.9).fillRoundedRect(x - 22, y - 44, 44, 78, 18);
-      g.lineStyle(2, 0xc9a070, 0.35).strokeRoundedRect(x - 22, y - 44, 44, 78, 18);
-      const d = text(this, x, y - 4, '0', { size: 54, color: '#ffae5a' }).setOrigin(0.5);
-      d.setShadow(0, 0, '#ff7a2a', 18, false, true);
-      this.digits.push(d);
-      c.add(d);
+    if (!this.textures.exists('ui:clockFace')) {
+      this.textures.addCanvas('ui:clockFace', clockFaceCanvas());
+      this.textures.addCanvas('ui:clockHour', clockHandCanvas(84, 22));
+      this.textures.addCanvas('ui:clockMin', clockHandCanvas(118, 16));
+      this.textures.addCanvas('ui:clockSec', clockHandCanvas(126, 6, '#9a1e22', 26));
     }
-    const colon = text(this, x0 + 2 * 54 - 13, y - 6, ':', { size: 44, color: '#ffae5a' }).setOrigin(0.5);
-    colon.setShadow(0, 0, '#ff7a2a', 14, false, true);
-    c.add(colon);
-    this.tweens.add({ targets: colon, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+    const s = 0.56;
+    const cx = 100;
+    const cy = 988;
+    const c = this.add.container(0, 0);
+    c.add(this.add.image(cx, cy, 'fx:glow').setTint(0xffc070).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(330, 300).setAlpha(0.16));
+    c.add(this.add.image(cx, cy, 'ui:clockFace').setScale(s));
+    const hand = (key: string, counter = 0) => this.add.image(cx, cy, key).setOrigin(0.5, 1 - counter / this.textures.get(key).getSourceImage().height).setScale(s);
+    this.hands = [hand('ui:clockHour'), hand('ui:clockMin'), hand('ui:clockSec', 26)];
+    c.add(this.hands);
+    c.add(this.add.circle(cx, cy, 6, 0xd8b060).setStrokeStyle(1.5, 0x3a2208));
+    // Date and time beside the dial, set like a ticket stub.
+    this.clockTime = text(this, cx + 104, cy - 20, '', { size: 46, font: 'display', color: '#f4ead4', spacing: 2, shadow: true }).setOrigin(0, 0.5);
+    this.clockDate = text(this, cx + 106, cy + 26, '', { size: 22, font: 'letter', italic: true, color: CSS.creamDim, shadow: true }).setOrigin(0, 0.5);
+    c.add([this.clockTime, this.clockDate, this.add.rectangle(cx + 114, cy + 4, 190, 1, 0xe8dcc0, 0.45).setOrigin(0, 0.5)]);
     this.ui.add(c);
     this.tickClock();
-    this.time.addEvent({ delay: 1000, loop: true, callback: () => this.tickClock() });
+    this.time.addEvent({ delay: 250, loop: true, callback: () => this.tickClock() });
   }
 
   private tickClock(): void {
     const d = new Date();
-    const s = `${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
-    this.digits.forEach((t, i) => t.setText(s[i]));
+    const sec = d.getSeconds() + d.getMilliseconds() / 1000;
+    const min = d.getMinutes() + sec / 60;
+    const hr = (d.getHours() % 12) + min / 60;
+    const [h, m, s2] = this.hands;
+    h.setAngle(hr * 30);
+    m.setAngle(min * 6);
+    // The second hand ticks, with a tiny overshoot like a real escapement.
+    const target = Math.floor(sec) * 6;
+    if (Math.abs(((s2.angle - target + 540) % 360) - 180) > 0.5) {
+      this.tweens.add({ targets: s2, angle: target === 0 && s2.angle > 300 ? 360 : target, duration: 140, ease: 'Back.easeOut', onComplete: () => s2.setAngle(target) });
+    }
+    this.clockTime.setText(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
+    this.clockDate.setText(d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }));
   }
 
   private say(line: string): void {

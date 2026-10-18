@@ -114,7 +114,7 @@ export function openAchievements(scene: Phaser.Scene, onChange?: () => void): vo
   // Drag or wheel to scroll; no scroll bar (like the reference's lists).
   const scroll = scrollable(scene, list, new Phaser.Geom.Rectangle(W / 2 - 810, 146, 1620, H / 2 + 460 - 160), rowsH);
   const done = ACHIEVEMENTS.filter((a) => saves.get().claimed.includes(a.id)).length;
-  c.add(text(scene, W / 2 + 800, 146 - 30, `${done} / ${ACHIEVEMENTS.length} claimed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(1, 0.5));
+  c.add(text(scene, W / 2 - 790, 130, `${done} / ${ACHIEVEMENTS.length} claimed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
   const draw = () => {
     list.removeAll(true);
     const save = saves.get();

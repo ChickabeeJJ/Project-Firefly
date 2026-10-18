@@ -163,6 +163,7 @@ export class MenuScene extends Phaser.Scene {
       ['gramophone', 'Gramophone', () => openGramophone(this)],
       ['gear', 'Settings', () => this.openSettings()],
     ];
+    const ART: Record<string, string> = { roster: 'troupe', story: 'story', shop: 'pawnshop', atlas: 'atlas', trophy: 'achievements', notice: 'notice', profile: 'profile', gramophone: 'gramophone', gear: 'settings' };
     const tw = 176;
     const th = 150;
     const gap = 14;
@@ -174,6 +175,24 @@ export class MenuScene extends Phaser.Scene {
       const x = x0 + tw / 2 + (i % 5) * (tw + gap);
       const y = y0 + th / 2 + Math.floor(i / 5) * (th + gap);
       const c = this.add.container(x, y).setDepth(40);
+      const art = ART[icon] && this.textures.exists(`menu:${ART[icon]}`) ? `menu:${ART[icon]}` : null;
+      if (art) {
+        // Painted button: the art carries its own name plate.
+        const halo = this.add.image(0, -10, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 160).setAlpha(0);
+        const im = this.add.image(0, 0, art).setDisplaySize(th + 14, th + 14);
+        c.add([halo, im]);
+        if (icon === 'trophy') {
+          this.badge = this.add.circle(tw / 2 - 26, -th / 2 + 14, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
+          c.add(this.badge);
+        }
+        c.setSize(tw, th).setInteractive({ useHandCursor: true });
+        c.on('pointerover', () => this.tweens.add({ targets: halo, alpha: 0.35, duration: 180 }));
+        c.on('pointerout', () => this.tweens.add({ targets: halo, alpha: 0, duration: 160 }));
+        softPress(c, go, 'tap', 1.05);
+        c.setAlpha(0).setY(y + 18);
+        this.tweens.add({ targets: c, alpha: 1, y, duration: 320, delay: 120 + i * 40, ease: 'Cubic.easeOut' });
+        return;
+      }
       const g = this.add.graphics();
       g.fillStyle(0x0b0c10, 0.6).fillRect(-tw / 2, -th / 2, tw, th);
       g.lineStyle(1.5, C.gold, 0.55).strokeRect(-tw / 2, -th / 2, tw, th);

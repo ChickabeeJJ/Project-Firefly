@@ -146,7 +146,7 @@ export class RosterScene extends Phaser.Scene {
     // ---- left: identity + stats
     const lx = 70;
     p.add(this.add.image(lx + 56, 190, `icon:${c.mood}`).setDisplaySize(112, 112));
-    p.add(text(this, lx + 56, 262, MOOD_NAME[c.mood].toUpperCase(), { size: 20, font: 'display', bold: true, color: MOOD_CSS[c.mood], spacing: 6 }).setOrigin(0.5));
+    p.add(text(this, lx + 56, 262, MOOD_NAME[c.mood], { size: 22, italic: true, color: MOOD_CSS[c.mood] }).setOrigin(0.5));
     p.add(rarityStars(this, lx + 220, 152, c.rarity, 30, Phaser.Display.Color.HexStringToColor(RARITY_CSS[c.rarity]).color));
     const nm = text(this, lx + 136, 176, c.name, { size: 50, font: 'display', bold: true, color: CSS.cream, shadow: true });
     if (nm.width > 470) nm.setScale(470 / nm.width);
@@ -157,7 +157,7 @@ export class RosterScene extends Phaser.Scene {
       p.add(this.add.rectangle(tx, 320, 138, 44, 0x16151a, 0.9).setOrigin(0, 0.5).setStrokeStyle(1, 0xe8dcc0, 0.25));
       p.add(text(this, tx + 69, 320, tag, { size: 22, color: CSS.cream }).setOrigin(0.5));
     });
-    p.add(text(this, lx, 392, 'Personal Stats  ▸', { size: 28, font: 'display', color: CSS.creamDim, spacing: 1 }));
+    p.add(text(this, lx, 392, 'Personal stats  ▸', { size: 28, italic: true, color: CSS.creamDim }));
     p.add(this.add.rectangle(lx, 432, 470, 1, C.gold, 0.35).setOrigin(0, 0.5));
     const statRows: Phaser.GameObjects.Text[] = [];
     ([['heal', 'HP', st.hp], ['attack', 'ATK', st.atk], ['shield', 'DEF', st.def]] as const).forEach(([icon, k, v], i) => {
@@ -204,7 +204,7 @@ export class RosterScene extends Phaser.Scene {
     const ist = insightState(save, c.id);
     box(rx, 'Level', `${o.level}`, `/${cap}`, () => this.openLevelUp(p, c, statRows), o.level < cap && maxAffordableLevel(save, c.id) > o.level);
     box(rx + 228, 'Kindle', ['0', 'I', 'II', 'III'][o.insight], `/${['0', 'I', 'II', 'III'][maxInsight(c.rarity)]}`, () => this.openInsight(p, c), ist === 'ready');
-    p.add(text(this, rx, 250, 'Verses', { size: 30, font: 'display', bold: true, color: CSS.cream, spacing: 2 }));
+    p.add(text(this, rx, 250, 'Verses', { size: 32, italic: true, bold: true, color: CSS.cream }));
     p.add(this.add.rectangle(rx, 290, 440, 1, C.gold, 0.35).setOrigin(0, 0.5));
     const info = this.add.container(0, 0);
     p.add(info);
@@ -235,8 +235,9 @@ export class RosterScene extends Phaser.Scene {
     show(0);
 
     const team = save.team.indexOf(c.id);
-    p.add(new Button(this, rx + 220, 850, {
-      w: 440, h: 76, label: team === 0 ? 'Team leader' : 'Make leader', style: team === 0 ? 'dark' : 'amber', size: 28,
+    // Two compact buttons side by side, set in the book face rather than spaced capitals.
+    p.add(new Button(this, rx + 108, 900, {
+      w: 212, h: 64, label: team === 0 ? 'Team leader' : 'Make leader', style: team === 0 ? 'dark' : 'amber', size: 27, font: 'body',
       onClick: () => {
         if (team === 0) return;
         if (team > 0) save.team[team] = save.team[0];
@@ -247,7 +248,7 @@ export class RosterScene extends Phaser.Scene {
         this.scene.restart({ sort: this.sort });
       },
     }));
-    p.add(new Button(this, rx + 220, 944, { w: 440, h: 66, label: 'Read Dossier', style: 'cream', size: 26, onClick: () => this.openCharacter(c.id, 'dossier') }));
+    p.add(new Button(this, rx + 332, 900, { w: 212, h: 64, label: 'Read dossier', style: 'cream', size: 27, font: 'body', onClick: () => this.openCharacter(c.id, 'dossier') }));
 
     // ---- bottom: voice line
     const q = text(this, 930, H - 50, `“${c.quote}”`, { size: 26, italic: true, color: CSS.cream, wrap: 760, align: 'center', shadow: true }).setOrigin(0.5);

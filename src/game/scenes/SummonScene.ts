@@ -70,7 +70,7 @@ export class SummonScene extends Phaser.Scene {
       this.tweens.add({ targets: art, y: art.y - 10, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     } else {
       [3, 4, 5].forEach((r, i) => {
-        const l = this.add.image(1180 + i * 230, 470 - (i % 2) * 90, `rite:lantern${r}`).setScale(0.85 - i * 0.1);
+        const l = this.add.image(1400 + i * 210, 560 - (i % 2) * 150, `rite:lantern${r}`).setScale(0.9 - i * 0.08);
         ui.add(l);
         this.tweens.add({ targets: l, y: l.y - 18, duration: 2600 + i * 400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       });
@@ -122,29 +122,32 @@ export class SummonScene extends Phaser.Scene {
     });
     this.tweens.add({ targets: slash, scaleX: 1, duration: 900, delay: 350, ease: 'Cubic.easeOut' });
 
-    // Featured name plate.
+    // Featured name plate, set under the title so it never covers the art.
     if (banner.featured) {
       const fc = getCharacter(banner.featured);
-      const nx = W - 470;
-      // A smoky backing so the name plate reads over the art.
-      const plate = this.add.graphics();
-      plate.fillGradientStyle(0x05070c, 0x05070c, 0x05070c, 0x05070c, 0, 0.78, 0, 0.78).fillRect(nx - 160, 350, 640, 230);
-      ui.add(plate);
-      ui.add(this.add.rectangle(nx - 30, 420, 80, 80, 0x2a1a10, 0.85).setStrokeStyle(1, C.gold, 0.6));
-      ui.add(this.add.image(nx - 30, 420, `icon:${fc.mood}`).setDisplaySize(56, 56));
-      const nm = text(this, nx + 30, 404, fc.name.split(' ')[0], { size: 64, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
-      ui.add(nm);
-      ui.add(rarityStars(this, nx + 30 + 5 * 22, 462, fc.rarity, 34, 0xf0c25a));
-      const mag = this.add.image(nx + 30 + 5 * 44 + 30, 462, 'icon:eye').setDisplaySize(34, 34).setInteractive({ useHandCursor: true });
+      const row = this.add.container(450, 742);
+      row.add(this.add.image(24, 0, `icon:${fc.mood}`).setDisplaySize(64, 64));
+      const nm = text(this, 66, -4, fc.name.split(' ')[0], { size: 54, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
+      row.add(nm);
+      let rx = 66 + nm.width + 22;
+      row.add(rarityStars(this, rx + 2.5 * 26, 2, fc.rarity, 30, 0xf0c25a));
+      rx += 5 * 28 + 12;
+      const mag = this.add.image(rx + 14, 0, 'icon:eye').setDisplaySize(32, 32).setInteractive({ useHandCursor: true });
       mag.on('pointerup', () => goTo(this, 'Roster', { charId: fc.id }));
-      ui.add(mag);
+      row.add(mag);
+      rx += 50;
       if (banner.featured4?.length) {
-        ui.add(text(this, nx - 70, 530, 'Rate up ★4', { size: 22, color: CSS.goldLight }).setOrigin(0, 0.5));
+        row.add(this.add.rectangle(rx, 0, 1, 44, 0xe8dcc0, 0.35));
+        row.add(text(this, rx + 16, 0, '★4', { size: 22, color: CSS.goldLight }).setOrigin(0, 0.5));
         banner.featured4.forEach((id, k) => {
-          ui.add(this.add.circle(nx + 120 + k * 76, 530, 32, 0x0b0c10, 0.7).setStrokeStyle(2, 0xb98ae0, 0.9));
-          ui.add(this.add.image(nx + 120 + k * 76, 530, `head:${id}`).setDisplaySize(60, 60));
+          const hx = rx + 82 + k * 66;
+          row.add(this.add.circle(hx, 0, 28, 0x0b0c10, 0.7).setStrokeStyle(2, 0xb98ae0, 0.9));
+          row.add(this.add.image(hx, 0, `head:${id}`).setDisplaySize(52, 52));
         });
       }
+      ui.add(row);
+      row.setAlpha(0);
+      this.tweens.add({ targets: row, alpha: 1, duration: 600, delay: 450 });
     }
 
     // Rate-up ribbon, time left and pity.
