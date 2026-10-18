@@ -157,6 +157,11 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     if (k) add(scene, `rite:lantern${r}`, paintedLantern(scene, k, col));
   });
   for (const s of uiTextureSpecs()) add(scene, s.key, s.canvas);
+  // Painted currency icons: Glimmer crystal everywhere, the gilt star for collected-star totals.
+  const crystal = dropIn(scene, 'ui', 'icon_glimmer');
+  if (crystal) add(scene, 'icon:glimmer', fitHeight(scene, crystal, 128));
+  const star = dropIn(scene, 'ui', 'icon_star');
+  add(scene, 'icon:starp', star ? fitHeight(scene, star, 128) : iconCanvas('star4', ICON_COLORS.star4));
   for (const name of ICON_NAMES) add(scene, `icon:${name}`, iconCanvas(name, ICON_COLORS[name]));
   for (const id of ITEM_ICON_IDS) add(scene, `item:${id}`, dropIn(scene, 'ui', `item_${id}`) ? fitHeight(scene, dropIn(scene, 'ui', `item_${id}`)!, 128) : itemIconCanvas(id));
   for (const c of CHARACTERS) {
@@ -166,9 +171,11 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
     const body = dropIn(scene, 'characters', c.id);
     const paintedBody = body ? { img: source(scene, body), ...size(scene, body) } : undefined;
+    const vp = dropIn(scene, 'ui', `vpanel_${panelFor(c.id)}`);
+    const panel = vp ? { img: source(scene, vp), ...size(scene, vp) } : undefined;
     for (const v of [...c.verses, c.finale]) {
       const painted = dropIn(scene, 'cards', v.id);
-      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody));
+      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody, panel));
     }
   }
   for (const e of ENEMIES) {
@@ -275,7 +282,7 @@ export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string 
   ctx.strokeStyle = rgba('#f3ead6', 0.7);
   ctx.lineWidth = 2;
   ctx.strokeRect(9, 9, PCARD_W - 18, PCARD_H - 18);
-  grain(ctx, PCARD_W, PCARD_H, 0.04, charId.length * 31);
+  grain(ctx, PCARD_W, PCARD_H, 0.015, charId.length * 31);
   add(scene, key, canvas);
   return key;
 }

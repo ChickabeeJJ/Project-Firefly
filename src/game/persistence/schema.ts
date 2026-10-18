@@ -43,6 +43,8 @@ export interface SaveData {
   claimed: string[];
   /** Growth materials (Wick Dust, Brass Sovereigns, Insight materials). */
   items: Record<ItemId, number>;
+  /** When this save was last written (ms since epoch). */
+  savedAt: number;
 }
 
 export const STARTING_ITEMS: Record<ItemId, number> = { dust: 3000, sovereign: 1500, moth: 0, velvet: 0, tide: 0, spring: 0 };
@@ -64,6 +66,7 @@ export function freshSave(): SaveData {
     seen: [],
     claimed: [],
     items: { ...STARTING_ITEMS },
+    savedAt: 0,
   };
 }
 
@@ -137,10 +140,11 @@ export function sanitizeSave(raw: unknown): SaveData {
       sfx: num(s.sfx, 0, 1, base.settings.sfx),
       track: (TRACKS as readonly string[]).includes(s.track as string) ? (s.track as Settings['track']) : 'lobby',
     },
-    hints: strings(r.hints, 128),
+    hints: strings(r.hints, 1024),
     playerId: Math.round(num(r.playerId, 100000000, 999999999, base.playerId)),
     seen: strings(r.seen, 64),
     claimed: strings(r.claimed, 64),
     items: sanitizeItems(r.items, legacy),
+    savedAt: Math.round(num(r.savedAt, 0, 1e14, 0)),
   };
 }

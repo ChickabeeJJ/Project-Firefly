@@ -7,7 +7,7 @@ import { getStage } from '../data/stages';
 import type { StatusId } from '../data/types';
 import { C, CSS, H, MOOD_NAME, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { Button, ornament, text } from '../ui/kit';
+import { Button, ornament, text, toast } from '../ui/kit';
 import type { BattleScene } from './BattleScene';
 import { startPrologue } from '../systems/storyFlow';
 
@@ -47,7 +47,7 @@ export class PauseScene extends Phaser.Scene {
   private buildPause(): void {
     const inBattle = this.data_.mode === 'pause';
     const pw = 760;
-    const ph = inBattle ? 700 : 600;
+    const ph = inBattle ? 700 : 720;
     const x = W / 2;
     const y = H / 2;
     this.add.nineslice(x, y, 'ui:paper', undefined, pw, ph, 16, 16, 16, 16);
@@ -88,7 +88,30 @@ export class PauseScene extends Phaser.Scene {
     toggle('Music', 'music', cy);
     toggle('Sound effects', 'sfx', cy + 86);
     if (!inBattle) {
-      const reset = new Button(this, x, cy + 186, {
+      // Local save: the game writes to this browser after every change; files are a portable backup.
+      const stamp = () => (save.savedAt ? `Saved on this device · ${new Date(save.savedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}` : 'Not saved yet');
+      const saved = text(this, x, cy + 168, stamp(), { size: 20, italic: true, color: CSS.paperSub }).setOrigin(0.5);
+      new Button(this, x - 112, cy + 218, {
+        w: 216, h: 60, label: 'Export save', style: 'dark', size: 22, onClick: () => {
+          saves.exportFile();
+          saved.setText(stamp());
+          toast(this, 'Save file downloaded');
+        },
+      });
+      new Button(this, x + 112, cy + 218, {
+        w: 216, h: 60, label: 'Import save', style: 'dark', size: 22, onClick: () => {
+          void saves.importFile().then((ok) => {
+            if (!ok) {
+              toast(this, 'That file is not a Firefly Nocturne save');
+              return;
+            }
+            toast(this, 'Save loaded');
+            this.scene.stop(this.data_.from ?? 'Lobby');
+            this.scene.start('Lobby');
+          });
+        },
+      });
+      const reset = new Button(this, x, cy + 300, {
         w: 440, h: 64, label: 'Reset progress', style: 'cream', size: 26, sfx: 'back', onClick: () => {
           if (reset.getData('armed')) {
             saves.reset();

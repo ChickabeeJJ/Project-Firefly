@@ -2,7 +2,7 @@ import { type Ctx, glow, grain, makeCanvas, mix, rgba, seeded, shade } from './p
 
 // Painted-style backgrounds, authored in 1920×1080 game space and rendered at BG_SCALE.
 export const BG_SCALE = 1600 / 1920;
-export type BgId = 'street' | 'theatre' | 'parlour' | 'lake' | 'map' | 'docks' | 'clocktower';
+export type BgId = 'street' | 'theatre' | 'parlour' | 'lake' | 'map' | 'docks' | 'clocktower' | 'loading';
 
 const W = 1920;
 const H = 1080;
@@ -781,7 +781,7 @@ function clocktower(ctx: Ctx): void {
   ctx.fillRect(0, 860, W, H - 860);
 }
 
-const PAINTERS: Record<BgId, (ctx: Ctx) => void> = { street, theatre, parlour, lake, map, docks, clocktower };
+const PAINTERS: Record<BgId, (ctx: Ctx) => void> = { street, theatre, parlour, lake, map, docks, clocktower, loading: lake };
 
 export function backgroundCanvas(id: BgId): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(W * BG_SCALE, H * BG_SCALE);

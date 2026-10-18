@@ -683,15 +683,27 @@ function cinematicGrade(ctx: Ctx, pal: Pal): void {
   ctx.restore();
 }
 
-export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource): void {
+export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource): void {
   const pal: Pal = char.palette;
   const rnd = seeded(verse.id.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, CARD_W, CARD_H);
   ctx.clip();
-  background(ctx, verse.art.layout, pal, rnd);
-  cinematicGrade(ctx, pal);
+  if (panel) {
+    // Painted element backdrop (ui/vpanel_<element>), lightly shaded so the figure reads.
+    const s = Math.max(CARD_W / panel.w, CARD_H / panel.h);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(panel.img, (CARD_W - panel.w * s) / 2, (CARD_H - panel.h * s) / 2, panel.w * s, panel.h * s);
+    const v = ctx.createRadialGradient(CARD_W / 2, CARD_H * 0.42, CARD_H * 0.2, CARD_W / 2, CARD_H * 0.5, CARD_H * 0.75);
+    v.addColorStop(0, rgba('#000000', 0));
+    v.addColorStop(1, rgba('#000000', 0.4));
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, CARD_W, CARD_H);
+  } else {
+    background(ctx, verse.art.layout, pal, rnd);
+    cinematicGrade(ctx, pal);
+  }
   if (verse.art.portrait) {
     portrait(ctx, char, painted);
     ctx.save();
@@ -714,12 +726,12 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, pain
     }
   }
   ctx.restore();
-  grain(ctx, CARD_W, CARD_H, 0.07, verse.id.length * 13);
+  grain(ctx, CARD_W, CARD_H, panel ? 0.025 : 0.07, verse.id.length * 13);
 }
 
-export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource): HTMLCanvasElement {
+export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(CARD_W, CARD_H);
-  drawVerseArt(ctx, char, verse, painted);
+  drawVerseArt(ctx, char, verse, painted, panel);
   return canvas;
 }
 

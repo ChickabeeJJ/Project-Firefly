@@ -193,7 +193,7 @@ export class LobbyScene extends Phaser.Scene {
       this.ui.add(c);
       return t;
     };
-    pill(RIGHT_X - COL_W / 2 + pw / 2, 'star4', `${totalStars(save)} / ${STAGES.length * 3}`, () => goTo(this, 'Story'));
+    pill(RIGHT_X - COL_W / 2 + pw / 2, 'starp', `${totalStars(save)} / ${STAGES.length * 3}`, () => goTo(this, 'Story'));
     this.glimmerText = pill(RIGHT_X + COL_W / 2 - pw / 2, 'glimmer', save.glimmer.toLocaleString('en-US'), () => goTo(this, 'Shop'));
   }
 

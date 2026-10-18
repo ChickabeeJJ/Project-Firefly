@@ -1,5 +1,6 @@
-// Original, fully synthesised audio (Web Audio). No recordings ship with the game.
-// Music is a small lookahead sequencer; SFX are short procedural voices.
+// Synthesised audio (Web Audio): music is a small lookahead sequencer, SFX are short procedural
+// voices. Recorded files dropped into src/assets/audio/ take over per slot (see dropins.ts).
+import { BGM, SFX_FILES } from './dropins';
 
 export type Sfx =
   | 'tap' | 'back' | 'card' | 'merge' | 'cast' | 'hit' | 'crit' | 'heal' | 'shield' | 'debuff' | 'firefly'
@@ -70,11 +71,16 @@ export class AudioController {
   private step = 0;
   private seed = 1;
   private lastPlayed = new Map<Sfx, number>();
+  /** Recorded music for the current track, if any (replaces the sequencer). */
+  private song: HTMLAudioElement | null = null;
+  private songIndex: Partial<Record<Track, number>> = {};
+  private sfxBuffers = new Map<Sfx, AudioBuffer>();
 
   constructor() {
     document.addEventListener('visibilitychange', () => {
       this.hidden = document.hidden;
       this.applyRunning();
+      if (this.song) void (this.hidden ? this.song.pause() : this.song.play().catch(() => undefined));
     });
   }
 
@@ -98,9 +104,21 @@ export class AudioController {
       const d = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       this.applyVolumes();
-      if (this.track) this.startSequencer();
+      this.loadSfxFiles();
+      if (this.track) this.startTrack();
     }
     this.applyRunning();
+    if (this.song?.paused && !this.hidden) void this.song.play().catch(() => undefined);
+  }
+
+  private loadSfxFiles(): void {
+    for (const [name, url] of Object.entries(SFX_FILES) as [Sfx, string][]) {
+      fetch(url)
+        .then((r) => r.arrayBuffer())
+        .then((b) => this.ctx!.decodeAudioData(b))
+        .then((buf) => this.sfxBuffers.set(name, buf))
+        .catch(() => undefined);
+    }
   }
 
   get unlocked(): boolean {
@@ -119,6 +137,7 @@ export class AudioController {
   }
 
   private applyVolumes(): void {
+    if (this.song) this.song.volume = this.platformMuted ? 0 : Math.min(1, this.musicVol * 0.9);
     if (!this.ctx) return;
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(this.platformMuted ? 0 : 1, t, 0.05);
@@ -148,7 +167,57 @@ export class AudioController {
     this.track = track;
     if (this.timer !== null) window.clearInterval(this.timer);
     this.timer = null;
-    if (track && this.ctx) this.startSequencer();
+    this.stopSong();
+    if (track && this.ctx) this.startTrack();
+  }
+
+  private startTrack(): void {
+    if (!this.track) return;
+    if (BGM[this.track].length) this.startSong(this.track);
+    else this.startSequencer();
+  }
+
+  /** Plays the slot's recorded files in turn, fading in. */
+  private startSong(track: Track): void {
+    const list = BGM[track];
+    const i = (this.songIndex[track] ?? -1) + 1;
+    this.songIndex[track] = i % list.length;
+    const el = new Audio(list[i % list.length]);
+    el.preload = 'auto';
+    el.loop = list.length === 1;
+    const target = () => (this.platformMuted ? 0 : Math.min(1, this.musicVol * 0.9));
+    el.volume = 0;
+    el.onended = () => {
+      if (this.song === el && this.track === track) this.startSong(track);
+    };
+    this.song = el;
+    if (!this.hidden) void el.play().catch(() => undefined);
+    const t0 = performance.now();
+    const fade = () => {
+      if (this.song !== el) return;
+      const k = Math.min(1, (performance.now() - t0) / 1200);
+      el.volume = target() * k;
+      if (k < 1) requestAnimationFrame(fade);
+    };
+    requestAnimationFrame(fade);
+  }
+
+  private stopSong(): void {
+    const el = this.song;
+    if (!el) return;
+    this.song = null;
+    const v0 = el.volume;
+    const t0 = performance.now();
+    const fade = () => {
+      const k = Math.min(1, (performance.now() - t0) / 600);
+      el.volume = v0 * (1 - k);
+      if (k < 1) requestAnimationFrame(fade);
+      else {
+        el.pause();
+        el.src = '';
+      }
+    };
+    requestAnimationFrame(fade);
   }
 
   private startSequencer(): void {
@@ -263,6 +332,15 @@ export class AudioController {
     this.lastPlayed.set(name, now);
     const t = now + 0.005;
     const B = this.sfxBus;
+    const file = this.sfxBuffers.get(name);
+    if (file) {
+      const src = this.ctx.createBufferSource();
+      src.buffer = file;
+      src.connect(B);
+      src.start(t);
+      src.onended = () => src.disconnect();
+      return;
+    }
     const v = 0.9 + Math.random() * 0.2;
     switch (name) {
       case 'tap':
@@ -286,13 +364,11 @@ export class AudioController {
         this.noise(t, 0.3, 4000, 0.05, B, 'highpass');
         break;
       case 'hit':
-        this.osc('sine', 150 * v, t, 0.16, 0.6, 0.002, B, 0, 48);
-        this.noise(t, 0.09, 900, 0.3, B, 'lowpass');
+        // Silent by design: drop sfx/hit.mp3 in to give attacks an impact sound.
         break;
       case 'crit':
-        this.osc('sine', 170, t, 0.22, 0.7, 0.002, B, 0, 40);
-        this.noise(t, 0.12, 1200, 0.35, B, 'lowpass');
-        this.bell(NOTE(96), t, 0.15, B);
+        // Only a soft chime on crits; drop sfx/crit.mp3 in for an impact.
+        this.bell(NOTE(96), t, 0.1, B);
         break;
       case 'heal':
         [72, 76, 79, 84].forEach((n, i) => this.osc('sine', NOTE(n), t + i * 0.06, 0.5, 0.12, 0.03, B));
