@@ -62,7 +62,7 @@ export class SummonScene extends Phaser.Scene {
       const fc = getCharacter(banner.featured);
       const rays = this.add.image(1450, 420, 'fx:glow').setTint(Phaser.Display.Color.HexStringToColor(fc.palette.secondary).color).setDisplaySize(1300, 1300).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
       ui.add(rays);
-      const art = fitPortrait(this.add.image(1400, H + 70, ensurePortrait(this, fc.id)).setOrigin(0.5, 1), 1.1, 1230, 1100);
+      const art = fitPortrait(this.add.image(1480, H + 70, ensurePortrait(this, fc.id)).setOrigin(0.5, 1), 1.1, 1230, 1100);
       ui.add(art);
       const ax = art.x;
       art.setX(ax + 80).setAlpha(0);
@@ -126,6 +126,10 @@ export class SummonScene extends Phaser.Scene {
     if (banner.featured) {
       const fc = getCharacter(banner.featured);
       const nx = W - 470;
+      // A smoky backing so the name plate reads over the art.
+      const plate = this.add.graphics();
+      plate.fillGradientStyle(0x05070c, 0x05070c, 0x05070c, 0x05070c, 0, 0.78, 0, 0.78).fillRect(nx - 160, 350, 640, 230);
+      ui.add(plate);
       ui.add(this.add.rectangle(nx - 30, 420, 80, 80, 0x2a1a10, 0.85).setStrokeStyle(1, C.gold, 0.6));
       ui.add(this.add.image(nx - 30, 420, `icon:${fc.mood}`).setDisplaySize(56, 56));
       const nm = text(this, nx + 30, 404, fc.name.split(' ')[0], { size: 64, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
@@ -179,8 +183,9 @@ export class SummonScene extends Phaser.Scene {
     const maskG = this.make.graphics({}).fillRect(x - w / 2, y - h / 2, w, h);
     let thumb: Phaser.GameObjects.Image;
     if (b.featured) {
+      // Face-and-shoulders crop of the featured art.
       thumb = this.add.image(0, 0, ensurePortrait(this, b.featured));
-      thumb.setScale(w / (thumb.width * 0.5)).setOrigin(0.5, 0.2).setY(-h / 2);
+      thumb.setScale(w / (thumb.width * 0.42)).setOrigin(0.45, 0.2);
     } else {
       thumb = this.add.image(0, 0, ensureBg(this, 'lake')).setDisplaySize(w * 1.4, h * 1.4);
     }

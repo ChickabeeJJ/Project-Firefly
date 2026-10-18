@@ -161,6 +161,14 @@ export interface StageDef {
   intro?: DialogueLine[];
   outro?: string;
   boss?: boolean;
+  /** Resource / Insight trials (repeatable farming stages, outside the story). */
+  mode?: 'resource' | 'insight';
+  /** Trial family id (see data/trials.ts). */
+  family?: string;
+  /** Fixed item drops for a trial clear (item id → amount). */
+  drops?: Record<string, number>;
+  /** Story stage that must be cleared first (trials). */
+  requires?: string;
 }
 
 export type SceneBg = 'street' | 'theatre' | 'docks' | 'clocktower' | 'parlour' | 'lake' | 'map';

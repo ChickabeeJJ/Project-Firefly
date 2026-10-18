@@ -16,7 +16,7 @@ Use **transparent PNG** for anything that stands on a background (characters, en
 | `bg/`         | Painted backdrops, no characters        | 1920 × 1080               | `street`, `theatre`, `docks`, `clocktower` (battles), `parlour` (lobby/menu), `lake` (Rite), `map` (Story) |
 | `cards/`      | *(optional)* Verse card illustrations   | 528 × 808 (portrait)      | Hand cards; id = verse id, e.g. `cards/wren_strike.png` |
 | `banners/`    | *(optional)* Wide promo banners         | 1800 × 720 (5:2)          | `rite` (lobby promo + menu carousel), `chapter1` … `chapter4` (menu carousel) |
-| `ui/`         | Reserved for future UI skins            | —                         | — |
+| `ui/`         | UI art: `lantern1..3` (Rite lanterns), `panel_<element>` (tall element backdrops for Troupe/Formation cards), `vpanel_<element>` (battle-card crops), `icon_glimmer`, `icon_star`, optional `item_<id>` | — | see below |
 
 Ids are listed in `docs/higgsfield-art-brief.md`, along with a ready-to-paste prompt for every
 character, enemy and background.
@@ -75,3 +75,24 @@ Backgrounds: `bg/parlour` (lobby + menu), `bg/street` (Chapter 1), `bg/theatre` 
 All ground units and the lobby/menu leader are drawn with `LivingSprite`
 (`src/game/ui/LivingSprite.ts`), which slices the image into strips and animates them every frame
 (sway, breathing, hair/cape ripple, attack/hit/cast poses), so a single still image moves.
+
+## Element panels
+
+`ui/panel_<name>.webp` and `ui/vpanel_<name>.webp` were cut from the six-panel element sheet:
+crimson, verdant, tide, gilt, amethyst, umber. Each Luminary gets the panel nearest its palette
+within its Mood (`panelFor` in `registry.ts`). `panel_*` is the full strip (Troupe, Formation, Rite
+cards); `vpanel_*` is cropped to the battle-card aspect (264 × 404, stored at 2×).
+
+## Clean-up pass
+
+Painted renders go through `tools/art/enhance.py` (light non-local-means denoise + unsharp mask)
+to remove AI grain and restore line detail. The idle loop's frames were cleaned the same way before
+encoding (`crf 36`).
+
+## Audio drop-ins
+
+Put music in `src/assets/audio/bgm/` and sound effects in `src/assets/audio/sfx/` (mp3/ogg/m4a/wav).
+Music whose file name contains "main menu" (or "menu"/"lobby") plays on the lobby and menus; "rite"
+/"summon"/"gacha" on the Lantern Rite; "boss" in boss fights; everything else is battle music.
+Several files in a slot play in turn. A sound effect replaces the synthesised one with the same id
+(`hit`, `crit`, `cast`, `tap`, `card`, `heal`, …). The attack impact (`hit`) is silent until a file is added.

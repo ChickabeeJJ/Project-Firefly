@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { freshSave, sanitizeSave } from '../src/game/persistence/schema';
-import { applyBattleResult, frontierStage, isUnlocked, REWARDS } from '../src/game/systems/progression';
+import { applyBattleResult, frontierStage, isUnlocked, REWARDS, trialUnlocked } from '../src/game/systems/progression';
 import { performRite, RITE } from '../src/game/systems/gacha';
 import { Rng } from '../src/game/battle/rng';
 import { getStage } from '../src/game/data/stages';
@@ -137,5 +137,45 @@ describe('growth (R1999-style)', () => {
     const out = applyBattleResult(save, getStage('1-1'), true, 3, 0);
     expect(save.items.dust).toBe(d0 + (out.items.dust ?? 0));
     expect(out.items.moth).toBeGreaterThan(0);
+  });
+});
+
+describe('trials and banners', () => {
+  it('trials drop materials, record a clear and unlock the next level, without stars', () => {
+    const save = freshSave();
+    for (const id of ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6']) save.stars[id] = 1;
+    const t1 = getStage('t-ember-1');
+    const t2 = getStage('t-ember-2');
+    expect(trialUnlocked(save, t1)).toBe(true);
+    expect(trialUnlocked(save, t2)).toBe(false);
+    const dust = save.items.dust;
+    const out = applyBattleResult(save, t1, true, 5, 0);
+    expect(out.firstClear).toBe(true);
+    expect(save.items.dust - dust).toBe(Math.round((t1.drops!.dust) * 1.5));
+    expect(save.stars['t-ember-1']).toBeUndefined();
+    expect(trialUnlocked(save, t2)).toBe(true);
+    // A second clear pays the base amount.
+    const before = save.items.dust;
+    applyBattleResult(save, t1, true, 5, 0);
+    expect(save.items.dust - before).toBe(t1.drops!.dust);
+  });
+
+  it('the event banner rates up its featured ★5 and records history', () => {
+    const save = freshSave();
+    save.glimmer = 1e7;
+    let featured = 0;
+    let fives = 0;
+    const rng = new Rng(7);
+    for (let i = 0; i < 400; i++) {
+      for (const r of performRite(save, 10, rng, 'dove')!) {
+        if (r.rarity === 5) {
+          fives++;
+          if (r.id === 'evangeline') featured++;
+        }
+      }
+    }
+    expect(featured / fives).toBeGreaterThan(0.4);
+    expect(save.history.length).toBe(100);
+    expect(sanitizeSave(JSON.parse(JSON.stringify(save))).history.length).toBe(100);
   });
 });

@@ -195,6 +195,11 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Maps That End', text: 'Every map he has drawn since the thirteenth stroke ends at midnight, in ink he did not put there. All but one. That map leads up, through the Clock Without Hands, to a dawn no one has seen.' },
     { title: 'North', text: 'He never gets lost. He says it is because he stopped looking for where he is, and started looking for when.' },
   ],
+  evangeline: [
+    { title: 'The Caged Dove', text: 'Aveline Halcyon kept the dovecote of the Mission to Seafarers, where sailors’ birds carried word home from every harbour on the coast. When the tide stopped, the birds stopped too — all but hers.' },
+    { title: 'The Gilded Cage', text: 'Her birdcage has no lock and has never had one. The doves fly out with names tied to their feet, and come back with the people who had forgotten them.' },
+    { title: 'Rainwater', text: 'She heals with water that remembers falling. It is not the same as the sea, she admits. But it has never once refused her.' },
+  ],
 };
 
 /** Things each Luminary says in the lobby (tap them, or on arrival). Night/first-visit lines are mixed in by the lobby. */
@@ -261,6 +266,13 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'The cat? She found me. I think she was looking for someone who still travels.',
     'I have walked every road out of Vellmoor. They all bend back at midnight.',
     'Pack light, Lamplighter. Hope does not weigh much, but it takes up a lot of room.',
+  ],
+  evangeline: [
+    'Hold still — there is a dove on your shoulder. She thinks you are a windowsill. It is a compliment.',
+    'Every bird I let go carries a name home. Tell me yours, so I do not lose it.',
+    'The cage is never locked. They come back because they choose to. So do I.',
+    'Rainwater remembers falling. If you listen, it will tell you where it has been.',
+    'You have been carrying something heavy all night. Set it down here, just for a moment.',
   ],
 };
 

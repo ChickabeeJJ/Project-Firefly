@@ -34,6 +34,7 @@ export class BootScene extends Phaser.Scene {
   private bar?: Phaser.GameObjects.Rectangle;
   private barGlow?: Phaser.GameObjects.Image;
   private status?: Phaser.GameObjects.Text;
+  private lore: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('Boot');
@@ -92,8 +93,9 @@ export class BootScene extends Phaser.Scene {
     text(this, 34, 26, VERSION, { size: 20, color: CSS.creamDim }).setAlpha(0.7);
     const lore = LORE[Math.floor(Math.random() * LORE.length)];
     const t = text(this, 120, H - 270, lore.title, { size: 40, color: CSS.cream, spacing: 1, shadow: true });
-    this.add.rectangle(120, H - 222, Math.max(420, t.width + 60), 1, 0xe8dcc0, 0.45).setOrigin(0, 0.5);
-    text(this, 120, H - 200, lore.text, { size: 26, color: CSS.cream, wrap: 1400, lineSpacing: 6, shadow: true }).setAlpha(0.92);
+    const rl = this.add.rectangle(120, H - 222, Math.max(420, t.width + 60), 1, 0xe8dcc0, 0.45).setOrigin(0, 0.5);
+    const lt = text(this, 120, H - 200, lore.text, { size: 26, color: CSS.cream, wrap: 1400, lineSpacing: 6, shadow: true }).setAlpha(0.92);
+    this.lore = [t, rl, lt];
     // Thin progress line across the bottom, with a soft glowing head.
     this.add.rectangle(0, H - 70, W, 2, 0xe8dcc0, 0.18).setOrigin(0, 0.5);
     this.bar = this.add.rectangle(0, H - 70, 1, 2, 0xf2e2c0, 0.95).setOrigin(0, 0.5);
@@ -112,7 +114,7 @@ export class BootScene extends Phaser.Scene {
   /** Title card: the game's name over the backdrop; the first tap also unlocks audio. */
   private showTitle(): void {
     const ui = this.add.container(0, 0).setAlpha(0);
-    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.25);
+    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.38);
     const glow = this.add.image(W / 2, H / 2 - 70, 'fx:glow').setTint(0xffd27a).setDisplaySize(1500, 520).setAlpha(0.18).setBlendMode(Phaser.BlendModes.ADD);
     const name = text(this, W / 2, H / 2 - 110, 'FIREFLY', { size: 150, font: 'display', color: '#f4ead4', spacing: 18, shadow: true }).setOrigin(0.5);
     const sub = text(this, W / 2, H / 2 + 20, 'N O C T U R N E', { size: 46, font: 'display', color: '#e8d6b0', spacing: 10, shadow: true }).setOrigin(0.5);
@@ -120,7 +122,7 @@ export class BootScene extends Phaser.Scene {
     const tag = text(this, W / 2, H / 2 + 110, 'Vellmoor · the night without end', { size: 26, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     const start = text(this, W / 2, H - 150, 'S T A R T', { size: 30, font: 'display', color: CSS.cream, spacing: 6, shadow: true }).setOrigin(0.5);
     ui.add([veil, glow, name, sub, rule, tag, start]);
-    this.tweens.add({ targets: [this.bar, this.barGlow, this.status], alpha: 0, duration: 500 });
+    this.tweens.add({ targets: [this.bar, this.barGlow, this.status, ...this.lore], alpha: 0, duration: 500 });
     this.tweens.add({ targets: ui, alpha: 1, duration: 1100, ease: 'Sine.easeOut' });
     this.tweens.add({ targets: rule, scaleX: 1, duration: 1200, delay: 400, ease: 'Cubic.easeOut' });
     this.tweens.add({ targets: start, alpha: 0.35, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 1200 });

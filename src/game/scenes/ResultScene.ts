@@ -3,7 +3,7 @@ import { fitPortrait } from '../art/assets';
 import { ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { getCharacter } from '../data/characters';
-import { getStage, nextStageId } from '../data/stages';
+import { getStage, nextStageId, stageCode } from '../data/stages';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { formatQty } from '../systems/growth';
@@ -50,7 +50,7 @@ export class ResultScene extends Phaser.Scene {
     this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 520, ease: 'Back.easeOut' });
 
     let y = 320;
-    text(this, rx - 330, y, stage.id, { size: 34, font: 'display', bold: true, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(61);
+    text(this, rx - 330, y, stageCode(stage), { size: 34, font: 'display', bold: true, color: CSS.creamDim }).setOrigin(0, 0.5).setDepth(61);
     text(this, rx - 240, y, stage.name, { size: 40, font: 'display', color: CSS.cream }).setOrigin(0, 0.5).setDepth(61);
     ornament(this, rx, y + 44, 680).setDepth(61);
     y += 96;
@@ -111,14 +111,16 @@ export class ResultScene extends Phaser.Scene {
     const firstRite = save.totalPulls === 0 && save.glimmer >= RITE.cost * 10;
     const by = H - 110;
     if (d.won) {
-      if (firstRite) {
+      if (stage.mode) {
+        new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Again', sub: stage.name, style: 'amber', onClick: () => goToStage(this, stage.id) }).setDepth(80);
+      } else if (firstRite) {
         new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Continue', sub: 'A Lantern Rite awaits', style: 'amber', onClick: () => this.leave(() => goTo(this, 'Lobby')) }).setDepth(80);
       } else if (next) {
         new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Next Stage', sub: next, style: 'amber', onClick: () => this.leave(() => goToStage(this, next)) }).setDepth(80);
       } else {
         new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Return Home', style: 'amber', onClick: () => this.leave(() => goTo(this, 'Lobby')) }).setDepth(80);
       }
-      new Button(this, rx - 190, by, { w: 300, h: 80, label: 'Story', style: 'cream', onClick: () => goTo(this, 'Story', { stageId: stage.id }) }).setDepth(80);
+      new Button(this, rx - 190, by, { w: 300, h: 80, label: stage.mode ? 'Trials' : 'Story', style: 'cream', onClick: () => goTo(this, 'Story', { stageId: stage.id }) }).setDepth(80);
     } else {
       new Button(this, rx + 170, by, { w: 380, h: 92, label: 'Retry', style: 'amber', onClick: () => goTo(this, 'Battle', { stageId: stage.id }) }).setDepth(80);
       new Button(this, rx - 190, by, { w: 300, h: 80, label: 'Team', style: 'cream', onClick: () => goTo(this, 'Formation', { stageId: stage.id }) }).setDepth(80);

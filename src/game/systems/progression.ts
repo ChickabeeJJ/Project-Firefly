@@ -34,6 +34,15 @@ export interface VictoryOutcome {
 export function applyBattleResult(save: SaveData, stage: StageDef, won: boolean, rounds: number, fallen: number): VictoryOutcome {
   const stars = computeStars(stage, won, rounds, fallen);
   if (!won) return { stars, glimmer: 0, firstClear: false, items: {} };
+  if (stage.mode) {
+    // Trials: fixed drops (half again on the first clear), no stars, no Glimmer.
+    const firstClear = !save.hints.includes(`trial:${stage.id}`);
+    if (firstClear) save.hints.push(`trial:${stage.id}`);
+    const items: Partial<Record<ItemId, number>> = {};
+    for (const [k, v] of Object.entries(stage.drops ?? {})) items[k as ItemId] = Math.round(v * (firstClear ? 1.5 : 1));
+    grant(save, items);
+    return { stars, glimmer: 0, firstClear, items };
+  }
   const firstClear = !(stage.id in save.stars);
   const prevBest = save.stars[stage.id] ?? 0;
   let glimmer = firstClear ? REWARDS.firstClear : REWARDS.repeatClear;
@@ -43,6 +52,16 @@ export function applyBattleResult(save: SaveData, stage: StageDef, won: boolean,
   const items = stageItems(stage.level, stage.chapter, firstClear, stars.count === 3 && prevBest < 3);
   grant(save, items);
   return { stars, glimmer, firstClear, items };
+}
+
+/** Trials open when the story has reached their gate and the previous level is cleared. */
+export function trialUnlocked(save: SaveData, t: StageDef): boolean {
+  if (t.requires && !(t.requires in save.stars)) return false;
+  return t.index === 1 || save.hints.includes(`trial:t-${t.family}-${t.index - 1}`);
+}
+
+export function trialCleared(save: SaveData, t: StageDef): boolean {
+  return save.hints.includes(`trial:${t.id}`);
 }
 
 export function isUnlocked(save: SaveData, stageId: string): boolean {

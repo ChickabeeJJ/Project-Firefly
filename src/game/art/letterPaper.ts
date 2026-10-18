@@ -72,19 +72,23 @@ export function letterPaperCanvas(seed = 1929): HTMLCanvasElement {
     ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
 
-  // Large water / tea stains.
-  for (let i = 0; i < 4; i++) {
-    const x = rnd() * W;
-    const y = rnd() * H;
-    const r = 60 + rnd() * 140;
-    const g = ctx.createRadialGradient(x, y, r * 0.6, x, y, r);
-    g.addColorStop(0, rgba('#a07040', 0.06));
-    g.addColorStop(0.92, rgba('#8a5a2a', 0.16));
-    g.addColorStop(1, rgba('#8a5a2a', 0));
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
+  // Faint tea stains: clusters of soft blobs, darker at a ragged tide-line.
+  for (let i = 0; i < 3; i++) {
+    const cx = rnd() * W;
+    const cy = rnd() * H;
+    for (let k = 0; k < 5; k++) {
+      const x = cx + (rnd() - 0.5) * 120;
+      const y = cy + (rnd() - 0.5) * 80;
+      const r = 40 + rnd() * 90;
+      const g = ctx.createRadialGradient(x, y, r * 0.5, x, y, r);
+      g.addColorStop(0, rgba('#a07040', 0.025));
+      g.addColorStop(0.9, rgba('#8a5a2a', 0.05));
+      g.addColorStop(1, rgba('#8a5a2a', 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   // A cup ring near a corner.
   ctx.strokeStyle = rgba('#7a4a20', 0.16);

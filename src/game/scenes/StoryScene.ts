@@ -6,11 +6,14 @@ import { CHAPTERS, STAGES, getStage } from '../data/stages';
 import type { StageDef } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { frontierStage, isUnlocked, REWARDS } from '../systems/progression';
-import { formatQty, fromLegacyLevel, insightLabel, stageItems } from '../systems/growth';
+import { frontierStage, isUnlocked, REWARDS, trialCleared, trialUnlocked } from '../systems/progression';
+import { TRIAL_FAMILIES, trialsOf, type TrialFamily } from '../data/trials';
+import { formatQty, fromLegacyLevel, insightLabel, ITEMS, type ItemId, stageItems } from '../systems/growth';
 import { CINEMATICS } from '../data/story';
 import { goToStage } from '../systems/storyFlow';
-import { Atmosphere, Button, fadeIn, goTo, ornament, text } from '../ui/kit';
+import { Atmosphere, Button, fadeIn, goTo, ornament, scrollable, softPress, text } from '../ui/kit';
+
+type Mode = 'story' | 'resource' | 'insight';
 
 /** Chapter timeline of stages (adapted from the reference's stage line), with a detail panel. */
 export class StoryScene extends Phaser.Scene {
@@ -19,15 +22,30 @@ export class StoryScene extends Phaser.Scene {
   private timeline?: Phaser.GameObjects.Container;
   private detail?: Phaser.GameObjects.Container;
   private header?: Phaser.GameObjects.Container;
+  private mode: Mode = 'story';
+  private family: string | null = null;
 
   constructor() {
     super('Story');
   }
 
-  create(data: { stageId?: string } = {}): void {
+  create(data: { stageId?: string; mode?: Mode; family?: string | null } = {}): void {
     fadeIn(this);
     const save = saves.get();
-    const pick = data.stageId ? getStage(data.stageId) : frontierStage(save);
+    const asked = data.stageId ? getStage(data.stageId) : null;
+    this.mode = data.mode ?? asked?.mode ?? 'story';
+    this.family = data.family !== undefined ? data.family : asked?.family ?? null;
+    this.tabBar();
+    if (this.mode !== 'story') {
+      this.timeline = undefined;
+      this.detail = undefined;
+      this.header = undefined;
+      if (this.family) this.renderFamily(TRIAL_FAMILIES.find((f) => f.id === this.family)!, asked?.mode ? asked : null);
+      else this.renderCards();
+      audio.play('lobby');
+      return;
+    }
+    const pick = asked && !asked.mode ? asked : frontierStage(save);
     this.selected = pick;
     this.chapter = pick.chapter;
     this.timeline = undefined;
@@ -123,7 +141,7 @@ export class StoryScene extends Phaser.Scene {
     this.detail?.destroy();
     const s = this.selected;
     const save = saves.get();
-    const c = this.add.container(W / 2, 830).setDepth(60);
+    const c = this.add.container(W / 2, 800).setDepth(60);
     const w = 1500;
     c.add(this.add.nineslice(0, 0, 'ui:paper', undefined, w, 330, 16, 16, 16, 16));
     const lx = -w / 2 + 50;
@@ -168,7 +186,7 @@ export class StoryScene extends Phaser.Scene {
       w: 280, h: 80, label: 'Begin', style: 'amber', size: 36, onClick: () => void this.begin(s),
     });
     c.add(start);
-    if (cleared && s.outro) c.add(text(this, 0, 205, `“${s.outro}”`, { size: 24, italic: true, color: CSS.creamDim, align: 'center' }).setOrigin(0.5));
+
     this.detail = c;
   }
 
@@ -188,6 +206,9 @@ export class StoryScene extends Phaser.Scene {
       if (Math.abs(p.x - W / 2) > 550 || Math.abs(p.y - H / 2) > 410) close();
     });
     c.add(new Button(this, W / 2 + 490, H / 2 - 360, { w: 64, h: 64, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: close }));
+    const list = this.add.container(0, 0);
+    c.add(list);
+    const scroll = scrollable(this, list, new Phaser.Geom.Rectangle(W / 2 - 500, H / 2 - 290, 1000, 680), CINEMATICS.length * 76 + 20);
     CINEMATICS.forEach((cin, i) => {
       const y = H / 2 - 250 + i * 76;
       const seen = saves.hasHint(`cine:${cin.id}`);
@@ -198,11 +219,186 @@ export class StoryScene extends Phaser.Scene {
         row.add(text(this, 450, 0, 'Replay ▸', { size: 24, italic: true, color: CSS.goldLight }).setOrigin(1, 0.5));
         row.setSize(960, 64).setInteractive({ useHandCursor: true });
         row.on('pointerup', () => {
+          if (scroll.wasDrag() || !scroll.visible(list.y + y)) return;
           audio.sfx('tap');
           goTo(this, 'Cinematic', { ids: [cin.id], next: { scene: 'Story' } });
         });
       }
-      c.add(row);
+      list.add(row);
     });
+  }
+
+  // ------------------------------------------------------------------ modes
+
+  /** Bottom tab bar, as in the reference: Story · Resource · Insight. */
+  private tabBar(): void {
+    const tabs: [Mode, string, string][] = [['story', 'Story', 'story'], ['resource', 'Resource', 'shop'], ['insight', 'Insight', 'eye']];
+    const bar = this.add.container(W / 2, H - 46).setDepth(95);
+    const light = this.mode !== 'story' && !this.family;
+    const g = this.add.graphics();
+    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, light ? 0.18 : 0.7, light ? 0.18 : 0.7).fillRect(-W / 2, -60, W, 106);
+    bar.add(g);
+    tabs.forEach(([m, label, icon], i) => {
+      const x = (i - 1) * 190;
+      const on = m === this.mode;
+      const col = light ? (on ? '#c8501e' : '#3a342c') : on ? CSS.amber : CSS.cream;
+      const t = this.add.container(x, 0);
+      t.add(this.add.image(0, -14, `icon:${icon}`).setDisplaySize(40, 40).setTint(Phaser.Display.Color.HexStringToColor(col).color));
+      t.add(text(this, 0, 20, label, { size: 22, color: col }).setOrigin(0.5));
+      if (on) t.add(this.add.rectangle(0, 40, 110, 4, C.amber, 1));
+      t.setSize(170, 90).setInteractive({ useHandCursor: true });
+      softPress(t, () => {
+        if (on && !this.family) return;
+        this.scene.restart({ mode: m, family: null });
+      }, 'tap', 1.06);
+      bar.add(t);
+    });
+  }
+
+  /** Trial families as torn photographs over vinyl records, on a pale sketch-paper desk. */
+  private renderCards(): void {
+    const save = saves.get();
+    this.add.rectangle(W / 2, H / 2, W, H, 0xdedad2);
+    const sk = this.add.graphics();
+    sk.lineStyle(1, 0x8a8478, 0.18);
+    for (let i = 0; i < 26; i++) {
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      sk.lineBetween(x, y, x + 80 + Math.random() * 220, y + (Math.random() - 0.5) * 60);
+    }
+    const vg = this.add.graphics();
+    vg.fillGradientStyle(0x6a6458, 0x6a6458, 0x6a6458, 0x6a6458, 0.0, 0.0, 0.35, 0.35).fillRect(0, H * 0.55, W, H * 0.45);
+    new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Lobby') }).setDepth(90);
+    text(this, W - 70, 70, this.mode === 'resource' ? 'RESOURCE' : 'INSIGHT', { size: 40, font: 'display', bold: true, color: '#3a342c', spacing: 10 }).setOrigin(1, 0.5);
+    text(this, W - 70, 116, this.mode === 'resource' ? 'Wick Dust and Brass Sovereigns, for levelling up' : 'Materials for raising Insight', { size: 22, italic: true, color: '#6a6458' }).setOrigin(1, 0.5);
+    const fams = TRIAL_FAMILIES.filter((f) => f.mode === this.mode);
+    const gap = fams.length > 2 ? 450 : 640;
+    fams.forEach((f, i) => {
+      const x = W / 2 + (i - (fams.length - 1) / 2) * gap;
+      const card = this.trialCard(f, x, 500, fams.length > 2 ? 0.86 : 1.05);
+      card.setAlpha(0).setY(530);
+      this.tweens.add({ targets: card, alpha: 1, y: 500, duration: 500, delay: i * 90, ease: 'Cubic.easeOut' });
+    });
+    const owned = (id: string) => formatQty(save.items[id as ItemId] ?? 0);
+    const strip = fams.map((f) => `${ITEMS[f.item as ItemId].name}: ${owned(f.item)}`).join('    ·    ');
+    text(this, W / 2, 900, strip, { size: 22, color: '#4a443a' }).setOrigin(0.5);
+  }
+
+  private trialCard(f: TrialFamily, x: number, y: number, s: number): Phaser.GameObjects.Container {
+    const save = saves.get();
+    const levels = trialsOf(f.id);
+    const open = trialUnlocked(save, levels[0]);
+    const done = levels.filter((t) => trialCleared(save, t)).length;
+    const c = this.add.container(x, y).setScale(s);
+    // Vinyl record behind the photo.
+    const rec = this.add.graphics();
+    rec.fillStyle(0x0c0c0e, 1).fillCircle(0, 0, 190);
+    rec.lineStyle(1, 0x2a2a2e, 0.9);
+    for (let r = 60; r < 186; r += 9) rec.strokeCircle(0, 0, r);
+    rec.fillStyle(0xc8501e, 1).fillCircle(0, 0, 46);
+    rec.fillStyle(0x0c0c0e, 1).fillCircle(0, 0, 6);
+    c.add(rec);
+    if (open) this.tweens.add({ targets: rec, angle: 360, duration: 9000, repeat: -1 });
+    rec.setPosition(120, 10);
+    // The photograph.
+    const photo = this.add.container(-40, 20).setAngle(-2.5);
+    photo.add(this.add.rectangle(4, 8, 400, 320, 0x000000, 0.25));
+    photo.add(this.add.rectangle(0, 0, 400, 320, 0xf6f2ea));
+    const img = this.add.image(0, 10, ensureBg(this, f.bg));
+    img.setScale(Math.max(372 / img.width, 262 / img.height));
+    img.setCrop((img.width - 372 / img.scaleX) / 2, (img.height - 262 / img.scaleY) / 2, 372 / img.scaleX, 262 / img.scaleY);
+    photo.add(img);
+    photo.add(this.add.rectangle(0, 10, 372, 262, 0x000000, open ? 0.05 : 0.55));
+    const code = text(this, 176, -136, f.code, { size: 24, font: 'display', bold: true, color: '#141414' }).setOrigin(1, 0.5);
+    photo.add(this.add.rectangle(188, -136, code.width + 26, 34, 0xffffff, 0.92).setOrigin(1, 0.5));
+    photo.add(code);
+    c.add(photo);
+    // Title, overlapping the photo's left edge.
+    const words = f.name.split(' ');
+    const t1 = text(this, -250, -150, words[0], { size: 54, font: 'display', bold: true, color: '#141414', stroke: '#f6f2ea', strokeThickness: 8 });
+    const t2 = text(this, -210, -92, `× ${words.slice(1).join(' ')}`, { size: 42, font: 'display', bold: true, color: '#141414', stroke: '#f6f2ea', strokeThickness: 8 });
+    c.add([t1, t2]);
+    // Item medallion.
+    c.add(this.add.circle(150, 150, 62, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));
+    c.add(this.add.image(150, 150, `item:${f.item}`).setDisplaySize(100, 100));
+    c.add(text(this, -40, 216, open ? `Cleared ${done} / ${levels.length}` : `Opens after Story ${levels[0].requires}`, { size: 24, bold: true, color: open ? '#3a342c' : '#8a3a2a' }).setOrigin(0.5));
+    if (!open) c.add(this.add.image(-40, 30, 'icon:lock').setDisplaySize(70, 70).setTint(0xf6f2ea));
+    c.setSize(520, 460).setInteractive({ useHandCursor: true });
+    softPress(c, () => {
+      if (!open) {
+        audio.sfx('deny');
+        return;
+      }
+      this.scene.restart({ mode: this.mode, family: f.id });
+    }, 'tap', 1.03);
+    return c;
+  }
+
+  /** One family: its backdrop, a level line along the bottom and a detail panel on the right. */
+  private renderFamily(f: TrialFamily, pick: StageDef | null): void {
+    const save = saves.get();
+    const levels = trialsOf(f.id);
+    const sel = pick ?? [...levels].reverse().find((t) => trialUnlocked(save, t)) ?? levels[0];
+    this.add.image(W / 2, H / 2, ensureBg(this, f.bg)).setDisplaySize(W, H);
+    const shade = this.add.graphics();
+    shade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.1, 0.55, 0.1, 0.55).fillRect(0, 0, W, H);
+    shade.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.8, 0.8).fillRect(0, H - 360, W, 360);
+    new Atmosphere(this, { depth: 40, fireflies: 3 });
+    new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => this.scene.restart({ mode: this.mode, family: null }) }).setDepth(90);
+    // Level line.
+    const y = 880;
+    const x0 = 160;
+    const gap = Math.min(300, (1300 - x0) / Math.max(1, levels.length - 1));
+    this.add.rectangle(x0 - 40, y + 46, gap * (levels.length - 1) + 80, 1, 0xe8dcc0, 0.4).setOrigin(0, 0.5).setDepth(50);
+    levels.forEach((t, i) => {
+      const x = x0 + i * gap;
+      const open = trialUnlocked(save, t);
+      const on = t.id === sel.id;
+      const c = this.add.container(x, y).setDepth(55);
+      c.add(text(this, 0, -26, String(t.index).padStart(2, '0'), { size: on ? 40 : 30, font: 'display', color: on ? '#fff4e4' : open ? CSS.cream : CSS.muted }).setOrigin(0, 0.5));
+      c.add(text(this, 52, -30, '✦', { size: 20, color: trialCleared(save, t) ? CSS.amber : '#5a5a62' }).setOrigin(0, 0.5));
+      c.add(text(this, 0, 14, open ? t.name : `Opens after ${t.requires}`, { size: on ? 26 : 22, color: on ? '#fff4e4' : open ? CSS.creamDim : CSS.muted }).setOrigin(0, 0.5));
+      if (on) c.add(this.add.circle(18, 46, 7, C.amber, 1));
+      c.setSize(260, 100).setInteractive({ useHandCursor: true });
+      c.input!.hitArea.setTo(130, 0, 260, 100);
+      softPress(c, () => {
+        if (!open) {
+          audio.sfx('deny');
+          return;
+        }
+        this.scene.restart({ mode: this.mode, family: f.id, stageId: t.id });
+      }, 'tap', 1.04);
+    });
+    // Detail panel (right), as the reference's stage card.
+    const px = W - 60;
+    const d = this.add.container(0, 0).setDepth(60);
+    d.add(text(this, px, 120, `LP ${String(sel.index).padStart(2, '0')}`, { size: 34, font: 'display', color: CSS.cream }).setOrigin(1, 0.5));
+    d.add(text(this, px, 190, sel.name, { size: 60, font: 'display', color: CSS.cream, shadow: true }).setOrigin(1, 0.5));
+    const rec = fromLegacyLevel(sel.level, 4);
+    const rl = text(this, px - 520, 262, 'Recommended:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5);
+    d.add(rl);
+    d.add(text(this, px - 520 + rl.width + 12, 262, `${insightLabel(rec.insight)} Level ${rec.level}`, { size: 24, color: '#f26b3a' }).setOrigin(0, 0.5));
+    d.add(text(this, px - 520, 300, f.blurb, { size: 24, color: CSS.cream, wrap: 520, lineSpacing: 4 }));
+    d.add(text(this, px - 520, 470, 'Rewards:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
+    const first = !trialCleared(save, sel);
+    Object.entries(sel.drops ?? {}).forEach(([id, n], i) => {
+      const ix = px - 360 + i * 130;
+      d.add(this.add.rectangle(ix, 470, 104, 104, 0x14161c, 0.8).setStrokeStyle(1, 0xe8dcc0, 0.4));
+      d.add(this.add.image(ix, 462, `item:${id}`).setDisplaySize(78, 78));
+      d.add(text(this, ix, 506, formatQty(Math.round(n * (first ? 1.5 : 1))), { size: 20, bold: true, color: CSS.cream, stroke: '#000', strokeThickness: 4 }).setOrigin(0.5));
+      if (first && i === 0) d.add(text(this, ix, 408, 'First ×1.5', { size: 18, bold: true, color: '#ffb08a' }).setOrigin(0.5));
+    });
+    const ids = [...new Set(sel.waves.flat())];
+    d.add(text(this, px - 520, 590, 'Enemies:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
+    ids.forEach((id, i) => {
+      const e = getEnemy(id);
+      const ex = px - 340 + i * 96;
+      d.add(this.add.circle(ex, 590, 40, 0x1a1c22, 0.85).setStrokeStyle(1, 0xe8dcc0, 0.3));
+      const im = this.add.image(ex, 590, `enemy:${e.kind}`);
+      im.setScale(Math.min(70 / im.height, 70 / im.width));
+      d.add(im);
+    });
+    const start = new Button(this, px - 200, 700, { w: 400, h: 84, label: 'Start', style: 'amber', size: 36, onClick: () => goToStage(this, sel.id) });
+    d.add(start);
   }
 }

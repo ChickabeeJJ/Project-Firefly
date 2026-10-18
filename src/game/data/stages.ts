@@ -1,4 +1,5 @@
 import { SAGAS } from './saga';
+import { TRIALS } from './trials';
 import type { StageDef } from './types';
 
 export const CHAPTERS = [
@@ -302,7 +303,7 @@ for (const saga of SAGAS) {
   }
 }
 
-const byId = new Map(STAGES.map((s) => [s.id, s]));
+const byId = new Map([...STAGES, ...TRIALS].map((s) => [s.id, s]));
 
 export function getStage(id: string): StageDef {
   const s = byId.get(id);
@@ -313,4 +314,9 @@ export function getStage(id: string): StageDef {
 export function nextStageId(id: string): string | null {
   const i = STAGES.findIndex((s) => s.id === id);
   return i >= 0 && i + 1 < STAGES.length ? STAGES[i + 1].id : null;
+}
+
+/** Display code for a stage: "1-3" for the story, "LP 02" for trials. */
+export function stageCode(s: StageDef): string {
+  return s.mode ? `LP ${String(s.index).padStart(2, '0')}` : s.id;
 }

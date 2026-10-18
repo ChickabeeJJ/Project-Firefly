@@ -7,7 +7,7 @@ import { allyStats } from '../battle/stats';
 import { effectiveLevel } from '../systems/growth';
 import { CHARACTERS, getCharacter } from '../data/characters';
 import { getEnemy } from '../data/enemies';
-import { getStage } from '../data/stages';
+import { getStage, stageCode } from '../data/stages';
 import type { StageDef } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
@@ -40,7 +40,7 @@ export class FormationScene extends Phaser.Scene {
     text(this, 1340, 900, 'Tap a Luminary to swap them out', { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     this.buildTeam();
     new Button(this, W - 260, H - 90, {
-      w: 400, h: 100, label: 'Start', sub: `${this.stage.id} · ${this.stage.name}`, style: 'amber', size: 40,
+      w: 400, h: 100, label: 'Start', sub: `${stageCode(this.stage)} · ${this.stage.name}`, style: 'amber', size: 40,
       onClick: () => goTo(this, 'Battle', { stageId: this.stage.id }),
     }).setDepth(90);
     audio.play('lobby');
@@ -50,7 +50,7 @@ export class FormationScene extends Phaser.Scene {
     const s = this.stage;
     const x = 80;
     let y = 160;
-    text(this, x, y, s.id, { size: 30, font: 'display', bold: true, color: CSS.goldLight, spacing: 3 });
+    text(this, x, y, s.mode ? `${s.mode === 'resource' ? 'RESOURCE' : 'INSIGHT'} · ${stageCode(s)}` : s.id, { size: 30, font: 'display', bold: true, color: CSS.goldLight, spacing: 3 });
     text(this, x, y + 36, s.name, { size: 46, font: 'display', bold: true, color: CSS.cream, shadow: true, wrap: 760 });
     y += 140;
     text(this, x, y, 'GOALS', { size: 26, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 });
