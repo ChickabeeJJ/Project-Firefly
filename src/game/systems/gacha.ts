@@ -12,6 +12,56 @@ export const RITE = {
   dupeRefund: 60,
 };
 
+/** A Rite banner. Featured Luminaries take half of their rarity's results (R1999's rate-up). */
+export interface Banner {
+  id: string;
+  name: string;
+  /** Tab label. */
+  tag: string;
+  blurb: string;
+  featured?: string;
+  featured4?: string[];
+}
+
+export const BANNERS: Banner[] = [
+  {
+    id: 'dove', name: 'The Caged Dove', tag: 'Event', featured: 'evangeline', featured4: ['kit', 'teddy'],
+    blurb: 'Every dove she sets free carries a name home. Aveline Halcyon answers the light more often.',
+  },
+  {
+    id: 'lantern', name: 'The Lantern Rite', tag: 'Standard',
+    blurb: 'Light a lantern on Lake Vell. Someone in the dark will answer.',
+  },
+];
+
+export function getBanner(id: string): Banner {
+  return BANNERS.find((b) => b.id === id) ?? BANNERS[0];
+}
+
+/** Event banners rotate weekly; returns ms until the current one closes (next Monday 05:00). */
+export function bannerTimeLeft(now = new Date()): number {
+  const end = new Date(now);
+  end.setHours(5, 0, 0, 0);
+  const add = (8 - end.getDay()) % 7 || (now >= end ? 7 : 0);
+  end.setDate(end.getDate() + add);
+  return end.getTime() - now.getTime();
+}
+
+/** Each Luminary's chance per light on a banner (for the Details panel). */
+export function bannerOdds(b: Banner): { id: string; rarity: Rarity; p: number }[] {
+  const out: { id: string; rarity: Rarity; p: number }[] = [];
+  for (const r of [5, 4, 3] as const) {
+    const rate = r === 3 ? 1 - RITE.rates[5] - RITE.rates[4] : RITE.rates[r];
+    const pool = CHARACTERS.filter((c) => c.rarity === r);
+    const feat = r === 5 && b.featured ? [b.featured] : r === 4 ? b.featured4 ?? [] : [];
+    for (const c of pool) {
+      const p = feat.length ? (feat.includes(c.id) ? rate * 0.5 / feat.length : (rate * 0.5) / (pool.length - feat.length)) : rate / pool.length;
+      out.push({ id: c.id, rarity: r, p });
+    }
+  }
+  return out;
+}
+
 export interface RiteResult {
   id: string;
   rarity: Rarity;
@@ -34,7 +84,8 @@ function rollRarity(rng: Rng, pity: number): Rarity {
 }
 
 /** Spends Glimmer and resolves `count` lights. Returns null when unaffordable. */
-export function performRite(save: SaveData, count: number, rng: Rng): RiteResult[] | null {
+export function performRite(save: SaveData, count: number, rng: Rng, bannerId = 'lantern'): RiteResult[] | null {
+  const banner = getBanner(bannerId);
   const cost = riteCost(count);
   if (save.glimmer < cost) return null;
   save.glimmer -= cost;
@@ -44,7 +95,12 @@ export function performRite(save: SaveData, count: number, rng: Rng): RiteResult
     save.pity = rarity === 5 ? 0 : save.pity + 1;
     save.totalPulls++;
     const pool = CHARACTERS.filter((c) => c.rarity === rarity);
-    const char = rng.pick(pool);
+    const feat = rarity === 5 && banner.featured ? [banner.featured] : rarity === 4 ? banner.featured4 ?? [] : [];
+    const featPool = pool.filter((c) => feat.includes(c.id));
+    const restPool = pool.filter((c) => !feat.includes(c.id));
+    const char = featPool.length && (rng.next() < 0.5 || !restPool.length) ? rng.pick(featPool) : rng.pick(restPool.length ? restPool : pool);
+    save.history.unshift({ id: char.id, rarity, b: banner.id, t: Date.now() });
+    if (save.history.length > 100) save.history.length = 100;
     const owned = save.roster[char.id];
     if (!owned) {
       save.roster[char.id] = { level: 1, insight: 0, resonance: 0 };

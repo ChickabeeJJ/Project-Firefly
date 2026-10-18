@@ -45,6 +45,16 @@ export interface SaveData {
   items: Record<ItemId, number>;
   /** When this save was last written (ms since epoch). */
   savedAt: number;
+  /** Recent Lantern Rite results, newest first (Record screen). */
+  history: RiteRecord[];
+}
+
+export interface RiteRecord {
+  id: string;
+  rarity: number;
+  /** Banner id. */
+  b: string;
+  t: number;
 }
 
 export const STARTING_ITEMS: Record<ItemId, number> = { dust: 3000, sovereign: 1500, moth: 0, velvet: 0, tide: 0, spring: 0 };
@@ -67,6 +77,7 @@ export function freshSave(): SaveData {
     claimed: [],
     items: { ...STARTING_ITEMS },
     savedAt: 0,
+    history: [],
   };
 }
 
@@ -143,8 +154,16 @@ export function sanitizeSave(raw: unknown): SaveData {
     hints: strings(r.hints, 1024),
     playerId: Math.round(num(r.playerId, 100000000, 999999999, base.playerId)),
     seen: strings(r.seen, 64),
-    claimed: strings(r.claimed, 64),
+    claimed: strings(r.claimed, 256),
     items: sanitizeItems(r.items, legacy),
     savedAt: Math.round(num(r.savedAt, 0, 1e14, 0)),
+    history: Array.isArray(r.history)
+      ? (r.history as unknown[]).slice(0, 100).flatMap((h) => {
+        const o = (h && typeof h === 'object' ? h : {}) as Record<string, unknown>;
+        return typeof o.id === 'string' && charIds.has(o.id)
+          ? [{ id: o.id, rarity: Math.round(num(o.rarity, 3, 5, 3)), b: typeof o.b === 'string' ? o.b : 'lantern', t: Math.round(num(o.t, 0, 1e14, 0)) }]
+          : [];
+      })
+      : [],
   };
 }

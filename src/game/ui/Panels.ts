@@ -6,7 +6,7 @@ import { STAGES } from '../data/stages';
 import { C, CSS, H, MOOD_CSS, MOOD_NAME, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { ACHIEVEMENTS, achievementState, claimAchievement, playerLevel, totalStars } from '../systems/achievements';
-import { Button, ornament, text, toast } from './kit';
+import { Button, ornament, scrollable, text, toast } from './kit';
 
 // Modal info panels opened from the lobby and its options menu. Each is a self-contained
 // container that swallows input underneath and closes with the ✕ or a tap on the backdrop.
@@ -110,6 +110,11 @@ export function openAchievements(scene: Phaser.Scene, onChange?: () => void): vo
   const { c } = modal(scene, 'ACHIEVEMENTS', 1640, 920);
   const list = scene.add.container(0, 0);
   c.add(list);
+  const rowsH = Math.ceil(ACHIEVEMENTS.length / 2) * 100 + 40;
+  // Drag or wheel to scroll; no scroll bar (like the reference's lists).
+  const scroll = scrollable(scene, list, new Phaser.Geom.Rectangle(W / 2 - 810, 146, 1620, H / 2 + 460 - 160), rowsH);
+  const done = ACHIEVEMENTS.filter((a) => saves.get().claimed.includes(a.id)).length;
+  c.add(text(scene, W / 2 + 800, 146 - 30, `${done} / ${ACHIEVEMENTS.length} claimed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(1, 0.5));
   const draw = () => {
     list.removeAll(true);
     const save = saves.get();
@@ -133,6 +138,7 @@ export function openAchievements(scene: Phaser.Scene, onChange?: () => void): vo
         const b = new Button(scene, rowW / 2 - 92, 0, {
           w: 160, h: 60, label: `+${a.reward}`, icon: 'glimmer', style: 'gold', size: 24, sfx: 'levelup',
           onClick: () => {
+            if (scroll.wasDrag() || !scroll.visible(list.y + y)) return;
             const got = claimAchievement(saves.get(), a.id);
             if (got) {
               saves.commit();

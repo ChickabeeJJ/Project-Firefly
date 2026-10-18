@@ -306,3 +306,66 @@ export function rarityStars(scene: Phaser.Scene, x: number, y: number, rarity: n
   }
   return c;
 }
+
+/**
+ * Makes `content` scroll vertically inside `area` (world rect) by dragging or with the mouse
+ * wheel, with a little momentum and no scroll bar. `height` is the content's full height.
+ * Returns `wasDrag()`, true just after a drag, so taps on children can ignore drag releases.
+ */
+export function scrollable(scene: Phaser.Scene, content: Phaser.GameObjects.Container, area: Phaser.Geom.Rectangle, height: number): { wasDrag: () => boolean; visible: (worldY: number) => boolean } {
+  const maskG = scene.make.graphics({}).fillRect(area.x, area.y, area.width, area.height);
+  content.setMask(maskG.createGeometryMask());
+  const top = content.y;
+  const min = Math.min(top, top - (height - area.height));
+  let vel = 0;
+  let dragY: number | null = null;
+  let moved = 0;
+  let lastDrag = 0;
+  const clamp = (y: number) => Phaser.Math.Clamp(y, min, top);
+  const inside = (p: Phaser.Input.Pointer) => area.contains(p.x, p.y);
+  const onDown = (p: Phaser.Input.Pointer) => {
+    if (!inside(p)) return;
+    dragY = p.y;
+    moved = 0;
+    vel = 0;
+  };
+  const onMove = (p: Phaser.Input.Pointer) => {
+    if (dragY === null || !p.isDown) return;
+    const dy = p.y - dragY;
+    dragY = p.y;
+    moved += Math.abs(dy);
+    vel = dy;
+    content.y = clamp(content.y + dy);
+  };
+  const onUp = () => {
+    if (dragY !== null && moved > 12) lastDrag = scene.time.now;
+    dragY = null;
+  };
+  const onWheel = (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
+    if (!inside(p)) return;
+    vel = 0;
+    scene.tweens.add({ targets: content, y: clamp(content.y - dy * 0.9), duration: 160, ease: 'Sine.easeOut' });
+  };
+  const onUpdate = () => {
+    if (dragY !== null || Math.abs(vel) < 0.2) return;
+    vel *= 0.92;
+    content.y = clamp(content.y + vel);
+  };
+  scene.input.on('pointerdown', onDown);
+  scene.input.on('pointermove', onMove);
+  scene.input.on('pointerup', onUp);
+  scene.input.on('wheel', onWheel);
+  scene.events.on('update', onUpdate);
+  content.once(Phaser.GameObjects.Events.DESTROY, () => {
+    scene.input.off('pointerdown', onDown);
+    scene.input.off('pointermove', onMove);
+    scene.input.off('pointerup', onUp);
+    scene.input.off('wheel', onWheel);
+    scene.events.off('update', onUpdate);
+    maskG.destroy();
+  });
+  return {
+    wasDrag: () => scene.time.now - lastDrag < 80 || moved > 12,
+    visible: (worldY: number) => worldY > area.y && worldY < area.bottom,
+  };
+}
