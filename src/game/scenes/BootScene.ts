@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropInUrl, loadDropInArt } from '../art/assets';
+import { dropInUrl, loadDropInArt, streamCharacterArt } from '../art/assets';
 import { registerBaseArt } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { CSS, H, W } from '../config/theme';
@@ -53,15 +53,21 @@ export class BootScene extends Phaser.Scene {
     this.buildLoading();
     document.getElementById('boot')?.remove();
 
-    await loadDropInArt(this, (p) => this.progress(p * 0.85));
+    const t0 = performance.now();
+    // The lobby's leader loads now at full size; the rest of the troupe streams in after.
+    const team = saves.load().team;
+    await loadDropInArt(this, (p) => this.progress(p * 0.85), [team[0]]);
+    const t1 = performance.now();
     this.progress(0.9, 'Lighting the lamps …');
     await new Promise((r) => this.time.delayedCall(30, r));
     registerBaseArt(this);
+    if (import.meta.env.DEV) console.info(`[boot] art loaded ${Math.round(t1 - t0)} ms, registered ${Math.round(performance.now() - t1)} ms`);
     const save = saves.load();
     audio.setVolumes(save.settings.music, save.settings.sfx);
     audio.setPlatformMuted(platform.muted);
     platform.onMuteChange((m) => audio.setPlatformMuted(m));
     this.progress(1, 'The lamps are lit.');
+    void streamCharacterArt(this.game, team);
     platform.loadingStop();
 
     const params = new URLSearchParams(location.search);

@@ -114,7 +114,7 @@ export class SummonScene extends Phaser.Scene {
     const t1 = text(this, 420, 400, l1, { size: 96, font: 'display', bold: true, color: '#f2ead8', spacing: 4, shadow: true });
     const t2 = text(this, 520, 510, l2, { size: 112, font: 'display', bold: true, color: '#f2ead8', spacing: 4, shadow: true });
     const slash = this.add.rectangle(520, 625, Math.max(t2.width, 420), 3, C.gold, 0.9).setOrigin(0, 0.5).setScale(0, 1);
-    const blurb = text(this, 524, 650, banner.blurb, { size: 24, italic: true, color: CSS.creamDim, wrap: 640, shadow: true });
+    const blurb = text(this, 524, 650, banner.blurb, { size: 24, italic: true, color: CSS.creamDim, wrap: 520, shadow: true });
     ui.add([t1, t2, slash, blurb]);
     [t1, t2].forEach((t, i) => {
       t.setAlpha(0).setX(t.x - 30);
@@ -125,7 +125,7 @@ export class SummonScene extends Phaser.Scene {
     // Featured name plate, set under the title so it never covers the art.
     if (banner.featured) {
       const fc = getCharacter(banner.featured);
-      const row = this.add.container(450, 742);
+      const row = this.add.container(450, 760);
       row.add(this.add.image(24, 0, `icon:${fc.mood}`).setDisplaySize(64, 64));
       const nm = text(this, 66, -4, fc.name.split(' ')[0], { size: 54, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5);
       row.add(nm);

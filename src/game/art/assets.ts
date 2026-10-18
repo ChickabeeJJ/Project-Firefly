@@ -41,11 +41,16 @@ export function dropInUrl(folder: ArtFolder, id: string): string | null {
   return hit ? hit[1] : null;
 }
 
-/** Queue every drop-in image and wait for them (no-op when the folder is empty). */
-export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => void): Promise<void> {
+/**
+ * Queue drop-in images and wait for them (no-op when nothing is left). Full-size character art
+ * is the heaviest part of the game, so only the `characters` listed in `keepCharacters` load here;
+ * the rest stream in afterwards (streamCharacterArt) while the player is on the title screen.
+ */
+export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => void, keepCharacters?: string[]): Promise<void> {
+  const deferred = (key: string) => keepCharacters !== undefined && key.startsWith('hf:characters/') && !keepCharacters.includes(key.slice(14));
   const entries = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
-    .filter((e): e is readonly [string, string] => !!e[0] && !scene.textures.exists(e[0]));
+    .filter((e): e is readonly [string, string] => !!e[0] && !scene.textures.exists(e[0]) && !deferred(e[0]));
   if (entries.length === 0) return Promise.resolve();
   return new Promise((resolve) => {
     for (const [key, url] of entries) scene.load.image(key, url);
@@ -57,6 +62,33 @@ export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => v
     scene.load.on(Phaser.Loader.Events.FILE_LOAD_ERROR, (f: Phaser.Loader.File) => console.warn('[art] failed to load', f.key));
     scene.load.start();
   });
+}
+
+/**
+ * Loads the remaining full-size character art in the background, `first` ids before the rest,
+ * independent of any scene (so changing scenes never cancels it). Resolves when all are in.
+ */
+export function streamCharacterArt(game: Phaser.Game, first: string[] = []): Promise<void> {
+  const todo = Object.entries(FILES)
+    .map(([path, url]) => [keyFor(path), url] as const)
+    .filter((e): e is readonly [string, string] => !!e[0] && e[0].startsWith('hf:characters/') && !game.textures.exists(e[0]))
+    .sort(([a], [b]) => Number(!first.includes(a.slice(14))) - Number(!first.includes(b.slice(14))));
+  const one = ([key, url]: readonly [string, string]) => new Promise<void>((resolve) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => {
+      if (!game.textures.exists(key)) game.textures.addImage(key, img);
+      resolve();
+    };
+    img.onerror = () => resolve();
+    img.src = url;
+  });
+  // Two at a time keeps the main thread free for the title screen's animation.
+  let i = 0;
+  const worker = async (): Promise<void> => {
+    while (i < todo.length) await one(todo[i++]);
+  };
+  return Promise.all([worker(), worker()]).then(() => undefined);
 }
 
 export function dropIn(scene: Phaser.Scene, folder: ArtFolder, id: string): string | null {

@@ -177,7 +177,8 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
     add(scene, `doll:${c.id}`, battle ? facingRight(fitBox(scene, battle, PAINTED_DOLL_H, PAINTED_DOLL_W), c.id) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
-    const body = dropIn(scene, 'characters', c.id);
+    // Mid-size body art (battle/<id>, 640 px) keeps boot light; full art streams in later.
+    const body = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
     const paintedBody = body ? { img: source(scene, body), ...size(scene, body) } : undefined;
     const vp = dropIn(scene, 'ui', `vpanel_${panelFor(c.id)}`);
     const panel = vp ? { img: source(scene, vp), ...size(scene, vp) } : undefined;
@@ -202,7 +203,8 @@ export function ensureBg(scene: Phaser.Scene, id: BgId): string {
 
 /** Large standing portrait. Painted art keys start with "hf:" — size them with fitPortrait(). */
 export function ensurePortrait(scene: Phaser.Scene, charId: string): string {
-  const painted = dropIn(scene, 'characters', charId);
+  // Full art if it has streamed in yet; until then the 640 px battle art stands in.
+  const painted = dropIn(scene, 'characters', charId) ?? dropIn(scene, 'battle', charId);
   if (painted) {
     const s0 = size(scene, painted);
     // Art already within budget is used as-is (no second copy in memory).
@@ -256,7 +258,7 @@ export function elementPanel(scene: Phaser.Scene, charId: string): string | null
 export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string {
   const key = `pcard:${charId}`;
   if (scene.textures.exists(key)) return key;
-  const painted = dropIn(scene, 'characters', charId);
+  const painted = dropIn(scene, 'battle', charId) ?? dropIn(scene, 'characters', charId);
   if (!painted) {
     add(scene, key, portraitCardCanvas(getCharacter(charId)));
     return key;
