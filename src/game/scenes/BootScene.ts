@@ -19,7 +19,7 @@ async function loadFonts(): Promise<void> {
 
 /** Lore cards shown while loading, in the manner of the reference's loading screens. */
 const LORE: { title: string; text: string }[] = [
-  { title: 'Project Firefly', text: 'Pencilled on the back of an envelope no one has opened: every time somebody is forgotten, a firefly goes up. Catch them all, and keep them safe until the morning can find them.' },
+  { title: 'Project Firefly', text: 'A secret scheme pencilled on the back of an envelope no one has opened: every time somebody is forgotten, a firefly goes up. Catch them all, and keep them safe until the morning can find them.' },
   { title: 'The Thirteenth Stroke', text: 'At midnight on the last night of 1929 the Cathedral Clock struck twelve, and then once more. There is no thirteenth hour. That night, Vellmoor found one.' },
   { title: 'The Dimming', text: 'What the fog swallows, the world forgets: faces, names, whole streets. Even the letters people wrote to one another fade to blank paper.' },
   { title: 'Luminaries', text: 'A few people remembered too fiercely to be forgotten. Their memories still glow — enough to light a lantern, or to burn a hole in the dark.' },

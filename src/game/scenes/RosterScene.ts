@@ -510,7 +510,9 @@ export class RosterScene extends Phaser.Scene {
       body.add(title);
       body.add(ornament(this, lpx, by + 316, 360, 0x8a6a3a, 0.8));
       // right page: text
-      body.add(text(this, bx + 50, by - bh / 2 + 110, pages[at].text, { size: 30, color: CSS.paperText, wrap: bw / 2 - 110, lineSpacing: 10 }));
+      const page = text(this, bx + 50, by - bh / 2 + 110, pages[at].text, { size: 30, color: CSS.paperText, wrap: bw / 2 - 110, lineSpacing: 10 });
+      for (let sz = 28; sz >= 20 && page.height > bh - 170; sz -= 2) page.setFontSize(sz);
+      body.add(page);
       // page tabs
       pages.forEach((_pg, k) => {
         const x = bx - 120 + k * 120;

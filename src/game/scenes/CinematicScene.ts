@@ -266,7 +266,17 @@ export class CinematicScene extends Phaser.Scene {
     const rule = this.add.rectangle(TX, RULE_Y, WRAP, 1, 0xe8dcc0, 0.3).setOrigin(0, 0.5);
     const t = text(this, TX, BODY_Y, '', { size: 30, color: CSS.cream, wrap: WRAP, lineSpacing: 8, shadow: true });
     this.ui.add([rule, t]);
+    this.fitBlock(t, str, [rule]);
     this.type(t, str, 1);
+  }
+
+  /** Raises the text block so long passages never run off the bottom of the screen. */
+  private fitBlock(body: Phaser.GameObjects.Text, full: string, others: Phaser.GameObjects.Components.Transform[]): void {
+    body.setText(full);
+    const over = body.y + body.height - (H - 34);
+    body.setText('');
+    if (over <= 0) return;
+    for (const o of [body, ...others]) o.y -= over;
   }
 
   private castFor(who: string): { name: string; key: string; enemy: boolean } {
@@ -298,6 +308,9 @@ export class CinematicScene extends Phaser.Scene {
       const hc = this.add.circle(TX - 70, NAME_Y + 34, 44, 0x15131a, 0.9).setStrokeStyle(1.5, 0xe8dcc0, 0.4);
       const q = text(this, TX - 70, NAME_Y + 34, '?', { size: 40, font: 'display', color: CSS.creamDim }).setOrigin(0.5);
       this.ui.add([hc, q]);
+      this.fitBlock(body, str, [rule, name, hc, q]);
+    } else {
+      this.fitBlock(body, str, [rule, name]);
     }
     this.type(body, str, 2);
   }
@@ -383,6 +396,10 @@ export class CinematicScene extends Phaser.Scene {
     const long = str.length > 260;
     const body = text(this, -hw + 120, -hh + 92, '', { size: long ? 30 : 34, font: 'letter', italic: true, color: '#2e1d0e', wrap: LETTER_W - 210, lineSpacing: long ? 8 : 12 });
     body.setShadow(0, 0, 'rgba(46,29,14,0.35)', 1.5, false, true);
+    // Shrink the hand until the whole letter sits on the paper, clear of the signature.
+    body.setText(str);
+    for (let size = long ? 30 : 34; size > 20 && body.height > LETTER_H - 200; size -= 2) body.setFontSize(size).setLineSpacing(size > 26 ? 8 : 4);
+    body.setText('');
     const sig = text(this, hw - 90, hh - 70, sign, { size: 32, font: 'letter', italic: true, color: '#3a2412' }).setOrigin(1, 0.5).setAlpha(0).setAngle(-3);
     sig.setShadow(0, 0, 'rgba(46,29,14,0.35)', 1.5, false, true);
     const blot = this.add.circle(hw - 80 - sig.width - 18, hh - 62, 5, 0x2e1d0e, 0).setScale(1, 0.8);
