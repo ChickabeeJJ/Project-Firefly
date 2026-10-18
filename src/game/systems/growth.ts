@@ -24,10 +24,10 @@ export interface ItemDef {
 export const ITEMS: Record<ItemId, ItemDef> = {
   dust: { id: 'dust', name: 'Wick Dust', icon: 'item:dust', blurb: 'Ash from a wick that burned through the Dimming, kept stoppered in glass. It still remembers being light — feed it to a Luminary and they grow brighter.', source: 'Any stage · Pawnshop' },
   sovereign: { id: 'sovereign', name: 'Brass Sovereign', icon: 'item:sovereign', blurb: 'Pre-Dimming coinage, stamped with a clock that has thirteen hours. Every trade in Vellmoor still runs on them.', source: 'Any stage · Pawnshop' },
-  moth: { id: 'moth', name: 'Moth-Wing Scale', icon: 'item:moth', blurb: 'A dusty scale shed by a Mothling. Ground fine, it lets a Luminary see further into the dark.', source: 'Chapter 1 stages · Pawnshop' },
-  velvet: { id: 'velvet', name: 'Velvet Thread', icon: 'item:velvet', blurb: 'Unpicked from a seat of the Gloaming Theatre. Strong enough to hold a memory in place.', source: 'Chapter 2 stages · Pawnshop' },
-  tide: { id: 'tide', name: 'Tide Glass', icon: 'item:tide', blurb: 'Sea glass from a tide that never turned. It holds one second of moving water inside.', source: 'Chapter 3 stages · Pawnshop' },
-  spring: { id: 'spring', name: 'Mainspring Coil', icon: 'item:spring', blurb: 'A coil from the Cathedral Clock, still wound with a stolen hour.', source: 'Chapter 4 stages · Pawnshop' },
+  moth: { id: 'moth', name: 'Moth-Wing Scale', icon: 'item:moth', blurb: 'A dusty scale shed by a Mothling. Ground fine, it lets a Luminary see further into the dark.', source: 'Kindles Star Luminaries · Chapter 1 · Moth Hollow · Curio Cabinet' },
+  velvet: { id: 'velvet', name: 'Velvet Thread', icon: 'item:velvet', blurb: 'Unpicked from a seat of the Gloaming Theatre. Strong enough to hold a memory in place.', source: 'Kindles Sun Luminaries · Chapter 2 · Velvet Wings · Curio Cabinet' },
+  tide: { id: 'tide', name: 'Tide Glass', icon: 'item:tide', blurb: 'Sea glass from a tide that never turned. It holds one second of moving water inside.', source: 'Kindles Moon Luminaries · Chapter 3 · Tide Pools · Curio Cabinet' },
+  spring: { id: 'spring', name: 'Mainspring Coil', icon: 'item:spring', blurb: 'A coil from the Cathedral Clock, still wound with a stolen hour.', source: 'Every Luminary’s higher Kindles · Chapter 4 · Spring Works · Curio Cabinet' },
 };
 
 export const ITEM_ORDER: ItemId[] = ['dust', 'sovereign', 'moth', 'velvet', 'tide', 'spring'];
@@ -104,11 +104,19 @@ export function levelUp(save: SaveData, id: string, target: number): boolean {
   return true;
 }
 
-/** Items needed to reach Insight `to` (1–3). */
-export function insightCost(to: number): Partial<Record<ItemId, number>> {
-  if (to === 1) return { sovereign: 2000, moth: 5 };
-  if (to === 2) return { sovereign: 8000, velvet: 6, moth: 4 };
-  return { sovereign: 20000, tide: 6, spring: 6 };
+/**
+ * Each Mood kindles with its own relic (as R1999 ties Insight materials to a character's
+ * Afflatus): Star → Moth-Wing Scales, Sun → Velvet Thread, Moon → Tide Glass. Higher tiers add
+ * Mainspring Coils, the rare relic every Luminary needs at the top.
+ */
+export const MOOD_MATERIAL: Record<string, ItemId> = { star: 'moth', sun: 'velvet', moon: 'tide' };
+
+/** Items needed for `charId` to reach Kindle `to` (1–3). */
+export function insightCost(to: number, charId?: string): Partial<Record<ItemId, number>> {
+  const mat = charId ? MOOD_MATERIAL[getCharacter(charId).mood] : 'moth';
+  if (to === 1) return { sovereign: 1000, [mat]: 3 };
+  if (to === 2) return { sovereign: 3500, [mat]: 6, spring: 1 };
+  return { sovereign: 8000, [mat]: 8, spring: 4 };
 }
 
 export type InsightState = 'max' | 'needsLevel' | 'ready' | 'short';
@@ -117,13 +125,13 @@ export function insightState(save: SaveData, id: string): InsightState {
   const o = save.roster[id];
   if (o.insight >= maxInsight(getCharacter(id).rarity)) return 'max';
   if (o.level < levelCap(o.insight)) return 'needsLevel';
-  return affordable(save, insightCost(o.insight + 1)) ? 'ready' : 'short';
+  return affordable(save, insightCost(o.insight + 1, id)) ? 'ready' : 'short';
 }
 
 export function raiseInsight(save: SaveData, id: string): boolean {
   if (insightState(save, id) !== 'ready') return false;
   const o = save.roster[id];
-  pay(save, insightCost(o.insight + 1));
+  pay(save, insightCost(o.insight + 1, id));
   o.insight++;
   o.level = 1;
   return true;

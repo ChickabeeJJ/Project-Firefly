@@ -202,7 +202,7 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'clementine',
-    name: 'Sister Clementine',
+    name: 'Clémence Vigil',
     title: 'Keeper of the Vigil',
     mood: 'star',
     rarity: 4,
@@ -235,8 +235,8 @@ export const CHARACTERS: CharacterDef[] = [
       outfit: 'robe', coat: '#262a3c', shirt: '#f1ece2', accent: '#d9a441', legs: '#262a3c', shoes: '#16171f',
       skirt: true, prop: 'lantern',
     },
-    palette: { primary: '#d9a441', secondary: '#f3ead6', ink: '#1b1c28' },
-    quote: 'A single candle is a sermon the dark cannot answer.',
+    palette: { primary: '#5a6a9a', secondary: '#eef0f6', ink: '#12162a' },
+    quote: 'Sit with me a while. The moths only come to a lamp that is kept.',
   },
   {
     id: 'rook',
@@ -435,7 +435,7 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'delphine',
-    name: 'Ysolde Nivelle',
+    name: 'Fae Nivelle',
     title: 'The Lantern Wyrm',
     mood: 'moon',
     rarity: 5,

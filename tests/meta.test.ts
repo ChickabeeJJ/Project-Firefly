@@ -119,7 +119,7 @@ describe('growth (R1999-style)', () => {
     expect(g.levelUp(save, 'wren', 30)).toBe(true);
     const before = g.effectiveLevel(save.roster.wren);
     expect(g.insightState(save, 'wren')).toBe('short');
-    save.items.moth = 5;
+    save.items.moth = 3;
     expect(g.raiseInsight(save, 'wren')).toBe(true);
     expect(save.roster.wren).toMatchObject({ insight: 1, level: 1 });
     expect(g.effectiveLevel(save.roster.wren)).toBeCloseTo(before);

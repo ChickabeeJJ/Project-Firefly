@@ -31,22 +31,22 @@ export const TRIAL_FAMILIES: TrialFamily[] = [
   },
   {
     id: 'hollow', mode: 'insight', name: 'Moth Hollow', code: 'Corvid Lane', item: 'moth', bg: 'street',
-    blurb: 'Where the moths sleep by day, their shed scales drift like snow.',
+    blurb: 'Where the moths sleep by day, their shed scales drift like snow. Star Luminaries kindle with them.',
     pool: ['mothling', 'lampeater', 'usher'], boss: 'lampeater',
   },
   {
     id: 'wings', mode: 'insight', name: 'Velvet Wings', code: 'The Gloaming', item: 'velvet', bg: 'theatre',
-    blurb: 'Backstage at the Gloaming, the seats are unpicking themselves thread by thread.',
+    blurb: 'Backstage at the Gloaming, the seats are unpicking themselves thread by thread. Sun Luminaries kindle with it.',
     pool: ['widow', 'mannequin', 'hound'], boss: 'widow',
   },
   {
     id: 'pools', mode: 'insight', name: 'Tide Pools', code: 'The Breakwater', item: 'tide', bg: 'docks',
-    blurb: 'Sea glass glitters in pools the tide forgot. Something sings beneath them.',
+    blurb: 'Sea glass glitters in pools the tide forgot. Moon Luminaries kindle with it.',
     pool: ['gullwraith', 'siren', 'stevedore'], boss: 'siren',
   },
   {
     id: 'works', mode: 'insight', name: 'Spring Works', code: 'The Clock Tower', item: 'spring', bg: 'clocktower',
-    blurb: 'The clock’s spare mainsprings, still wound tight with stolen hours.',
+    blurb: 'The clock’s spare mainsprings, still wound tight with stolen hours. Every Luminary needs them for their higher Kindles.',
     pool: ['cogspider', 'chimewisp', 'pendulum'], boss: 'chimewisp',
   },
 ];
@@ -56,10 +56,10 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
 const GATES: Record<string, string[]> = {
   ember: ['1-3', '1-6', '2-3', '2-6', '3-4', '4-2'],
   mint: ['1-5', '1-8', '2-5', '2-8', '3-6', '4-4'],
-  hollow: ['1-4', '1-8', '2-4', '2-8'],
-  wings: ['2-2', '2-6', '3-2', '3-6'],
-  pools: ['3-2', '3-5', '3-8', '4-4'],
-  works: ['4-2', '4-4', '4-6', '4-8'],
+  hollow: ['1-3', '1-7', '2-4', '3-2'],
+  wings: ['1-4', '1-8', '2-5', '3-3'],
+  pools: ['1-5', '2-2', '2-6', '3-4'],
+  works: ['2-3', '2-8', '3-6', '4-4'],
 };
 const LEVELS = [5, 12, 19, 26, 32, 38];
 

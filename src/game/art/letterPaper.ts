@@ -266,3 +266,47 @@ export function deskPaperCanvas(W = 1920, H = 1080): HTMLCanvasElement {
   grain(ctx, W, H, 0.06, 1931);
   return canvas;
 }
+
+/** Aged playbill card for the stage panel: sepia stock, foxing, double rule and corner flourishes. */
+export function playbillCanvas(W: number, H: number, seed = 7): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(W, H);
+  const rnd = seeded(seed);
+  const base = ctx.createLinearGradient(0, 0, 0, H);
+  base.addColorStop(0, '#efe3c6');
+  base.addColorStop(1, '#ddc9a0');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 140; i++) {
+    const x = rnd() * W;
+    const y = rnd() * H;
+    const r = 1 + rnd() * (rnd() < 0.07 ? 12 : 3.5);
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, rgba('#8a5a2a', 0.16 + rnd() * 0.16));
+    g.addColorStop(1, rgba('#8a5a2a', 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  const rim = ctx.createRadialGradient(W / 2, H / 2, H * 0.4, W / 2, H / 2, W * 0.6);
+  rim.addColorStop(0, rgba('#4a2e12', 0));
+  rim.addColorStop(1, rgba('#4a2e12', 0.32));
+  ctx.fillStyle = rim;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = rgba('#5a4026', 0.75);
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, W - 20, H - 20);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(17, 17, W - 34, H - 34);
+  // Corner flourishes: small lozenges with whiskers.
+  for (const [x, y] of [[17, 17], [W - 17, 17], [17, H - 17], [W - 17, H - 17]]) {
+    ctx.fillStyle = rgba('#5a4026', 0.85);
+    ctx.beginPath();
+    ctx.moveTo(x, y - 7);
+    ctx.lineTo(x + 7, y);
+    ctx.lineTo(x, y + 7);
+    ctx.lineTo(x - 7, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+  grain(ctx, W, H, 0.05, seed);
+  return canvas;
+}

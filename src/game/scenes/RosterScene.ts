@@ -128,9 +128,9 @@ export class RosterScene extends Phaser.Scene {
     const panel = dropIn(this, 'ui', `charbg_${panelFor(id)}`) ?? elementPanel(this, id);
     if (panel) {
       const bgImg = this.add.image(W / 2, H / 2, panel);
-      bgImg.setScale(Math.max(W / bgImg.width, H / bgImg.height)).setAlpha(panel.includes('charbg_') ? 0.85 : 0.3);
+      bgImg.setScale(Math.max(W / bgImg.width, H / bgImg.height)).setAlpha(panel.includes('charbg_') ? 0.62 : 0.3);
       p.add(bgImg);
-      p.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0b0b0e, 0.28));
+      p.add(this.add.rectangle(W / 2, H / 2, W, H, 0x0b0b0e, 0.34));
     }
     p.add(this.add.image(940, 560, 'fx:glow').setTint(tint).setDisplaySize(1300, 1100).setAlpha(0.42));
     p.add(text(this, W - 40, 150, view === 'dossier' ? 'DOSSIER' : 'DOCUMENT', { size: 150, font: 'display', bold: true, color: '#ffffff', spacing: 20 }).setOrigin(1, 0.5).setAlpha(0.035));
@@ -174,7 +174,7 @@ export class RosterScene extends Phaser.Scene {
     ([['heal', 'HP', st.hp], ['attack', 'ATK', st.atk], ['shield', 'DEF', st.def]] as const).forEach(([icon, k, v], i) => {
       const y = 470 + i * 52;
       p.add(this.add.rectangle(lx, y, 470, 44, 0x121116, 0.75).setOrigin(0, 0.5));
-      p.add(this.add.image(lx + 26, y, `icon:${icon}`).setDisplaySize(28, 28));
+      p.add(this.add.image(lx + 26, y, this.textures.exists(`stat:${k}`) ? `stat:${k}` : `icon:${icon}`).setDisplaySize(this.textures.exists(`stat:${k}`) ? 40 : 28, this.textures.exists(`stat:${k}`) ? 40 : 28));
       p.add(text(this, lx + 52, y, k, { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
       const vt = text(this, lx + 450, y, v.toLocaleString('en-US'), { size: 26, bold: true, color: CSS.cream }).setOrigin(1, 0.5);
       statRows.push(vt);
@@ -469,7 +469,7 @@ export class RosterScene extends Phaser.Scene {
     }
     s.add(text(this, cx, 470, `Kindle ${R[o.insight]}  ▸  ${R[o.insight + 1]}`, { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0.5));
     s.add(text(this, cx, 516, `Level cap ${levelCap(o.insight)} ▸ ${levelCap(o.insight + 1)}  ·  level resets to 1, stats are kept`, { size: 20, italic: true, color: CSS.paperSub }).setOrigin(0.5));
-    const cost = insightCost(o.insight + 1);
+    const cost = insightCost(o.insight + 1, c.id);
     Object.entries(cost).forEach(([id, n], i) => {
       const x = cx - 180 + (i % 3) * 180;
       const have = save.items[id as ItemId];

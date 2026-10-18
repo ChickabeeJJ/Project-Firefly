@@ -119,8 +119,13 @@ export class LobbyScene extends Phaser.Scene {
     if (!art || !this.textures.exists(`menu:${art}`)) return this.iconButton(x, y - 8, icon, label, onClick, Math.round(size * 0.6), dot);
     const c = this.add.container(x, y);
     const glow = this.add.image(0, -size * 0.08, 'fx:glow').setTint(0xffd27a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.3, size * 1.1).setAlpha(0);
-    const img = this.add.image(0, 0, `menu:${art}`).setDisplaySize(size, size);
+    const img = this.add.image(0, label ? -8 : 0, `menu:${art}`).setDisplaySize(size, size);
     c.add([glow, img]);
+    if (label) {
+      // A small engraved caption on a soft dark band, so it reads over any backdrop.
+      const cap = text(this, 0, size / 2 + 2, label, { size: 15, font: 'display', color: CSS.cream, spacing: 2, shadow: true }).setOrigin(0.5);
+      c.add([this.add.rectangle(0, size / 2 + 2, cap.width + 18, 20, 0x0b0c10, 0.45), cap]);
+    }
     if (dot) {
       const d = this.add.circle(size * 0.36, -size * 0.36, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
       c.add(d);
@@ -161,12 +166,12 @@ export class LobbyScene extends Phaser.Scene {
     this.ui.add(c);
 
     // Shortcut row under the badge.
-    const row: [string, string, () => void][] = [
-      ['profile', 'profile', () => openProfile(this)],
-      ['gramophone', 'gramophone', () => openGramophone(this)],
-      ['settings', 'gear', () => this.openSettings()],
+    const row: [string, string, string, () => void][] = [
+      ['profile', 'profile', 'Profile', () => openProfile(this)],
+      ['gramophone', 'gramophone', 'Music', () => openGramophone(this)],
+      ['settings', 'gear', 'Settings', () => this.openSettings()],
     ];
-    row.forEach(([art, icon, go], i) => this.artButton(84 + i * 92, 200, art, icon, '', go, 74));
+    row.forEach(([art, icon, label, go], i) => this.artButton(84 + i * 100, 196, art, icon, label, go, 66));
   }
 
   private buildLeftColumn(): void {
@@ -179,7 +184,7 @@ export class LobbyScene extends Phaser.Scene {
       ['pawnshop', 'shop', 'Shop', () => goTo(this, 'Shop')],
       ['menu', 'menu', 'Menu', () => goTo(this, 'Menu')],
     ];
-    items.forEach(([art, icon, label, go, dot], i) => this.artButton(84, 300 + i * 92, art, icon, label, go, 82, !!dot));
+    items.forEach(([art, icon, label, go, dot], i) => this.artButton(84, 298 + i * 100, art, icon, label, go, 74, !!dot));
     this.refreshDotsLater();
   }
 
@@ -237,7 +242,7 @@ export class LobbyScene extends Phaser.Scene {
     const left = x - COL_W / 2;
 
     // Promo banner, tilted like a pasted poster.
-    const promo = this.add.container(x, 222).setAngle(-2.5);
+    const promo = this.add.container(x, 222);
     const painted = dropIn(this, 'banners', 'rite');
     if (painted) {
       promo.add(this.add.image(0, 0, painted).setDisplaySize(COL_W, 132));
@@ -257,7 +262,7 @@ export class LobbyScene extends Phaser.Scene {
     }
     promo.add(this.add.rectangle(0, 0, COL_W, 132).setStrokeStyle(1.5, 0xe8dcc0, 0.55));
     // A pasted poster stirring in a draught: a slow, tiny rock either side of its tilt.
-    this.tweens.add({ targets: promo, angle: { from: -3.1, to: -1.9 }, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: promo, angle: { from: -0.7, to: 0.7 }, duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     promo.setSize(COL_W, 132).setInteractive({ useHandCursor: true });
     promo.on('pointerup', () => {
       audio.sfx('tap');
@@ -300,7 +305,7 @@ export class LobbyScene extends Phaser.Scene {
     this.tweens.add({ targets: wheel, angle: 360, duration: 18000, repeat: -1 });
     const riteArt = this.textures.exists('menu:rite');
     const icon = riteArt
-      ? this.add.image(COL_W / 2 - 84, 0, 'menu:rite').setDisplaySize(150, 150)
+      ? this.add.image(COL_W / 2 - 84, 0, 'menu:rite').setDisplaySize(150, 150).setAlpha(0.5).setTint(0xd8cfc0)
       : this.add.image(COL_W / 2 - 90, 0, 'icon:summon').setDisplaySize(44, 44);
     if (riteArt) {
       wheel.setVisible(false);

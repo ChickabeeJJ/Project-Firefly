@@ -201,9 +201,14 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Rainwater', text: 'She heals with water that remembers falling. It is not the same as the sea, she admits. But it has never once refused her.' },
   ],
   delphine: [
-    { title: 'The Lantern Wyrm', text: 'Ysolde Nivelle came down from the cold peaks above Vellmoor the winter before the Dimming, carrying a lantern with a whole night sky shut inside it. The city took her for a story. She let it.' },
-    { title: 'The Hoard', text: 'Dragons keep what shines. Ysolde keeps only one thing: a star that fell into her lantern as a child and has never once gone out. When the city went dark, she was the only one who did not notice.' },
+    { title: 'The Lantern Wyrm', text: 'Fae Nivelle came down from the cold peaks above Vellmoor the winter before the Dimming, carrying a lantern with a whole night sky shut inside it. The city took her for a story. She let it.' },
+    { title: 'The Hoard', text: 'Dragons keep what shines. Fae keeps only one thing: a star that fell into her lantern as a child and has never once gone out. When the city went dark, she was the only one who did not notice.' },
     { title: 'Scales', text: 'Her skin goes to frost-white scale at the wrists and ankles when she is angry, or afraid, or — she will deny this — very happy.' },
+  ],
+  clementine: [
+    { title: 'Keeper of the Vigil', text: 'Clémence Vigil kept the night lamp at the chapel of St. Brigid’s, where the sick are watched until morning. When the morning stopped coming, she simply kept watching.' },
+    { title: 'Moths', text: 'Pale moths follow her everywhere — not the Dimmed kind, she insists, but the old kind, that come to any lamp kept long enough. She talks to them. Sometimes they seem to answer.' },
+    { title: 'The Vigil', text: 'She has sat beside a great many beds in the dark. She knows the exact weight of a hand that is letting go, and she has never once let go first.' },
   ],
 };
 
@@ -285,6 +290,13 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'My scales itch when the weather turns. Or when someone is kind to me. It is very inconvenient.',
     'A hoard is only a list of things you could not bear to lose. Mine is short. You are on it.',
     'The star in here fell when I was small. I caught it. It has been sulking ever since.',
+  ],
+  clementine: [
+    'Sit with me a while. The moths only come to a lamp that is kept.',
+    'You needn’t talk. A vigil is mostly the art of being quietly present.',
+    'I keep a list of everyone I have sat beside. It is very long. I read it to the moths.',
+    'Rest your eyes. I will wake you if anything changes. I always do.',
+    'There — a moth on your sleeve. That means you are a lamp now too. Be careful with it.',
   ],
 };
 

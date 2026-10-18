@@ -11,7 +11,7 @@ import { TRIAL_FAMILIES, trialsOf, type TrialFamily } from '../data/trials';
 import { formatQty, fromLegacyLevel, insightLabel, ITEMS, type ItemId, stageItems } from '../systems/growth';
 import { CINEMATICS } from '../data/story';
 import { goToStage } from '../systems/storyFlow';
-import { deskPaperCanvas } from '../art/letterPaper';
+import { deskPaperCanvas, playbillCanvas } from '../art/letterPaper';
 import { Atmosphere, Button, fadeIn, goTo, ornament, scrollable, softPress, text } from '../ui/kit';
 
 type Mode = 'story' | 'resource' | 'insight';
@@ -138,56 +138,104 @@ export class StoryScene extends Phaser.Scene {
     this.renderDetail();
   }
 
+  /** The selected stage as an aged playbill: the bill on the left, the cast and takings on the right, a ticket stub to begin. */
   private renderDetail(): void {
     this.detail?.destroy();
     const s = this.selected;
     const save = saves.get();
+    const w = 1560;
+    const h = 330;
     const c = this.add.container(W / 2, 800).setDepth(60);
-    const w = 1500;
-    c.add(this.add.nineslice(0, 0, 'ui:paper', undefined, w, 330, 16, 16, 16, 16));
-    const lx = -w / 2 + 50;
-    c.add(text(this, lx, -122, `${s.id}${s.boss ? '  ·  BOSS' : ''}`, { size: 28, font: 'display', bold: true, color: s.boss ? '#a8322a' : CSS.paperSub, spacing: 3 }));
-    c.add(text(this, lx, -82, s.name, { size: 50, font: 'display', bold: true, color: CSS.paperText }));
+    const key = `ui:playbill${w}x${h}`;
+    if (!this.textures.exists(key)) this.textures.addCanvas(key, playbillCanvas(w, h));
+    c.add(this.add.image(0, 0, key));
+    const ink = '#2a1d10';
+    const sepia = '#6a5034';
+    const rust = '#9a4a22';
+    const stub = 230;
+    const lx = -w / 2 + 52;
+
+    // ---- the bill
+    const ch = CHAPTERS.find((x) => x.id === s.chapter)!;
+    c.add(text(this, lx, -122, `${s.id}   ·   CHAPTER ${['I', 'II', 'III', 'IV'][s.chapter - 1] ?? s.chapter}${s.boss ? '   ·   FINAL ACT' : ''}`, { size: 18, font: 'display', color: s.boss ? '#a8322a' : rust, spacing: 4 }).setOrigin(0, 0.5));
+    const title = text(this, lx, -74, s.name, { size: 48, font: 'display', bold: true, color: ink }).setOrigin(0, 0.5);
+    if (title.width > 660) title.setScale(660 / title.width);
+    c.add(title);
+    c.add(this.add.rectangle(lx, -38, 300, 1.5, 0x5a4026, 0.6).setOrigin(0, 0.5));
     const rec = fromLegacyLevel(s.level, 4);
-    c.add(text(this, lx, -12, `Recommended ${insightLabel(rec.insight)} Lv ${rec.level}   ·   Round limit ${s.roundLimit}   ·   ${s.waves.length} wave${s.waves.length > 1 ? 's' : ''}`, { size: 26, color: CSS.paperSub }));
-    const cleared = s.id in save.stars;
-    const reward = cleared ? `+${REWARDS.repeatClear} Glimmer` : `+${REWARDS.firstClear} Glimmer first clear (+${REWARDS.perfectBonus} for ★★★)`;
-    c.add(this.add.image(lx + 20, 44, 'icon:glimmer').setDisplaySize(40, 40));
-    const rt = text(this, lx + 50, 44, reward, { size: 26, color: CSS.paperText }).setOrigin(0, 0.5);
-    c.add(rt);
-    let ix = lx + 50 + rt.width + 40;
-    for (const [id, n] of Object.entries(stageItems(s.level, s.chapter, !cleared, false))) {
-      c.add(this.add.image(ix, 44, `item:${id}`).setDisplaySize(46, 46));
-      const q = text(this, ix + 26, 44, `×${formatQty(n as number)}`, { size: 22, bold: true, color: CSS.paperText }).setOrigin(0, 0.5);
-      c.add(q);
-      ix += 26 + q.width + 26;
-    }
-    const goals = `★ Win   ★ Within ${s.starRounds} rounds   ★ No one falls`;
-    c.add(text(this, lx, 90, goals, { size: 26, color: '#9a5a2a' }));
+    c.add(text(this, lx, -10, `${ch.subtitle}  ·  recommended ${insightLabel(rec.insight)}, Lv ${rec.level}`, { size: 22, italic: true, color: sepia }).setOrigin(0, 0.5));
+    c.add(text(this, lx, 22, `${s.waves.length} act${s.waves.length > 1 ? 's' : ''}  ·  round limit ${s.roundLimit}`, { size: 22, italic: true, color: sepia }).setOrigin(0, 0.5));
+    // Objectives as three small ruled lines with stars (filled when earned).
+    const best = save.stars[s.id] ?? 0;
+    ['Drive back the Dimming', `Win within ${s.starRounds} rounds`, 'No Luminary falls'].forEach((g, i) => {
+      const y = 66 + i * 30;
+      c.add(this.add.image(lx + 10, y, 'icon:starp').setDisplaySize(22, 22).setAlpha(i < best ? 1 : 0.35));
+      c.add(text(this, lx + 30, y, g, { size: 21, color: i < best ? ink : sepia }).setOrigin(0, 0.5));
+    });
     if (s.rule) {
-      c.add(text(this, lx + 620, -122, s.rule === 'fireflyBloom' ? '✦ Firefly Bloom: two fireflies per round' : '✦ Restless Dim: enemies start with 2 Ardor', { size: 24, italic: true, color: '#6a7a2a' }));
+      const note = text(this, lx + 420, 80, s.rule === 'fireflyBloom' ? 'Firefly Bloom\ntwo fireflies a round' : 'Restless Dim\nfoes start with 2 Ardor', { size: 19, font: 'letter', italic: true, color: '#5a6a22', align: 'center', lineSpacing: 2 }).setOrigin(0.5).setAngle(-4);
+      c.add(this.add.rectangle(lx + 420, 80, note.width + 26, note.height + 14, 0x5a6a22, 0.08).setStrokeStyle(1.5, 0x5a6a22, 0.6).setAngle(-4));
+      c.add(note);
     }
 
-    // Enemy line-up
+    // ---- divider
+    const dx = 40;
+    const g = this.add.graphics();
+    g.lineStyle(1, 0x5a4026, 0.5);
+    for (let y = -h / 2 + 34; y < h / 2 - 34; y += 10) g.lineBetween(dx, y, dx, y + 5);
+    c.add(g);
+
+    // ---- the cast of the Dimmed
+    const rx = dx + 46;
+    c.add(text(this, rx, -122, 'THE DIMMED', { size: 18, font: 'display', color: rust, spacing: 4 }).setOrigin(0, 0.5));
     const ids = [...new Set(s.waves.flat())];
+    const step = Math.min(118, (w / 2 - stub - rx - 40) / Math.max(1, ids.length));
     ids.forEach((id, i) => {
       const e = getEnemy(id);
-      const ex = 230 + i * 140;
-      const img = this.add.image(ex, 30, `enemy:${e.kind}`).setOrigin(0.5, 1);
-      img.setScale(Math.min(120 / img.height, 120 / img.width));
-      c.add(this.add.circle(ex, -30, 66, 0x1a1c22, 0.85));
+      const ex = rx + 50 + i * step;
+      c.add(this.add.circle(ex, -50, 46, 0x1c1610, 0.9).setStrokeStyle(2, 0x8a6a3a, 0.8));
+      const img = this.add.image(ex, -50, `enemy:${e.kind}`);
+      img.setScale(Math.min(84 / img.height, 84 / img.width));
       c.add(img);
-      c.add(this.add.image(ex + 46, -80, `icon:${e.mood}`).setDisplaySize(34, 34));
-      const lbl = text(this, ex, 50, e.name.replace(/^The /, ''), { size: 20, color: CSS.paperSub }).setOrigin(0.5);
-      if (lbl.width > 128) lbl.setScale(128 / lbl.width);
+      c.add(this.add.image(ex + 34, -84, `icon:${e.mood}`).setDisplaySize(28, 28));
+      const lbl = text(this, ex, 8, e.name.replace(/^The /, ''), { size: 17, italic: true, color: sepia }).setOrigin(0.5);
+      if (lbl.width > step - 8) lbl.setScale((step - 8) / lbl.width);
       c.add(lbl);
     });
 
-    const start = new Button(this, w / 2 - 170, 104, {
-      w: 280, h: 80, label: 'Begin', style: 'amber', size: 36, onClick: () => void this.begin(s),
+    // ---- the takings
+    const cleared = s.id in save.stars;
+    c.add(text(this, rx, 48, cleared ? 'TAKINGS' : 'TAKINGS  ·  FIRST NIGHT', { size: 18, font: 'display', color: rust, spacing: 4 }).setOrigin(0, 0.5));
+    const rewards: [string, string][] = [['icon:glimmer', `${cleared ? REWARDS.repeatClear : REWARDS.firstClear}`]];
+    for (const [id, n] of Object.entries(stageItems(s.level, s.chapter, !cleared, false))) rewards.push([`item:${id}`, formatQty(n as number)]);
+    rewards.forEach(([icon, q], i) => {
+      const tx = rx + 40 + i * 92;
+      c.add(this.add.rectangle(tx, 100, 80, 80, 0x2a2016, 0.08).setStrokeStyle(1.5, 0x5a4026, 0.55));
+      c.add(this.add.image(tx, 94, icon).setDisplaySize(56, 56));
+      c.add(text(this, tx, 128, q, { size: 16, bold: true, color: ink }).setOrigin(0.5));
     });
-    c.add(start);
+    if (!cleared) c.add(text(this, rx + 40 + rewards.length * 92 - 20, 100, `+${REWARDS.perfectBonus} for ★★★`, { size: 17, italic: true, color: sepia }).setOrigin(0, 0.5));
 
+    // ---- ticket stub
+    const sx = w / 2 - stub / 2 - 14;
+    const perf = this.add.graphics();
+    perf.fillStyle(0x5a4026, 0.55);
+    for (let y = -h / 2 + 22; y < h / 2 - 16; y += 12) perf.fillCircle(w / 2 - stub - 14, y, 2);
+    c.add(perf);
+    c.add(this.add.rectangle(sx, 0, stub - 30, h - 56, 0x9a3a1a, 0.92).setStrokeStyle(1.5, 0x5a1e0a, 0.9));
+    c.add(this.add.rectangle(sx, 0, stub - 46, h - 72).setStrokeStyle(1, 0xf2d8b0, 0.5));
+    c.add(text(this, sx, -86, 'ADMIT ONE', { size: 16, font: 'display', color: '#f6e6c8', spacing: 4 }).setOrigin(0.5));
+    c.add(text(this, sx, -10, 'Begin', { size: 46, font: 'display', bold: true, color: '#fff4e4' }).setOrigin(0.5));
+    c.add(this.add.image(sx, 54, 'icon:back').setDisplaySize(30, 30).setFlipX(true).setTint(0xf6e6c8));
+    c.add(text(this, sx, 104, s.id, { size: 18, font: 'display', color: '#f6e6c8', spacing: 3 }).setOrigin(0.5));
+    const hit = this.add.zone(sx, 0, stub - 30, h - 56).setInteractive({ useHandCursor: true });
+    c.add(hit);
+    hit.on('pointerover', () => this.tweens.add({ targets: c, scale: 1.005, duration: 120 }));
+    hit.on('pointerout', () => this.tweens.add({ targets: c, scale: 1, duration: 120 }));
+    hit.on('pointerup', () => {
+      audio.sfx('tap');
+      void this.begin(s);
+    });
     this.detail = c;
   }
 
@@ -269,7 +317,7 @@ export class StoryScene extends Phaser.Scene {
     const gap = fams.length > 2 ? 450 : 640;
     fams.forEach((f, i) => {
       const x = W / 2 + (i - (fams.length - 1) / 2) * gap;
-      const card = this.trialCard(f, x, 500, fams.length > 2 ? 0.86 : 1.05);
+      const card = this.trialCard(f, x, 470, fams.length > 2 ? 0.86 : 1.05);
       card.setAlpha(0).setY(530);
       this.tweens.add({ targets: card, alpha: 1, y: 500, duration: 500, delay: i * 90, ease: 'Cubic.easeOut' });
     });
@@ -313,15 +361,20 @@ export class StoryScene extends Phaser.Scene {
     photo.add(this.add.rectangle(188, -136, code.width + 26, 34, 0xf2e6c8, 0.95).setOrigin(1, 0.5).setAngle(2));
     photo.add(code);
     c.add(photo);
-    // Title, overlapping the photo's left edge.
-    const words = f.name.split(' ');
-    const t1 = text(this, -250, -150, words[0], { size: 54, font: 'display', bold: true, color: '#1e1710', stroke: '#efe4cc', strokeThickness: 3 });
-    const t2 = text(this, -210, -92, `× ${words.slice(1).join(' ')}`, { size: 42, font: 'display', bold: true, color: '#1e1710', stroke: '#efe4cc', strokeThickness: 3 });
-    c.add([t1, t2]);
+    // Title on a typed paper label, pinned askew across the photo's lower edge (no outlines).
+    const label = this.add.container(-40, 214).setAngle(-1.5);
+    const nm = text(this, 0, -12, f.name, { size: 36, font: 'display', bold: true, color: '#241a0e' }).setOrigin(0.5);
+    const sub = text(this, 0, 22, open ? `Cleared ${done} / ${levels.length}` : `Opens after Story ${levels[0].requires}`, { size: 19, italic: true, color: open ? '#5a4632' : '#8a3a2a' }).setOrigin(0.5);
+    const lw = Math.max(nm.width, sub.width) + 56;
+    label.add(this.add.rectangle(3, 4, lw, 82, 0x000000, 0.18));
+    label.add(this.add.rectangle(0, 0, lw, 82, 0xf2e8d0).setStrokeStyle(1, 0x8a6a3a, 0.5));
+    label.add(this.add.rectangle(0, 2, lw - 24, 1, 0x8a6a3a, 0.4));
+    label.add(this.add.circle(-lw / 2 + 14, -26, 5, 0x9a3a1a));
+    label.add([nm, sub]);
+    c.add(label);
     // Item medallion.
-    c.add(this.add.circle(150, 150, 62, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));
-    c.add(this.add.image(150, 150, `item:${f.item}`).setDisplaySize(100, 100));
-    c.add(text(this, -40, 216, open ? `Cleared ${done} / ${levels.length}` : `Opens after Story ${levels[0].requires}`, { size: 24, bold: true, color: open ? '#3a342c' : '#8a3a2a' }).setOrigin(0.5));
+    c.add(this.add.circle(186, 70, 62, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));
+    c.add(this.add.image(186, 70, `item:${f.item}`).setDisplaySize(100, 100));
     if (!open) c.add(this.add.image(-40, 30, 'icon:lock').setDisplaySize(70, 70).setTint(0xf6f2ea));
     c.setSize(520, 460).setInteractive({ useHandCursor: true });
     softPress(c, () => {
