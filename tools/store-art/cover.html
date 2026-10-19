@@ -1,6 +1,8 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
 @font-face{font-family:Cinzel;src:url(src/cinzel-latin-700-normal.woff2);font-weight:700}
 @font-face{font-family:Cinzel;src:url(src/cinzel-latin-400-normal.woff2);font-weight:400}
+@font-face{font-family:CinzelDeco;src:url(src/cinzel-decorative-latin-900-normal.woff2);font-weight:900}
+@font-face{font-family:CinzelDeco;src:url(src/cinzel-decorative-latin-700-normal.woff2);font-weight:700}
 html,body{margin:0;background:#000;overflow:hidden}canvas{display:block}
 </style></head><body><canvas id="c"></canvas><script>
 // Gacha-style key art: one hero large and cropped, the troupe behind in depth, god rays,
@@ -18,6 +20,7 @@ function coverImg(g, img, ax, ay, zoom = 1) {
 }
 function rg(g, cx, cy, r, stops) { const gr = g.createRadialGradient(cx, cy, 0, cx, cy, r); stops.forEach(([o, c]) => gr.addColorStop(o, c)); g.fillStyle = gr; g.fillRect(cx - r, cy - r, r * 2, r * 2); }
 // A figure: height in px, anchored by the top of its head (fraction of art height) so heads line up predictably.
+function hero(img, faceX, faceY, h, opts) { const w = img.width * h / img.height; fig(img, faceX - (0.572 - 0.5) * w, faceY - 0.2 * h, h, opts); }
 function fig(img, cx, topY, h, { blur = 0, dim = 1, haze = 0, rim = 0, rimLeft = true, flip = false } = {}) {
   const s = h / img.height, w = img.width * s;
   const o = document.createElement('canvas'); o.width = Math.ceil(w); o.height = Math.ceil(h);
@@ -74,19 +77,29 @@ function logo(cx, cy, k, lantern) {
   x.lineWidth = 1 * k; x.strokeStyle = 'rgba(232,196,110,0.6)'; x.beginPath(); x.arc(0, 0, R + 9 * k, 0, Math.PI * 2); x.stroke();
   for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, l = i % 2 ? 10 : 20; x.beginPath(); x.moveTo(Math.cos(a) * (R + 12 * k), Math.sin(a) * (R + 12 * k)); x.lineTo(Math.cos(a) * (R + (12 + l) * k), Math.sin(a) * (R + (12 + l) * k)); x.stroke(); }
   x.fillStyle = 'rgba(14,10,8,0.7)'; x.beginPath(); x.arc(0, 0, R - 3 * k, 0, Math.PI * 2); x.fill();
-  x.drawImage(lantern, -R * 0.82, -R * 0.86, R * 1.64, R * 1.64);
+  { const ls = (R * 1.5) / 330; x.drawImage(lantern, -215 * ls, -183 * ls, 360 * ls, 360 * ls); }
   x.restore();
-  const word = (txt, y, sz, sp, weight) => {
-    x.font = `${weight} ${sz}px Cinzel`; x.letterSpacing = sp + 'px';
-    x.lineJoin = 'round'; x.lineWidth = sz * 0.16; x.strokeStyle = 'rgba(14,8,4,0.9)'; x.strokeText(txt, cx, y);
-    x.shadowColor = 'rgba(255,190,90,0.55)'; x.shadowBlur = sz * 0.35;
-    const g = x.createLinearGradient(0, y - sz * 0.55, 0, y + sz * 0.5);
-    g.addColorStop(0, '#fffbe8'); g.addColorStop(0.42, '#f6dc98'); g.addColorStop(0.52, '#c88e3a'); g.addColorStop(1, '#f8e2a4');
-    x.fillStyle = g; x.fillText(txt, cx, y); x.shadowColor = 'transparent';
-    x.lineWidth = Math.max(1, sz * 0.02); x.strokeStyle = 'rgba(255,248,220,0.55)'; x.strokeText(txt, cx, y);
+  // Engraved gilt lettering: a deep shadow, a dark keyline, a bevelled gold face and a fine highlight.
+  const word = (txt, y, sz, sp, family, weight) => {
+    x.font = `${weight} ${sz}px ${family}`; x.letterSpacing = sp + 'px'; x.lineJoin = 'round';
+    x.save(); x.shadowColor = 'rgba(0,0,0,0.85)'; x.shadowBlur = sz * 0.22; x.shadowOffsetY = sz * 0.06;
+    x.lineWidth = sz * 0.2; x.strokeStyle = '#120a05'; x.strokeText(txt, cx, y); x.restore();
+    x.lineWidth = sz * 0.1; x.strokeStyle = '#6a4518'; x.strokeText(txt, cx, y);
+    x.save(); x.shadowColor = 'rgba(255,196,110,0.6)'; x.shadowBlur = sz * 0.3;
+    const g = x.createLinearGradient(0, y - sz * 0.5, 0, y + sz * 0.45);
+    g.addColorStop(0, '#fffdf0'); g.addColorStop(0.3, '#f8e6b0'); g.addColorStop(0.5, '#d9a54c'); g.addColorStop(0.56, '#a8702a'); g.addColorStop(0.8, '#e6bf6a'); g.addColorStop(1, '#fff0c0');
+    x.fillStyle = g; x.fillText(txt, cx, y); x.restore();
+    x.save(); x.globalCompositeOperation = 'lighter'; x.lineWidth = Math.max(1, sz * 0.012); x.strokeStyle = 'rgba(255,250,225,0.5)'; x.strokeText(txt, cx, y - sz * 0.01); x.restore();
   };
-  word('FIREFLY', cy + 30 * k, 150 * k, 10 * k, 700);
-  word('PROJECT', cy - 92 * k, 44 * k, 28 * k, 700);
+  word('FIREFLY', cy + 34 * k, 158 * k, 6 * k, 'CinzelDeco', 900);
+  // PROJECT, small and widely spaced, between two fine rules.
+  word('PROJECT', cy - 96 * k, 40 * k, 30 * k, 'Cinzel', 700);
+  x.save(); x.font = `700 ${40 * k}px Cinzel`; x.letterSpacing = 30 * k + 'px';
+  const pw = x.measureText('PROJECT').width / 2 + 36 * k; x.restore();
+  for (const sgn of [-1, 1]) {
+    const gl = x.createLinearGradient(cx + sgn * pw, 0, cx + sgn * (pw + 150 * k), 0); gl.addColorStop(0, 'rgba(240,214,146,0.95)'); gl.addColorStop(1, 'rgba(240,214,146,0)');
+    x.fillStyle = gl; x.fillRect(Math.min(cx + sgn * pw, cx + sgn * (pw + 150 * k)), cy - 98 * k, 150 * k, 2 * k);
+  }
   // Flourish rule under the title.
   const ry = cy + 120 * k, rw = 330 * k;
   const gr = x.createLinearGradient(cx - rw, 0, cx + rw, 0); gr.addColorStop(0, 'rgba(232,196,110,0)'); gr.addColorStop(0.5, 'rgba(240,214,146,1)'); gr.addColorStop(1, 'rgba(232,196,110,0)');
@@ -103,12 +116,12 @@ function grade() {
   x.putImageData(id, 0, 0);
 }
 (async () => {
-  await document.fonts.load('700 40px Cinzel');
+  await document.fonts.load('700 40px Cinzel'); await document.fonts.load('900 40px CinzelDeco');
   const [street, theatre, cassian, wren, odile, nell, lantern, letter] = await Promise.all(['bg_street', 'bg_theatre', 'characters_cassian', 'characters_wren', 'characters_odile', 'characters_nell', 'ui_obj_lantern', 'ui_obj_letters'].map(load));
   // Backdrop: the lamplit street, softened for depth and graded teal with a warm heart.
   x.drawImage(layer((g) => { g.filter = 'blur(5px)'; coverImg(g, street, 0.5, L === 'land' ? 0.62 : 0.5, 1.08); }), 0, 0);
   x.fillStyle = 'rgba(10,22,32,0.42)'; x.fillRect(0, 0, W, H);
-  const hx = L === 'land' ? W * 0.64 : W * 0.5;
+  const hx = L === 'land' ? W * 0.68 : W * 0.5;
   x.save(); x.globalCompositeOperation = 'lighter';
   rg(x, hx, H * 0.4, Math.max(W, H) * 0.55, [[0, 'rgba(255,170,90,0.32)'], [0.5, 'rgba(170,70,50,0.14)'], [1, 'rgba(0,0,0,0)']]);
   // A great pale moon behind the hero.
@@ -117,10 +130,10 @@ function grade() {
   rays(hx + W * 0.25, -H * 0.3, 12, H * 1.6, 0.7, 0.09, 7);
   if (L === 'land') {
     // Troupe in depth, then the hero.
-    fig(odile, W * 0.93, H * 0.16, H * 0.78, { blur: 3, dim: 0.72, haze: 0.45 });
-    fig(wren, W * 0.40, H * 0.30, H * 0.78, { blur: 2.5, dim: 0.72, haze: 0.42, flip: true });
+    fig(odile, W * 0.95, H * 0.14, H * 0.74, { blur: 3, dim: 0.7, haze: 0.45 });
+    fig(cassian, W * 0.43, H * 0.12, H * 0.96, { blur: 3, dim: 0.66, haze: 0.48 });
     fireflies(14, 3, [W * 0.3, H * 0.2, W * 0.7, H * 0.6], 1.2, false);
-    fig(cassian, W * 0.66, H * 0.02, H * 1.62, { rim: 0.22, rimLeft: true });
+    hero(wren, W * 0.7, H * 0.27, H * 1.18, { rim: 0.2, rimLeft: true });
 
     fireflies(10, 41, [0, H * 0.55, W, H * 0.45], 1.6, true);
     fireflies(36, 13, [0, H * 0.1, W, H * 0.85], 1.4, false);
@@ -132,7 +145,8 @@ function grade() {
   } else if (L === 'port') {
     fig(odile, W * 0.12, H * 0.2, H * 0.52, { blur: 3, dim: 0.7, haze: 0.45 });
     fig(nell, W * 0.92, H * 0.17, H * 0.52, { blur: 3, dim: 0.7, haze: 0.45 });
-    fig(cassian, W * 0.52, H * 0.04, H * 1.06, { rim: 0.2, rimLeft: true });
+    fig(cassian, W * 0.5, H * 0.1, H * 0.62, { blur: 3, dim: 0.66, haze: 0.48 });
+    hero(wren, W * 0.5, H * 0.34, H * 0.78, { rim: 0.2, rimLeft: true });
     letters(letter, 3, 21, [0, H * 0.45, W, H * 0.3], W / 900, 2);
     fireflies(8, 41, [0, H * 0.4, W, H * 0.6], W / 1000, true);
     fireflies(28, 13, [0, H * 0.05, W, H * 0.8], W / 900, false);
@@ -141,7 +155,7 @@ function grade() {
     grade();
     logo(W * 0.5, H * 0.83, W / 1000, lantern);
   } else {
-    fig(cassian, W * 0.6, H * 0.04, H * 1.45, { rim: 0.2, rimLeft: true });
+    hero(wren, W * 0.5, H * 0.3, H * 1.05, { rim: 0.2, rimLeft: true });
     fireflies(6, 41, [0, H * 0.4, W, H * 0.6], W / 1000, true);
     fireflies(22, 13, [0, H * 0.05, W, H * 0.8], W / 900, false);
     const sh = x.createLinearGradient(0, H * 0.5, 0, H); sh.addColorStop(0, 'rgba(6,8,12,0)'); sh.addColorStop(0.6, 'rgba(6,8,12,0.8)'); sh.addColorStop(1, 'rgba(6,8,12,0.9)');
