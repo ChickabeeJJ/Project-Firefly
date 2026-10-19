@@ -370,7 +370,12 @@ export class BattleFx {
         const x0 = Phaser.Math.Clamp(face[0] * src.width - cw / 2, 0, src.width - cw);
         const y0 = Phaser.Math.Clamp(face[1] * src.height - ch * 0.45, 0, src.height - ch);
         const fname = `cutface:${Math.round(x0)}:${Math.round(y0)}:${Math.round(cw)}`;
-        if (!tex.has(fname)) tex.add(fname, 0, x0, y0, cw, ch);
+        if (!tex.has(fname)) {
+          // Adding a frame makes Phaser treat it as the texture's default; keep the whole image as the default.
+          const first = tex.firstFrame;
+          tex.add(fname, 0, x0, y0, cw, ch);
+          tex.firstFrame = first;
+        }
         still.add(sc.add.image(0, 0, portraitKey, fname).setDisplaySize(FW, FH));
         still.add(sc.add.rectangle(0, 0, FW, FH, color, 0.16).setBlendMode(Phaser.BlendModes.ADD));
         still.add(sc.add.rectangle(-FW / 2 + 6, 0, 4, FH, color, 1));
