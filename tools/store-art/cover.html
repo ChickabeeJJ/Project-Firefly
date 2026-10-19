@@ -69,16 +69,7 @@ function letters(img, n, seed, area, k, blur) {
 }
 function logo(cx, cy, k, lantern) {
   x.save(); x.textAlign = 'center'; x.textBaseline = 'middle';
-  // Emblem: the lantern in a gilt ring with sunburst ticks, firefly at its heart.
-  const R = 74 * k;
-  x.save(); x.globalCompositeOperation = 'lighter'; rg(x, cx, cy - 120 * k, 300 * k, [[0, 'rgba(255,200,110,0.42)'], [1, 'rgba(255,200,110,0)']]); x.restore();
-  x.save(); x.translate(cx, cy - 210 * k);
-  x.strokeStyle = 'rgba(232,196,110,0.95)'; x.lineWidth = 2.4 * k; x.beginPath(); x.arc(0, 0, R, 0, Math.PI * 2); x.stroke();
-  x.lineWidth = 1 * k; x.strokeStyle = 'rgba(232,196,110,0.6)'; x.beginPath(); x.arc(0, 0, R + 9 * k, 0, Math.PI * 2); x.stroke();
-  for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, l = i % 2 ? 10 : 20; x.beginPath(); x.moveTo(Math.cos(a) * (R + 12 * k), Math.sin(a) * (R + 12 * k)); x.lineTo(Math.cos(a) * (R + (12 + l) * k), Math.sin(a) * (R + (12 + l) * k)); x.stroke(); }
-  x.fillStyle = 'rgba(14,10,8,0.7)'; x.beginPath(); x.arc(0, 0, R - 3 * k, 0, Math.PI * 2); x.fill();
-  { const ls = (R * 1.5) / 330; x.drawImage(lantern, -215 * ls, -183 * ls, 360 * ls, 360 * ls); }
-  x.restore();
+  x.save(); x.globalCompositeOperation = 'lighter'; rg(x, cx, cy - 20 * k, 420 * k, [[0, 'rgba(255,200,110,0.26)'], [1, 'rgba(255,200,110,0)']]); x.restore();
   // Engraved gilt lettering: a deep shadow, a dark keyline, a bevelled gold face and a fine highlight.
   const word = (txt, y, sz, sp, family, weight) => {
     x.font = `${weight} ${sz}px ${family}`; x.letterSpacing = sp + 'px'; x.lineJoin = 'round';
@@ -153,7 +144,7 @@ function grade() {
     const sh = x.createLinearGradient(0, H * 0.6, 0, H); sh.addColorStop(0, 'rgba(6,8,12,0)'); sh.addColorStop(0.55, 'rgba(6,8,12,0.78)'); sh.addColorStop(1, 'rgba(6,8,12,0.9)');
     x.fillStyle = sh; x.fillRect(0, H * 0.6, W, H * 0.4);
     grade();
-    logo(W * 0.5, H * 0.83, W / 1000, lantern);
+    logo(W * 0.5, H * 0.85, W / 1000, lantern);
   } else {
     hero(wren, W * 0.5, H * 0.3, H * 1.05, { rim: 0.2, rimLeft: true });
     fireflies(6, 41, [0, H * 0.4, W, H * 0.6], W / 1000, true);
@@ -161,7 +152,7 @@ function grade() {
     const sh = x.createLinearGradient(0, H * 0.5, 0, H); sh.addColorStop(0, 'rgba(6,8,12,0)'); sh.addColorStop(0.6, 'rgba(6,8,12,0.8)'); sh.addColorStop(1, 'rgba(6,8,12,0.9)');
     x.fillStyle = sh; x.fillRect(0, H * 0.5, W, H * 0.5);
     grade();
-    logo(W * 0.5, H * 0.8, W / 1000, lantern);
+    logo(W * 0.5, H * 0.83, W / 1000, lantern);
   }
   document.title = 'done';
 })();
