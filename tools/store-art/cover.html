@@ -1,0 +1,136 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:Cinzel;src:url(src/cinzel-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:Cinzel;src:url(src/cinzel-latin-400-normal.woff2);font-weight:400}
+html,body{margin:0;background:#000;overflow:hidden}
+canvas{display:block}
+</style></head><body><canvas id="c"></canvas><script>
+const q = new URLSearchParams(location.search);
+const W = +q.get('w'), H = +q.get('h'), layout = q.get('l');
+const K = layout === 'port' ? W / 800 : layout === 'sq' ? W / 800 : W / 1920;
+const c = document.getElementById('c'); c.width = W; c.height = H; const x = c.getContext('2d');
+const load = (n) => new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.src = 'src/' + n + '.webp'; });
+function rnd(seed){ return () => (seed = (seed * 16807) % 2147483647) / 2147483647; }
+function cover(img, ax = 0.5, ay = 0.5, zoom = 1, fx = 0, fy = 0) {
+  const s = Math.max(W / img.width, H / img.height) * zoom;
+  const w = img.width * s, h = img.height * s;
+  x.drawImage(img, (W - w) * ax + fx, (H - h) * ay + fy, w, h);
+}
+function glow(cx, cy, r, color, a) {
+  const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, color.replace('A', a)); g.addColorStop(1, color.replace('A', 0));
+  x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+}
+// A figure: separate soft drop shadow, optional atmospheric haze (depth), and a warm rim from
+// the lantern side, all composed off-screen so the shadow never bands across the art.
+function figure(img, cx, bottom, height, haze = 0, rim = 0, rimFromLeft = true) {
+  const s = height / img.height, w = Math.round(img.width * s), h = Math.round(height);
+  const o = document.createElement('canvas'); o.width = w; o.height = h; const g = o.getContext('2d');
+  g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, w, h);
+  g.globalCompositeOperation = 'source-atop';
+  if (haze) { g.fillStyle = 'rgba(20,32,48,' + haze + ')'; g.fillRect(0, 0, w, h); }
+  if (rim) {
+    const rg = g.createLinearGradient(rimFromLeft ? 0 : w, 0, rimFromLeft ? w * 0.45 : w * 0.55, 0);
+    rg.addColorStop(0, 'rgba(255,196,120,' + rim + ')'); rg.addColorStop(1, 'rgba(255,196,120,0)');
+    g.globalCompositeOperation = 'source-atop'; g.globalAlpha = 1;
+    g.fillStyle = rg; g.fillRect(0, 0, w, h);
+  }
+  const x0 = cx - w / 2, y0 = bottom - h;
+  x.save(); x.filter = 'blur(' + Math.round(h * 0.025) + 'px) brightness(0)'; x.globalAlpha = 0.55;
+  x.drawImage(o, x0 + h * 0.01, y0 + h * 0.012); x.restore();
+  x.drawImage(o, x0, y0);
+}
+function fog(y0, color, a) {
+  const g = x.createLinearGradient(0, y0, 0, H);
+  g.addColorStop(0, color.replace('A', 0)); g.addColorStop(1, color.replace('A', a));
+  x.fillStyle = g; x.fillRect(0, y0, W, H - y0);
+}
+function fireflies(n, seed, area, scale) {
+  const r = rnd(seed);
+  x.save(); x.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    const px = area[0] + r() * area[2], py = area[1] + r() * area[3], s = (0.4 + r() * 1.1) * scale;
+    glow(px, py, 26 * s, 'rgba(220,240,120,A)', 0.35);
+    glow(px, py, 7 * s, 'rgba(255,255,220,A)', 0.95);
+  }
+  x.restore();
+}
+function title(cx, cy, size, sub = true) {
+  x.save(); x.textAlign = 'center'; x.textBaseline = 'middle';
+  // Soft dark bed and a warm aura behind the letters so they read on any art.
+  x.globalCompositeOperation = 'source-over';
+  const bed = x.createRadialGradient(cx, cy, 0, cx, cy, size * 5.2);
+  bed.addColorStop(0, 'rgba(6,6,10,0.55)'); bed.addColorStop(1, 'rgba(6,6,10,0)');
+  x.fillStyle = bed; x.fillRect(cx - size * 6, cy - size * 3, size * 12, size * 6);
+  const line = (txt, y, sz, spacing, weight) => {
+    x.font = `${weight} ${sz}px Cinzel`;
+    x.letterSpacing = spacing + 'px';
+    // shadow
+    x.shadowColor = 'rgba(0,0,0,0.85)'; x.shadowBlur = sz * 0.18; x.shadowOffsetY = sz * 0.04;
+    const g = x.createLinearGradient(0, y - sz / 2, 0, y + sz / 2);
+    g.addColorStop(0, '#fff6d8'); g.addColorStop(0.45, '#f1d692'); g.addColorStop(0.55, '#d8a84e'); g.addColorStop(1, '#f6e3ac');
+    x.fillStyle = g; x.fillText(txt, cx, y);
+    x.shadowColor = 'transparent';
+    x.lineWidth = Math.max(1, sz * 0.012); x.strokeStyle = 'rgba(70,40,10,0.55)'; x.strokeText(txt, cx, y);
+  };
+  line('PROJECT', cy - size * 0.78, size * 0.46, size * 0.32, 400);
+  line('FIREFLY', cy + size * 0.12, size, size * 0.1, 700);
+  // Ornament rule with a firefly at its heart.
+  const rw = size * 2.4, ry = cy + size * 0.86;
+  const rg = x.createLinearGradient(cx - rw, 0, cx + rw, 0);
+  rg.addColorStop(0, 'rgba(226,190,106,0)'); rg.addColorStop(0.5, 'rgba(240,214,146,0.95)'); rg.addColorStop(1, 'rgba(226,190,106,0)');
+  x.fillStyle = rg; x.fillRect(cx - rw, ry - 1.2, rw * 2, 2.4);
+  x.globalCompositeOperation = 'lighter';
+  glow(cx, ry, size * 0.42, 'rgba(220,240,120,A)', 0.55); glow(cx, ry, size * 0.1, 'rgba(255,255,230,A)', 1);
+  x.restore();
+}
+function grade() {
+  // Vignette + warm/teal split and fine grain for the painted, filmic finish the game has.
+  const v = x.createRadialGradient(W / 2, H * 0.55, Math.min(W, H) * 0.3, W / 2, H * 0.55, Math.max(W, H) * 0.78);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.62)');
+  x.fillStyle = v; x.fillRect(0, 0, W, H);
+  const id = x.getImageData(0, 0, W, H), d = id.data, r = rnd(7);
+  for (let i = 0; i < d.length; i += 4) { const n = (r() - 0.5) * 10; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  x.putImageData(id, 0, 0);
+}
+(async () => {
+  await document.fonts.load('700 40px Cinzel'); await document.fonts.load('400 40px Cinzel');
+  const [street, wren, cassian, odile, lantern] = await Promise.all(['bg_street', 'characters_wren', 'characters_cassian', 'characters_odile', 'ui_lantern1'].map(load));
+  x.imageSmoothingQuality = 'high';
+  if (layout === 'land') {
+    cover(street, 0.5, 0.62, 1.04);
+    x.fillStyle = 'rgba(8,12,20,0.32)'; x.fillRect(0, 0, W, H);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.5, H * 0.16, 620, 'rgba(120,150,190,A)', 0.16); x.restore();
+    figure(odile, W * 0.12, H * 1.05, H * 0.78, 0.38, 0.0);
+    figure(cassian, W * 0.865, H * 1.08, H * 0.98, 0.3, 0.14, true);
+    fog(H * 0.62, 'rgba(14,22,32,A)', 0.55);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.45, H * 0.78, 600, 'rgba(255,190,110,A)', 0.28); x.restore();
+    figure(wren, W * 0.48, H * 1.06, H * 0.76, 0, 0.12, true);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.418, H * 0.72, 170, 'rgba(255,210,140,A)', 0.5); x.restore();
+    fireflies(48, 11, [0, H * 0.3, W, H * 0.7], 1.4);
+    grade();
+    title(W * 0.5, H * 0.145, 120);
+  } else if (layout === 'port') {
+    cover(street, 0.42, 0.5, 1.0);
+    x.fillStyle = 'rgba(8,12,20,0.32)'; x.fillRect(0, 0, W, H);
+    figure(cassian, W * 0.62, H * 1.05, H * 0.8, 0.12, 0.14, true);
+    fog(H * 0.6, 'rgba(14,22,32,A)', 0.6);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.36, H * 0.86, 360 * K, 'rgba(255,190,110,A)', 0.32); x.restore();
+    figure(wren, W * 0.37, H * 1.05, H * 0.45, 0, 0.12, true);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.29, H * 0.86, 110 * K, 'rgba(255,210,140,A)', 0.5); x.restore();
+    fireflies(34, 23, [0, H * 0.28, W, H * 0.72], K);
+    grade();
+    title(W * 0.5, H * 0.125, 90 * K);
+  } else {
+    cover(street, 0.5, 0.6, 1.05);
+    x.fillStyle = 'rgba(8,12,20,0.32)'; x.fillRect(0, 0, W, H);
+    fog(H * 0.6, 'rgba(14,22,32,A)', 0.5);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.5, H * 0.8, 380, 'rgba(255,190,110,A)', 0.3); x.restore();
+    figure(wren, W * 0.5, H * 1.05, H * 0.64, 0, 0.12, true);
+    x.save(); x.globalCompositeOperation = 'lighter'; glow(W * 0.425, H * 0.78, 120, 'rgba(255,210,140,A)', 0.5); x.restore();
+    fireflies(30, 31, [0, H * 0.3, W, H * 0.7], 1);
+    grade();
+    title(W * 0.5, H * 0.155, 86);
+  }
+  document.title = 'done';
+})();
+</script></body></html>
