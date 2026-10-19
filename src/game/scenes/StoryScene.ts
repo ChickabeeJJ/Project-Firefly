@@ -332,7 +332,7 @@ export class StoryScene extends Phaser.Scene {
     g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, light ? 0.18 : 0.7, light ? 0.18 : 0.7).fillRect(-W / 2, -60, W, 106);
     bar.add(g);
     tabs.forEach(([m, label, icon, art], i) => {
-      const x = (i - (tabs.length - 1) / 2) * 200;
+      const x = (i - (tabs.length - 1) / 2) * 150;
       const on = m === this.mode;
       const col = light ? (on ? CSS.accentInk : '#5a4a36') : on ? CSS.amber : CSS.cream;
       const t = this.add.container(x, 0);
@@ -347,7 +347,7 @@ export class StoryScene extends Phaser.Scene {
       }
       t.add(text(this, 0, 26, label, { size: 22, color: col, bold: on }).setOrigin(0.5));
       if (on) t.add(this.add.rectangle(0, 44, 90, 3, C.amber, 1));
-      t.setSize(170, 90).setInteractive({ useHandCursor: true });
+      t.setSize(140, 90).setInteractive({ useHandCursor: true });
       softPress(t, () => {
         if (m === 'night') {
           goTo(this, 'Night');

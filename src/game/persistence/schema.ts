@@ -1,3 +1,4 @@
+import { freshTasks, sanitizeTasks, type TaskRecord } from '../systems/tasks';
 import { CHARACTERS, STARTER_TEAM } from '../data/characters';
 import { STAGES } from '../data/stages';
 import { MAX_RESONANCE } from '../battle/rules';
@@ -59,6 +60,8 @@ export interface SaveData {
   signIn: SignInRecord;
   /** The Long Night: the run in progress and the records. */
   night: NightRecord;
+  /** Daily and weekly task sheets. */
+  tasks: TaskRecord;
 }
 
 export interface RiteRecord {
@@ -92,6 +95,7 @@ export function freshSave(): SaveData {
     history: [],
     signIn: { month: '', days: [], milestones: [] },
     night: freshNight(),
+    tasks: freshTasks(),
   };
 }
 
@@ -184,6 +188,7 @@ export function sanitizeSave(raw: unknown): SaveData {
       : [],
     signIn: sanitizeSignIn(r.signIn),
     night: sanitizeNight(r.night),
+    tasks: sanitizeTasks(r.tasks),
   };
 }
 

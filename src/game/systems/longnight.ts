@@ -1,3 +1,4 @@
+import { track } from './tasks';
 import type { BattleMods } from '../battle/engine';
 import { Rng } from '../battle/rng';
 import { registerStage } from '../data/stages';
@@ -49,6 +50,8 @@ export interface NightRun {
   baseLevel: number;
   /** Times the Last Letter keepsake has already been spent. */
   revived?: boolean;
+  /** What happened on the way up; decides which ending dawn brings. */
+  stats?: { omens: number; letters: number; fell: boolean; sanctuaries: number };
 }
 
 export interface NightRecord {
@@ -58,9 +61,104 @@ export interface NightRecord {
   runs: number;
   /** Milestone hours whose first-reach bonus has been paid. */
   milestones: number[];
+  /** Ending badges earned (ids of ENDINGS). */
+  badges: string[];
 }
 
-export const freshNight = (): NightRecord => ({ run: null, best: 0, clears: 0, runs: 0, milestones: [] });
+export const freshNight = (): NightRecord => ({ run: null, best: 0, clears: 0, runs: 0, milestones: [], badges: [] });
+
+// ------------------------------------------------------------------ the story of each hour
+
+/** A short scene for each landing of the clock, read as you stand before its door. */
+export const HOUR_TALES: string[] = [
+  'The cathedral door is unlocked. It has been unlocked for a year; nobody has wanted to go in. The first stair smells of candle-smoke and wet stone, and somewhere above, the great clock ticks — once — and waits.',
+  'Hymn-boards line the second landing, their numbers peeled away. Something has been sitting in the pews, listening to a sermon nobody is giving. It turns its head as your lantern finds it.',
+  'The bell-ringers’ ropes hang here, frayed to threads. A child’s chalk drawing on the wall shows a clock with thirteen hours and a smiling sun. The sun has been scribbled out, carefully, many times.',
+  'Here the stairs narrow and the windows begin. Through the cracked glass you can see Vellmoor laid out below — every street dark but one: the lane you came from, where a single lamp still burns.',
+  'The fifth landing is a choir loft. Sheet music lies everywhere, every page the same aria, every page ending a bar too soon. Mireille would know the piece. She would know where it is meant to end.',
+  'A chapel on the stair, the size of a cupboard, with a votive still burning in it. Someone has been climbing ahead of you, lighting candles as they go. The wax is still soft.',
+  'Halfway. The clock’s workings begin here: brass wheels taller than doors, turning so slowly you cannot see them move — only hear them. Every tooth that passes is a minute stolen from someone below.',
+  'A clockmaker’s bench, tools laid out as if he stepped away a moment ago. A half-finished hand lies on the cloth. Its inscription reads: for the thirteenth hour. Do not fit.',
+  'The pendulum chamber. The great weight swings past close enough to stir your hair, and with every swing the shadows on the wall lean in, as though the room itself were holding its breath.',
+  'Ten hours climbed. Your legs ache in a way that feels like a year. The fireflies in your lantern have gone quiet, gathered close around the wick, the way people gather near a door before bad news.',
+  'The dial room. You stand behind the clock’s great face and see the city through its numbers, backwards. The minute hand is a bridge of iron overhead. Something is walking along it.',
+  'The last landing below the bells. A single chair, turned to face the stair. On it, a pocket watch, open, running — thirteen hours on its face — and a note in a careful hand: nearly there.',
+  'The top of the clock. No more stairs. The thirteenth hour stands where the bells should be, wearing a crown of stopped hands, and it has been expecting you since midnight a year ago.',
+];
+
+/** A line for what kind of door it is, added under the hour's scene. */
+export const KIND_TALES: Record<NodeKind, string> = {
+  skirmish: 'Shapes move on the landing ahead. The Dimmed have heard your footsteps.',
+  omen: 'The air here is wrong — too cold, too still. Whatever waits behind this door has been fed.',
+  sanctuary: 'A warm light spills from a side chapel. For a little while, nothing can follow you in.',
+  curio: 'A cabinet of curiosities stands against the wall, its little drawers labelled in copperplate.',
+  letter: 'An envelope has been pinned to the bannister, addressed to whoever climbs.',
+  boss: 'The bells are silent. The king is not.',
+};
+
+// ------------------------------------------------------------------ endings and badges
+
+export interface Ending {
+  id: string;
+  name: string;
+  /** How it is earned (shown on the badge before it is won). */
+  hint: string;
+  /** Painted badge (ui/badge_*). */
+  badge: string;
+  epilogue: string[];
+}
+
+export const ENDINGS: Ending[] = [
+  {
+    id: 'ember', name: 'The Burning Clock', badge: 'badge_ember', hint: 'Reach dawn having fought through three Omens.',
+    epilogue: [
+      'You did not climb the clock so much as set it alight. Every Omen you walked into burned a little brighter for having met you.',
+      'When the king fell, the gears were still glowing red. Vellmoor woke to a tower lit from inside like a lantern, and for a whole day nobody could look directly at it.',
+    ],
+  },
+  {
+    id: 'tide', name: 'The Quiet Tide', badge: 'badge_tide', hint: 'Reach dawn without a single Luminary falling.',
+    epilogue: [
+      'Not one of you fell. You came up the stair the way the tide comes up a beach: unhurried, unbroken, impossible to turn back.',
+      'At dawn the troupe stood together under the bells and found they had nothing to say. They did not need to. Somewhere below, the harbour began, very softly, to move again.',
+    ],
+  },
+  {
+    id: 'verdant', name: 'The Kept Promise', badge: 'badge_verdant', hint: 'Reach dawn having answered two Letters on the stair.',
+    epilogue: [
+      'You stopped for the letters. Of course you did — a letter is a road that runs one way, and ends at just one door.',
+      'At dawn you carried them down with you. By noon every one had been delivered, and in nineteen kitchens on Corvid Lane, somebody remembered a name.',
+    ],
+  },
+  {
+    id: 'dawn', name: 'Dawn', badge: 'badge_dawn', hint: 'Reach the top of the clock and defeat the Hourless King.',
+    epilogue: [
+      'The thirteenth hour struck — and then, for the first time in a year, the first.',
+      'It was not a grand sunrise. It was grey, and wet, and a little late. Every person in Vellmoor stood in the street to watch it anyway.',
+    ],
+  },
+  {
+    id: 'dusk', name: 'The Long Dark', badge: 'badge_dusk', hint: 'Fall in the night after climbing past the seventh hour.',
+    epilogue: [
+      'The light went out somewhere above the halfway mark. But it went out higher than anyone had carried it before.',
+      'The next night, someone found your footprints on the stair and followed them up. That is how it works with lamps: the second one is always easier to light.',
+    ],
+  },
+];
+
+export const ending = (id: string): Ending => ENDINGS.find((e) => e.id === id) ?? ENDINGS[3];
+
+/** Which endings a finished run earns; the first is the one told. */
+export function endingsFor(run: NightRun | null, cleared: boolean, hours: number): string[] {
+  const st = run?.stats ?? { omens: 0, letters: 0, fell: true, sanctuaries: 0 };
+  if (!cleared) return hours >= 7 ? ['dusk'] : [];
+  const out: string[] = [];
+  if (st.omens >= 3) out.push('ember');
+  if (!st.fell) out.push('tide');
+  if (st.letters >= 2) out.push('verdant');
+  out.push('dawn');
+  return out;
+}
 
 // ------------------------------------------------------------------ Keepsakes
 
@@ -297,6 +395,7 @@ export function startRun(save: SaveData, seed: number): NightRun {
   const rng = new Rng(seed);
   const run: NightRun = {
     seed, team, hp: Object.fromEntries(team.map((id) => [id, 1])), nodes: buildMap(rng), path: [], keepsakes: [], embers: 0,
+    stats: { omens: 0, letters: 0, fell: false, sanctuaries: 0 },
     baseLevel: Math.max(1, Math.round(lv - 3)),
   };
   save.night.run = run;
@@ -368,7 +467,10 @@ export function draftKeepsakes(run: NightRun, rng: Rng, n: number, rare = false)
 /** A battle came back: carry wounds, pay Embers, offer Keepsakes. Returns false when the run ends. */
 export function afterBattle(run: NightRun, node: NightNode, won: boolean, hp: Record<string, number>): boolean {
   for (const id of run.team) run.hp[id] = Math.max(0, Math.min(1, hp[id] ?? 0));
+  run.stats ??= { omens: 0, letters: 0, fell: false, sanctuaries: 0 };
+  if (run.team.some((id) => run.hp[id] <= 0)) run.stats.fell = true;
   if (!won) return false;
+  if (node.kind === 'omen') run.stats.omens++;
   if (run.keepsakes.includes('lily')) for (const id of run.team) if (run.hp[id] > 0) run.hp[id] = Math.min(1, run.hp[id] + 0.15);
   if (run.keepsakes.includes('dove') && !run.revived) {
     const fallen = run.team.find((id) => run.hp[id] <= 0);
@@ -402,7 +504,7 @@ export function runRewards(hours: number, cleared: boolean): { glimmer: number; 
 export const MILESTONES: Record<number, number> = { 4: 60, 8: 100, 13: 200 };
 
 /** Ends the run: pays rewards and milestones, records the best. */
-export function endRun(save: SaveData, cleared: boolean, abandoned = false): { hours: number; glimmer: number; items: Partial<Record<ItemId, number>>; bonus: number; record: boolean } {
+export function endRun(save: SaveData, cleared: boolean, abandoned = false): { hours: number; glimmer: number; items: Partial<Record<ItemId, number>>; bonus: number; record: boolean; endings: string[]; newBadges: string[] } {
   const run = save.night.run;
   // A lost fight does not count its hour; walking away after a finished hour does.
   const hours = run ? (cleared ? HOURS : Math.max(0, hourReached(run) - (abandoned && !run.pending ? 0 : 1))) : 0;
@@ -414,13 +516,20 @@ export function endRun(save: SaveData, cleared: boolean, abandoned = false): { h
       bonus += g;
     }
   }
+  if (hours) track(save, 'night', hours);
   const record = hours > save.night.best;
   save.night.best = Math.max(save.night.best, hours);
   if (cleared) save.night.clears++;
   save.glimmer += r.glimmer + bonus;
   grant(save, r.items);
+  const endings = endingsFor(run, cleared, hours);
+  const newBadges = endings.filter((e) => !save.night.badges.includes(e));
+  save.night.badges.push(...newBadges);
+  // Each badge's first earning pays a little Glimmer.
+  save.glimmer += newBadges.length * 30;
+  bonus += newBadges.length * 30;
   save.night.run = null;
-  return { hours, glimmer: r.glimmer, items: r.items, bonus, record };
+  return { hours, glimmer: r.glimmer, items: r.items, bonus, record, endings, newBadges };
 }
 
 export function sanitizeNight(raw: unknown): NightRecord {
@@ -430,5 +539,6 @@ export function sanitizeNight(raw: unknown): NightRecord {
   return {
     run, best: n(o.best, HOURS), clears: n(o.clears, 1e6), runs: n(o.runs, 1e6),
     milestones: Array.isArray(o.milestones) ? (o.milestones as unknown[]).filter((x): x is number => typeof x === 'number') : [],
+    badges: Array.isArray(o.badges) ? (o.badges as unknown[]).filter((x): x is string => typeof x === 'string' && ENDINGS.some((e) => e.id === x)) : [],
   };
 }

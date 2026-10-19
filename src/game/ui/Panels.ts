@@ -6,7 +6,8 @@ import { STAGES } from '../data/stages';
 import { C, CSS, H, MOOD_CSS, MOOD_NAME, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { ACHIEVEMENTS, achievementState, claimAchievement, playerLevel, totalStars } from '../systems/achievements';
-import { ITEM_ORDER, ITEMS } from '../systems/growth';
+import { formatQty, ITEM_ORDER, ITEMS } from '../systems/growth';
+import { claimTask, DAILY, type TaskDef, taskProgress, taskState, WEEKLY } from '../systems/tasks';
 import { Button, ornament, scrollable, text, toast } from './kit';
 
 // Modal info panels opened from the lobby and its options menu. Each is a self-contained
@@ -16,8 +17,10 @@ const DEPTH = 3000;
 
 interface Modal {
   c: Phaser.GameObjects.Container;
-  close: () => void;
+  close: (swap?: boolean) => void;
 }
+
+let swapping = false;
 
 function modal(scene: Phaser.Scene, title: string, w: number, h: number, onClose?: () => void): Modal {
   const c = scene.add.container(0, 0).setDepth(DEPTH);
@@ -30,21 +33,31 @@ function modal(scene: Phaser.Scene, title: string, w: number, h: number, onClose
   const x = scene.add.image(x0 + w - 50, y0 + 50, 'icon:close').setDisplaySize(48, 48).setInteractive({ useHandCursor: true });
   c.add([dim, panel, t, orn, x]);
   // Open: the sheet rises a few pixels as it fades in; the backdrop dims separately.
-  c.setAlpha(0).setY(22);
-  scene.tweens.add({ targets: c, alpha: 1, y: 0, duration: 260, ease: 'Cubic.easeOut' });
+  if (swapping) swapping = false;
+  else {
+    c.setAlpha(0).setY(22);
+    scene.tweens.add({ targets: c, alpha: 1, y: 0, duration: 260, ease: 'Cubic.easeOut' });
+  }
   let closed = false;
-  const close = () => {
+  /** `swap`: replaced at once by another panel (a tab change) — no fade, no sound. */
+  const close = (swap = false) => {
     if (closed) return;
     closed = true;
+    if (swap) {
+      swapping = true;
+      c.destroy();
+      onClose?.();
+      return;
+    }
     audio.sfx('back');
     scene.tweens.add({ targets: c, alpha: 0, y: 14, duration: 180, ease: 'Cubic.easeIn', onComplete: () => c.destroy() });
     onClose?.();
   };
-  x.on('pointerup', close);
+  x.on('pointerup', () => close());
   dim.on('pointerup', (p: Phaser.Input.Pointer) => {
     if (Math.abs(p.x - W / 2) > w / 2 || Math.abs(p.y - H / 2) > h / 2) close();
   });
-  scene.input.keyboard?.once('keydown-ESC', close);
+  scene.input.keyboard?.once('keydown-ESC', () => c.active && close());
   return { c, close };
 }
 
@@ -107,15 +120,93 @@ export function openAtlas(scene: Phaser.Scene): void {
 
 // ===================================================================== Achievements
 
-export function openAchievements(scene: Phaser.Scene, onChange?: () => void): void {
-  const { c } = modal(scene, 'ACHIEVEMENTS', 1640, 920);
+/** The task board: Daily, Weekly and Achievements, as tabs along the top. */
+export function openAchievements(scene: Phaser.Scene, onChange?: () => void, tab: 'daily' | 'weekly' | 'ach' = 'daily'): void {
+  const { c, close } = modal(scene, 'TASKS', 1640, 920);
+  const tabs: ['daily' | 'weekly' | 'ach', string][] = [['daily', 'Daily Tasks'], ['weekly', 'Weekly Tasks'], ['ach', 'Achievements']];
+  tabs.forEach(([id, label], i) => {
+    const on = id === tab;
+    const tx = W / 2 - 300 + i * 300;
+    const t = scene.add.container(tx, H / 2 - 460 + 128);
+    const ready = id === 'ach' ? ACHIEVEMENTS.filter((a) => achievementState(saves.get(), a) === 'ready').length : (id === 'daily' ? DAILY : WEEKLY).filter((d) => taskState(saves.get(), d) === 'ready').length;
+    t.add(text(scene, 0, 0, label, { size: on ? 28 : 25, font: 'display', bold: on, color: on ? CSS.goldLight : CSS.creamDim, spacing: 2 }).setOrigin(0.5));
+    if (on) t.add(scene.add.rectangle(0, 26, 200, 3, C.gold, 0.9));
+    if (ready) t.add(scene.add.circle(110, -12, 8, C.danger).setStrokeStyle(2, 0xffffff, 0.9));
+    t.setSize(260, 60).setInteractive({ useHandCursor: true }).on('pointerup', () => {
+      if (on) return;
+      audio.sfx('tap');
+      close(true);
+      openAchievements(scene, onChange, id);
+    });
+    c.add(t);
+  });
+  if (tab === 'ach') drawAchievements(scene, c, onChange, () => {
+    close(true);
+    openAchievements(scene, onChange, 'ach');
+  });
+  else drawTasks(scene, c, tab === 'daily' ? DAILY : WEEKLY, tab, onChange, () => {
+    close(true);
+    openAchievements(scene, onChange, tab);
+  });
+}
+
+function drawTasks(scene: Phaser.Scene, c: Phaser.GameObjects.Container, defs: TaskDef[], tab: 'daily' | 'weekly', onChange: (() => void) | undefined, redraw: () => void): void {
+  const save = saves.get();
+  const now = new Date();
+  const end = tab === 'daily' ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7 - ((now.getDay() + 6) % 7));
+  const left = Math.max(0, end.getTime() - now.getTime());
+  const hrs = Math.floor(left / 3600000);
+  c.add(text(scene, W / 2, H / 2 - 460 + 190, `Resets in ${tab === 'daily' ? `${hrs}h ${Math.floor((left % 3600000) / 60000)}m` : `${Math.floor(hrs / 24)}d ${hrs % 24}h`}`, { size: 21, italic: true, color: CSS.creamDim }).setOrigin(0.5));
+  const rowW = 1440;
+  const rowH = 96;
+  defs.forEach((d, i) => {
+    const y = H / 2 - 460 + 270 + i * (rowH + 14);
+    const st = taskState(save, d);
+    const [cur, goal] = taskProgress(save, d);
+    const row = scene.add.container(W / 2, y);
+    row.add(scene.add.nineslice(0, 0, st === 'claimed' ? 'ui:dark' : 'ui:paper', undefined, rowW, rowH, 12, 12, 12, 12).setAlpha(st === 'claimed' ? 0.6 : 1));
+    const dark = st !== 'claimed';
+    row.add(text(scene, -rowW / 2 + 40, -16, d.name, { size: 27, font: 'display', bold: true, color: dark ? CSS.paperText : CSS.creamDim }).setOrigin(0, 0.5));
+    // Progress bar.
+    row.add(scene.add.rectangle(-rowW / 2 + 40, 22, 420, 10, 0x000000, 0.18).setOrigin(0, 0.5));
+    row.add(scene.add.rectangle(-rowW / 2 + 40, 22, 420 * (cur / goal), 10, C.amber, 0.95).setOrigin(0, 0.5));
+    row.add(text(scene, -rowW / 2 + 480, 22, `${cur} / ${goal}`, { size: 20, color: dark ? CSS.paperSub : CSS.muted }).setOrigin(0, 0.5));
+    // Rewards.
+    const rewards: [string, number][] = [['icon:glimmer', d.glimmer], ...Object.entries(d.items ?? {}).map(([k, v]) => [`item:${k}`, v as number] as [string, number])];
+    rewards.forEach(([key, q], k) => {
+      const rx = 40 + k * 118;
+      row.add(scene.add.image(rx - 20, 0, key).setDisplaySize(52, 52).setAlpha(st === 'claimed' ? 0.5 : 1));
+      row.add(text(scene, rx + 10, 16, formatQty(q), { size: 19, bold: true, color: dark ? CSS.paperText : CSS.muted }).setOrigin(0, 0.5));
+    });
+    if (st === 'claimed') row.add(scene.add.image(rowW / 2 - 90, 0, 'icon:check').setDisplaySize(44, 44));
+    else {
+      const b = new Button(scene, rowW / 2 - 110, 0, {
+        w: 180, h: 62, label: st === 'ready' ? 'Claim' : 'In progress', style: st === 'ready' ? 'gold' : 'dark', size: st === 'ready' ? 26 : 20, sfx: st === 'ready' ? 'levelup' : 'tap',
+        onClick: () => {
+          if (st !== 'ready') return;
+          if (claimTask(saves.get(), d.id)) {
+            saves.commit();
+            toast(scene, `+${d.glimmer} Glimmer${d.items ? ' and materials' : ''}`, 'glimmer');
+            onChange?.();
+            redraw();
+          }
+        },
+      });
+      if (st !== 'ready') b.setAlpha(0.6);
+      row.add(b);
+    }
+    c.add(row);
+  });
+}
+
+function drawAchievements(scene: Phaser.Scene, c: Phaser.GameObjects.Container, onChange: (() => void) | undefined, _redraw: () => void): void {
   const list = scene.add.container(0, 0);
   c.add(list);
   const rowsH = Math.ceil(ACHIEVEMENTS.length / 2) * 100 + 40;
   // Drag or wheel to scroll; no scroll bar (like the reference's lists).
-  const scroll = scrollable(scene, list, new Phaser.Geom.Rectangle(W / 2 - 810, 146, 1620, H / 2 + 460 - 160), rowsH);
+  const scroll = scrollable(scene, list, new Phaser.Geom.Rectangle(W / 2 - 810, 236, 1620, H / 2 + 460 - 250), rowsH);
   const done = ACHIEVEMENTS.filter((a) => saves.get().claimed.includes(a.id)).length;
-  c.add(text(scene, W / 2 - 790, 130, `${done} / ${ACHIEVEMENTS.length} claimed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
+  c.add(text(scene, W / 2, H / 2 - 460 + 190, `${done} / ${ACHIEVEMENTS.length} claimed`, { size: 21, italic: true, color: CSS.creamDim }).setOrigin(0.5));
   const draw = () => {
     list.removeAll(true);
     const save = saves.get();
@@ -124,7 +215,7 @@ export function openAchievements(scene: Phaser.Scene, onChange?: () => void): vo
     ACHIEVEMENTS.forEach((a, i) => {
       const col = i % 2;
       const x = W / 2 - 400 + col * 800;
-      const y = 196 + Math.floor(i / 2) * (rowH + 8) + rowH / 2;
+      const y = 286 + Math.floor(i / 2) * (rowH + 8) + rowH / 2;
       const st = achievementState(save, a);
       const [cur, goal] = a.progress(save);
       const row = scene.add.container(x, y);

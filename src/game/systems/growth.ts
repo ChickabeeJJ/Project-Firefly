@@ -1,3 +1,4 @@
+import { track } from './tasks';
 import { getCharacter } from '../data/characters';
 import type { OwnedCharacter, SaveData } from '../persistence/schema';
 
@@ -62,7 +63,7 @@ export interface Cost {
 
 /** Cost of the level-up that takes step `s` to `s + 1`. */
 function stepCost(s: number): Cost {
-  return { dust: 60 + 14 * s, sovereign: 25 + 6 * s };
+  return { dust: 90 + 22 * s, sovereign: 40 + 9 * s };
 }
 
 /** Total cost to go from the current level to `target` (same Insight tier). */
@@ -101,6 +102,7 @@ export function levelUp(save: SaveData, id: string, target: number): boolean {
   if (!affordable(save, cost)) return false;
   pay(save, cost);
   o.level = target;
+  track(save, 'levelup');
   return true;
 }
 
@@ -134,6 +136,7 @@ export function raiseInsight(save: SaveData, id: string): boolean {
   pay(save, insightCost(o.insight + 1, id));
   o.insight++;
   o.level = 1;
+  track(save, 'kindle');
   return true;
 }
 

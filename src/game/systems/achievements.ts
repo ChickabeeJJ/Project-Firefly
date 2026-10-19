@@ -1,3 +1,4 @@
+import { readyTaskCount } from './tasks';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { CHAPTERS, STAGES } from '../data/stages';
@@ -27,58 +28,58 @@ const chapterPerfect = (s: SaveData, ch: number) => STAGES.filter((st) => st.cha
 const bossDown = (s: SaveData, id: string) => (id in s.stars ? 1 : 0);
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_light', name: 'First Light', desc: 'Finish the tutorial battle.', reward: 100, progress: (s) => [s.stars['1-1'] !== undefined ? 1 : 0, 1] },
+  { id: 'first_light', name: 'First Light', desc: 'Finish the tutorial battle.', reward: 40, progress: (s) => [s.stars['1-1'] !== undefined ? 1 : 0, 1] },
   ...CHAPTERS.map((ch, i): Achievement => {
     const n = STAGES.filter((st) => st.chapter === ch.id).length;
-    return { id: `chapter_${ch.id}`, name: ch.name, desc: `Clear every stage of Chapter ${ch.id}.`, reward: 300 + i * 150, progress: (s) => [chapterClears(s, ch.id), n] };
+    return { id: `chapter_${ch.id}`, name: ch.name, desc: `Clear every stage of Chapter ${ch.id}.`, reward: 120 + i * 60, progress: (s) => [chapterClears(s, ch.id), n] };
   }),
-  { id: 'stars_30', name: 'Starlit', desc: 'Earn 30 stars.', reward: 200, progress: (s) => [totalStars(s), 30] },
-  { id: 'stars_all', name: 'Every Lamp Ablaze', desc: `Earn all ${STAGES.length * 3} stars.`, reward: 1200, progress: (s) => [totalStars(s), STAGES.length * 3] },
-  { id: 'perfect_10', name: 'Encore!', desc: 'Earn 3 stars on 10 stages.', reward: 300, progress: (s) => [Object.values(s.stars).filter((v) => v === 3).length, 10] },
-  { id: 'rite_1', name: 'The First Rite', desc: 'Hold a Lantern Rite.', reward: 160, progress: (s) => [s.totalPulls, 1] },
-  { id: 'rite_50', name: 'Devoted', desc: 'Light the Lantern 50 times.', reward: 480, progress: (s) => [s.totalPulls, 50] },
-  { id: 'troupe_8', name: 'A Full Bill', desc: 'Recruit 8 Luminaries.', reward: 300, progress: (s) => [Object.keys(s.roster).length, 8] },
-  { id: 'troupe_all', name: 'The Whole Company', desc: `Recruit all ${CHARACTERS.length} Luminaries.`, reward: 1000, progress: (s) => [Object.keys(s.roster).length, CHARACTERS.length] },
-  { id: 'level_20', name: 'Seasoned', desc: 'Kindle a Luminary to Kindle I.', reward: 200, progress: (s) => [maxInsight(s), 1] },
-  { id: 'level_40', name: 'Headliner', desc: 'Kindle a Luminary to Kindle II.', reward: 500, progress: (s) => [maxInsight(s), 2] },
-  { id: 'atlas_8', name: 'Field Notes', desc: 'Meet 8 kinds of Dimmed.', reward: 200, progress: (s) => [s.seen.length, 8] },
-  { id: 'atlas_all', name: 'Complete Atlas', desc: `Meet all ${ENEMIES.length} kinds of Dimmed.`, reward: 600, progress: (s) => [s.seen.length, ENEMIES.length] },
+  { id: 'stars_30', name: 'Starlit', desc: 'Earn 30 stars.', reward: 80, progress: (s) => [totalStars(s), 30] },
+  { id: 'stars_all', name: 'Every Lamp Ablaze', desc: `Earn all ${STAGES.length * 3} stars.`, reward: 480, progress: (s) => [totalStars(s), STAGES.length * 3] },
+  { id: 'perfect_10', name: 'Encore!', desc: 'Earn 3 stars on 10 stages.', reward: 120, progress: (s) => [Object.values(s.stars).filter((v) => v === 3).length, 10] },
+  { id: 'rite_1', name: 'The First Rite', desc: 'Hold a Lantern Rite.', reward: 60, progress: (s) => [s.totalPulls, 1] },
+  { id: 'rite_50', name: 'Devoted', desc: 'Light the Lantern 50 times.', reward: 190, progress: (s) => [s.totalPulls, 50] },
+  { id: 'troupe_8', name: 'A Full Bill', desc: 'Recruit 8 Luminaries.', reward: 120, progress: (s) => [Object.keys(s.roster).length, 8] },
+  { id: 'troupe_all', name: 'The Whole Company', desc: `Recruit all ${CHARACTERS.length} Luminaries.`, reward: 400, progress: (s) => [Object.keys(s.roster).length, CHARACTERS.length] },
+  { id: 'level_20', name: 'Seasoned', desc: 'Kindle a Luminary to Kindle I.', reward: 80, progress: (s) => [maxInsight(s), 1] },
+  { id: 'level_40', name: 'Headliner', desc: 'Kindle a Luminary to Kindle II.', reward: 200, progress: (s) => [maxInsight(s), 2] },
+  { id: 'atlas_8', name: 'Field Notes', desc: 'Meet 8 kinds of Dimmed.', reward: 80, progress: (s) => [s.seen.length, 8] },
+  { id: 'atlas_all', name: 'Complete Atlas', desc: `Meet all ${ENEMIES.length} kinds of Dimmed.`, reward: 240, progress: (s) => [s.seen.length, ENEMIES.length] },
   // Story
-  { id: 'boss_curtain', name: 'Curtain Down', desc: 'Defeat the Curtain-Caller.', reward: 150, progress: (s) => [bossDown(s, '1-8'), 1] },
-  { id: 'boss_gloam', name: 'Remember My Name', desc: 'Defeat Madame Gloam.', reward: 200, progress: (s) => [bossDown(s, '2-8'), 1] },
-  { id: 'boss_brine', name: 'The Tide Turns', desc: 'Defeat Keeper Brine.', reward: 250, progress: (s) => [bossDown(s, '3-8'), 1] },
-  { id: 'boss_hourless', name: 'Let the Morning Come', desc: 'Defeat the Hourless King.', reward: 400, progress: (s) => [bossDown(s, '4-8'), 1] },
-  { id: 'reader_5', name: 'Night Reader', desc: 'Watch 5 story scenes to the end.', reward: 120, progress: (s) => [watched(s, ''), 5] },
-  { id: 'reader_ch1', name: 'Dead-Letter Office', desc: 'Watch every Chapter I interlude.', reward: 150, progress: (s) => [watched(s, 'ch1_i'), 4] },
-  { id: 'reader_ch2', name: 'Front of House', desc: 'Watch every Chapter II interlude.', reward: 150, progress: (s) => [watched(s, 'ch2_i'), 5] },
-  { id: 'reader_ch3', name: 'Message in a Bottle', desc: 'Watch every Chapter III interlude.', reward: 150, progress: (s) => [watched(s, 'ch3_i'), 5] },
-  { id: 'reader_ch4', name: 'Four Hundred and Thirteen Steps', desc: 'Watch every Chapter IV interlude.', reward: 150, progress: (s) => [watched(s, 'ch4_i'), 5] },
+  { id: 'boss_curtain', name: 'Curtain Down', desc: 'Defeat the Curtain-Caller.', reward: 60, progress: (s) => [bossDown(s, '1-8'), 1] },
+  { id: 'boss_gloam', name: 'Remember My Name', desc: 'Defeat Madame Gloam.', reward: 80, progress: (s) => [bossDown(s, '2-8'), 1] },
+  { id: 'boss_brine', name: 'The Tide Turns', desc: 'Defeat Keeper Brine.', reward: 100, progress: (s) => [bossDown(s, '3-8'), 1] },
+  { id: 'boss_hourless', name: 'Let the Morning Come', desc: 'Defeat the Hourless King.', reward: 160, progress: (s) => [bossDown(s, '4-8'), 1] },
+  { id: 'reader_5', name: 'Night Reader', desc: 'Watch 5 story scenes to the end.', reward: 50, progress: (s) => [watched(s, ''), 5] },
+  { id: 'reader_ch1', name: 'Dead-Letter Office', desc: 'Watch every Chapter I interlude.', reward: 60, progress: (s) => [watched(s, 'ch1_i'), 4] },
+  { id: 'reader_ch2', name: 'Front of House', desc: 'Watch every Chapter II interlude.', reward: 60, progress: (s) => [watched(s, 'ch2_i'), 5] },
+  { id: 'reader_ch3', name: 'Message in a Bottle', desc: 'Watch every Chapter III interlude.', reward: 60, progress: (s) => [watched(s, 'ch3_i'), 5] },
+  { id: 'reader_ch4', name: 'Four Hundred and Thirteen Steps', desc: 'Watch every Chapter IV interlude.', reward: 60, progress: (s) => [watched(s, 'ch4_i'), 5] },
   // Mastery
   ...CHAPTERS.map((ch): Achievement => {
     const n = STAGES.filter((st) => st.chapter === ch.id).length;
-    return { id: `perfect_ch${ch.id}`, name: `Flawless · ${ch.name}`, desc: `Earn 3 stars on every Chapter ${ch.id} stage.`, reward: 250, progress: (s) => [chapterPerfect(s, ch.id), n] };
+    return { id: `perfect_ch${ch.id}`, name: `Flawless · ${ch.name}`, desc: `Earn 3 stars on every Chapter ${ch.id} stage.`, reward: 100, progress: (s) => [chapterPerfect(s, ch.id), n] };
   }),
-  { id: 'perfect_3', name: 'Bravo', desc: 'Earn 3 stars on 3 stages.', reward: 100, progress: (s) => [perfects(s), 3] },
-  { id: 'perfect_25', name: 'Standing Ovation', desc: 'Earn 3 stars on 25 stages.', reward: 600, progress: (s) => [perfects(s), 25] },
-  { id: 'stars_10', name: 'First Constellation', desc: 'Earn 10 stars.', reward: 80, progress: (s) => [totalStars(s), 10] },
-  { id: 'stars_60', name: 'Night Sky', desc: 'Earn 60 stars.', reward: 400, progress: (s) => [totalStars(s), 60] },
+  { id: 'perfect_3', name: 'Bravo', desc: 'Earn 3 stars on 3 stages.', reward: 40, progress: (s) => [perfects(s), 3] },
+  { id: 'perfect_25', name: 'Standing Ovation', desc: 'Earn 3 stars on 25 stages.', reward: 240, progress: (s) => [perfects(s), 25] },
+  { id: 'stars_10', name: 'First Constellation', desc: 'Earn 10 stars.', reward: 30, progress: (s) => [totalStars(s), 10] },
+  { id: 'stars_60', name: 'Night Sky', desc: 'Earn 60 stars.', reward: 160, progress: (s) => [totalStars(s), 60] },
   // Rite
-  { id: 'rite_10', name: 'A String of Lanterns', desc: 'Light the Lantern 10 times.', reward: 200, progress: (s) => [s.totalPulls, 10] },
-  { id: 'rite_100', name: 'Lake of Lights', desc: 'Light the Lantern 100 times.', reward: 800, progress: (s) => [s.totalPulls, 100] },
-  { id: 'five_1', name: 'A Star Falls', desc: 'Recruit a ★5 Luminary.', reward: 200, progress: (s) => [owned(s, 5), 1] },
-  { id: 'five_3', name: 'Constellation', desc: 'Recruit three ★5 Luminaries.', reward: 500, progress: (s) => [owned(s, 5), 3] },
-  { id: 'four_all', name: 'Supporting Cast', desc: 'Recruit every ★4 Luminary.', reward: 400, progress: (s) => [owned(s, 4), CHARACTERS.filter((c) => c.rarity === 4).length] },
-  { id: 'troupe_4', name: 'A Quartet', desc: 'Recruit 4 Luminaries.', reward: 100, progress: (s) => [Object.keys(s.roster).length, 4] },
-  { id: 'troupe_12', name: 'Repertory Company', desc: 'Recruit 12 Luminaries.', reward: 500, progress: (s) => [Object.keys(s.roster).length, 12] },
-  { id: 'resonance_1', name: 'Echo', desc: 'Deepen any Luminary’s Echo.', reward: 100, progress: (s) => [maxResonance(s), 1] },
-  { id: 'resonance_max', name: 'Perfect Pitch', desc: 'Fill a Luminary’s Echo to the brim.', reward: 600, progress: (s) => [maxResonance(s), 5] },
+  { id: 'rite_10', name: 'A String of Lanterns', desc: 'Light the Lantern 10 times.', reward: 80, progress: (s) => [s.totalPulls, 10] },
+  { id: 'rite_100', name: 'Lake of Lights', desc: 'Light the Lantern 100 times.', reward: 320, progress: (s) => [s.totalPulls, 100] },
+  { id: 'five_1', name: 'A Star Falls', desc: 'Recruit a ★5 Luminary.', reward: 80, progress: (s) => [owned(s, 5), 1] },
+  { id: 'five_3', name: 'Constellation', desc: 'Recruit three ★5 Luminaries.', reward: 200, progress: (s) => [owned(s, 5), 3] },
+  { id: 'four_all', name: 'Supporting Cast', desc: 'Recruit every ★4 Luminary.', reward: 160, progress: (s) => [owned(s, 4), CHARACTERS.filter((c) => c.rarity === 4).length] },
+  { id: 'troupe_4', name: 'A Quartet', desc: 'Recruit 4 Luminaries.', reward: 40, progress: (s) => [Object.keys(s.roster).length, 4] },
+  { id: 'troupe_12', name: 'Repertory Company', desc: 'Recruit 12 Luminaries.', reward: 200, progress: (s) => [Object.keys(s.roster).length, 12] },
+  { id: 'resonance_1', name: 'Echo', desc: 'Deepen any Luminary’s Echo.', reward: 40, progress: (s) => [maxResonance(s), 1] },
+  { id: 'resonance_max', name: 'Perfect Pitch', desc: 'Fill a Luminary’s Echo to the brim.', reward: 240, progress: (s) => [maxResonance(s), 5] },
   // Growth
-  { id: 'lv_30', name: 'Apprentice', desc: 'Raise a Luminary to the level cap before their first Kindling.', reward: 120, progress: (s) => [Math.max(maxLevel(s), maxInsight(s) > 0 ? 30 : 0), 30] },
-  { id: 'insight_3', name: 'Luminous', desc: 'Kindle a ★5 Luminary to Kindle III.', reward: 900, progress: (s) => [maxInsight(s), 3] },
-  { id: 'insight_team', name: 'Lamplit Troupe', desc: 'Have four Luminaries at Kindle I or higher.', reward: 400, progress: (s) => [atInsight(s, 1), 4] },
-  { id: 'hoard', name: 'Magpie', desc: 'Hold 5,000 Glimmer at once.', reward: 150, progress: (s) => [s.glimmer, 5000] },
-  { id: 'sovereigns', name: 'Thirteen-Hour Coins', desc: 'Hold 50,000 Brass Sovereigns.', reward: 200, progress: (s) => [s.items.sovereign, 50000] },
-  { id: 'atlas_4', name: 'Sketchbook', desc: 'Meet 4 kinds of Dimmed.', reward: 80, progress: (s) => [s.seen.length, 4] },
+  { id: 'lv_30', name: 'Apprentice', desc: 'Raise a Luminary to the level cap before their first Kindling.', reward: 50, progress: (s) => [Math.max(maxLevel(s), maxInsight(s) > 0 ? 30 : 0), 30] },
+  { id: 'insight_3', name: 'Luminous', desc: 'Kindle a ★5 Luminary to Kindle III.', reward: 360, progress: (s) => [maxInsight(s), 3] },
+  { id: 'insight_team', name: 'Lamplit Troupe', desc: 'Have four Luminaries at Kindle I or higher.', reward: 160, progress: (s) => [atInsight(s, 1), 4] },
+  { id: 'hoard', name: 'Magpie', desc: 'Hold 5,000 Glimmer at once.', reward: 60, progress: (s) => [s.glimmer, 5000] },
+  { id: 'sovereigns', name: 'Thirteen-Hour Coins', desc: 'Hold 50,000 Brass Sovereigns.', reward: 80, progress: (s) => [s.items.sovereign, 50000] },
+  { id: 'atlas_4', name: 'Sketchbook', desc: 'Meet 4 kinds of Dimmed.', reward: 30, progress: (s) => [s.seen.length, 4] },
 ];
 
 export type AchievementState = 'locked' | 'ready' | 'claimed';
@@ -90,7 +91,7 @@ export function achievementState(s: SaveData, a: Achievement): AchievementState 
 }
 
 export function claimableCount(s: SaveData): number {
-  return ACHIEVEMENTS.filter((a) => achievementState(s, a) === 'ready').length;
+  return ACHIEVEMENTS.filter((a) => achievementState(s, a) === 'ready').length + readyTaskCount(s);
 }
 
 /** Pays the reward once; returns the Glimmer granted (0 if not claimable). */

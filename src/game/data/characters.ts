@@ -470,6 +470,123 @@ export const CHARACTERS: CharacterDef[] = [
     quote: 'My father built the clock that struck thirteen. I have come to make it strike twelve again.',
   },
   {
+    id: 'sorrel',
+    name: 'Aurélien Glycine',
+    title: 'The Wisteria Poet',
+    mood: 'star',
+    rarity: 4,
+    role: 'Support',
+    base: { hp: 1000, atk: 122, def: 52 },
+    verses: [
+      {
+        id: 'sorrel_couplet', name: 'Idle Couplet', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.0 },
+          { kind: 'status', target: 'enemy', status: 'weak', turns: 2 },
+        ],
+        art: { motif: 'note', layout: 'split', portrait: true },
+      },
+      {
+        id: 'sorrel_muse', name: 'Borrowed Muse', type: 'buff',
+        effects: [
+          { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
+          { kind: 'heal', target: 'woundedAlly', power: 0.6 },
+        ],
+        art: { motif: 'wings', layout: 'spiral' },
+      },
+    ],
+    finale: {
+      id: 'sorrel_finale', name: 'Wisteria Requiem', type: 'heal', finale: true,
+      effects: [
+        { kind: 'heal', target: 'allAllies', power: 1.3 },
+        { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.25 },
+      ],
+      art: { motif: 'note', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'smile',
+      skin: '#f2dccc', hair: '#d8d4cc', hairStyle: 'long', bangs: 'side', eyes: '#8a6ab8',
+      outfit: 'robe', coat: '#ece6dc', shirt: '#f4efe6', accent: '#6a5498', legs: '#e8e2d8', shoes: '#1a1416',
+    },
+    palette: { primary: '#6a5498', secondary: '#ece6dc', ink: '#1a1424' },
+    quote: 'I write a line, and the dark forgets what it was about to do. It is not courage. It is punctuation.',
+  },
+  {
+    id: 'lazare',
+    name: 'Dante Carmin',
+    title: 'The Last Encore',
+    mood: 'moon',
+    rarity: 3,
+    role: 'Striker',
+    base: { hp: 960, atk: 126, def: 44 },
+    verses: [
+      {
+        id: 'lazare_riposte', name: 'Riposte', type: 'attack',
+        effects: [{ kind: 'damage', target: 'enemy', power: 0.85, hits: 2 }],
+        art: { motif: 'glove', layout: 'burst', portrait: true },
+      },
+      {
+        id: 'lazare_bow', name: 'Curtain Bow', type: 'mass',
+        effects: [{ kind: 'damage', target: 'allEnemies', power: 0.75 }],
+        art: { motif: 'meteor', layout: 'rays' },
+      },
+    ],
+    finale: {
+      id: 'lazare_finale', name: 'Standing Ovation', type: 'attack', finale: true,
+      effects: [
+        { kind: 'damage', target: 'enemy', power: 4.0 },
+        { kind: 'status', target: 'enemy', status: 'burn', turns: 2, power: 0.3 },
+      ],
+      art: { motif: 'meteor', layout: 'burst', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#eed6c6', hair: '#2a1c1c', hairStyle: 'long', bangs: 'side', eyes: '#a83a32',
+      outfit: 'coat', coat: '#1c1618', shirt: '#2a2224', accent: '#9a2a2a', legs: '#1a1618', shoes: '#0e0c0c',
+    },
+    palette: { primary: '#8a2228', secondary: '#e6d6c6', ink: '#140c0e' },
+    quote: 'Every night is my last performance. So far the audience keeps asking for one more.',
+  },
+  {
+    id: 'lys',
+    name: 'Odette Verveine',
+    title: 'The Green Room Herbalist',
+    mood: 'star',
+    rarity: 3,
+    role: 'Healer',
+    base: { hp: 1080, atk: 96, def: 56 },
+    verses: [
+      {
+        id: 'lys_poultice', name: 'Bitter Poultice', type: 'heal',
+        effects: [{ kind: 'heal', target: 'woundedAlly', power: 1.0 }],
+        art: { motif: 'crystal', layout: 'split', portrait: true },
+      },
+      {
+        id: 'lys_thorn', name: 'Nettle Thorn', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 0.9 },
+          { kind: 'status', target: 'enemy', status: 'burn', turns: 2, power: 0.25 },
+        ],
+        art: { motif: 'swirl', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'lys_finale', name: 'Greenhouse in Winter', type: 'heal', finale: true,
+      effects: [
+        { kind: 'heal', target: 'allAllies', power: 1.1 },
+        { kind: 'shield', target: 'allAllies', power: 0.6 },
+      ],
+      art: { motif: 'crystal', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccc', hair: '#cfc8c0', hairStyle: 'bun', bangs: 'side', eyes: '#7a9a8a',
+      outfit: 'dress', coat: '#2e3a30', shirt: '#ece8de', accent: '#4a6a4e', legs: '#1a1e1a', shoes: '#141614',
+    },
+    palette: { primary: '#3e5a44', secondary: '#ece8de', ink: '#101410' },
+    quote: 'Chamomile for the nerves, nettle for the Dimmed. Hold still, this will sting rather less than they do.',
+  },
+  {
     id: 'delphine',
     name: 'Fae Nivelle',
     title: 'The Lantern Wyrm',

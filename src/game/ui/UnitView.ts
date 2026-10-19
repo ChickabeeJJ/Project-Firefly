@@ -174,11 +174,12 @@ export class UnitView {
     this.intentChip = undefined;
     if (!intent) return;
     const c = this.scene.add.container(this.homeX, this.homeY - this.height - (this.unit.boss ? 150 : 96)).setDepth(49);
-    const w = intent.preview > 0 ? 150 : 96;
+    // Moves without a number (shield, buff, heal…) get a square chip with the icon centred.
+    const w = intent.preview > 0 ? 150 : 76;
     const bg = this.scene.add.nineslice(0, 0, 'ui:dark', undefined, w, 64, 10, 10, 10, 10);
     if (intent.finale) bg.setTint(0xff8a7a);
     const painted = this.scene.textures.exists(`intent:${intent.kind}`);
-    const ic = this.scene.add.image(-w / 2 + 32, 0, painted ? `intent:${intent.kind}` : `icon:${intent.kind}`).setDisplaySize(painted ? 48 : 42, painted ? 48 : 42);
+    const ic = this.scene.add.image(intent.preview > 0 ? -w / 2 + 32 : 0, 0, painted ? `intent:${intent.kind}` : `icon:${intent.kind}`).setDisplaySize(painted ? 48 : 42, painted ? 48 : 42);
     c.add([bg, ic]);
     if (intent.preview > 0) {
       c.add(text(this.scene, -w / 2 + 58, 0, String(intent.preview), { size: 28, bold: true, italic: true, color: intent.finale ? '#ffb0a0' : CSS.cream }).setOrigin(0, 0.5));
