@@ -9,7 +9,7 @@ import { saves } from '../persistence/SaveService';
 import { Rng } from '../battle/rng';
 import { formatQty, type ItemId } from '../systems/growth';
 import {
-  afterBattle, aliveTeam, CURIO, currentNode, draftKeepsakes, endRun, HOURS, keepsake, letter, MILESTONES, type NightNode,
+  afterBattle, aliveTeam, CURIO, ENDINGS, ending, HOUR_TALES, KIND_TALES, currentNode, draftKeepsakes, endRun, HOURS, keepsake, letter, MILESTONES, type NightNode,
   type NightRun, type NodeKind, omen, ordinal, reachable, runRewards, startRun, stageFor,
 } from '../systems/longnight';
 import { Atmosphere, Button, fadeIn, goTo, ornament, softPress, text, toast } from '../ui/kit';
@@ -71,18 +71,18 @@ export class NightScene extends Phaser.Scene {
 
     // The great dial: its hand rests on your best hour.
     const cx = 470;
-    const cy = 560;
+    const cy = 470;
     const ornate = dropIn(this, 'ui', 'clock_ornate');
-    if (ornate) this.add.image(cx, cy, ornate).setDisplaySize(560, 560);
+    if (ornate) this.add.image(cx, cy, ornate).setDisplaySize(440, 440);
     else this.add.circle(cx, cy, 230, 0x2a2016).setStrokeStyle(6, C.gold);
     const best = rec.best;
-    const hand = this.add.rectangle(cx, cy, 10, 170, 0x1c2436).setOrigin(0.5, 1).setStrokeStyle(1.5, 0xd6b264);
+    const hand = this.add.rectangle(cx, cy, 9, 132, 0x1c2436).setOrigin(0.5, 1).setStrokeStyle(1.5, 0xd6b264);
     const angle = (best / HOURS) * 360;
     hand.setAngle(0);
     this.tweens.add({ targets: hand, angle, duration: 1600, ease: 'Cubic.easeOut', delay: 300 });
     this.add.circle(cx, cy, 12, 0xd6b264).setStrokeStyle(2, 0x3a2410);
-    text(this, cx, cy + 320, best ? (best >= HOURS ? 'You have seen the dawn' : `Furthest: the ${ordinal(best)} Hour`) : 'The clock has not been climbed', { size: 30, font: 'display', color: CSS.cream }).setOrigin(0.5);
-    text(this, cx, cy + 362, `${rec.clears} dawn${rec.clears === 1 ? '' : 's'}  ·  ${rec.runs} night${rec.runs === 1 ? '' : 's'} climbed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    text(this, cx, cy + 260, best ? (best >= HOURS ? 'You have seen the dawn' : `Furthest: the ${ordinal(best)} Hour`) : 'The clock has not been climbed', { size: 30, font: 'display', color: CSS.cream }).setOrigin(0.5);
+    text(this, cx, cy + 298, `${rec.clears} dawn${rec.clears === 1 ? '' : 's'}  ·  ${rec.runs} night${rec.runs === 1 ? '' : 's'} climbed`, { size: 22, italic: true, color: CSS.creamDim }).setOrigin(0.5);
 
     // The rules, on a slip of parchment.
     const px = 1240;
@@ -123,6 +123,21 @@ export class NightScene extends Phaser.Scene {
         audio.sfx('lantern');
         this.scene.restart({});
       },
+    });
+    // Ending badges: earned ones shine; the rest are silhouettes with a hint.
+    text(this, cx, 852, `ENDINGS  ·  ${rec.badges.length} / ${ENDINGS.length}`, { size: 20, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0.5);
+    ENDINGS.forEach((e, i) => {
+      const bx = cx + (i - 2) * 96;
+      const got = rec.badges.includes(e.id);
+      const key = dropIn(this, 'ui', e.badge);
+      const b = this.add.container(bx, 930);
+      if (got) b.add(this.add.image(0, 0, 'fx:glow').setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(110, 110).setAlpha(0.3));
+      if (key) {
+        const im = this.add.image(0, 0, key).setDisplaySize(84, 84);
+        if (!got) im.setTint(0x5a5662).setAlpha(0.45);
+        b.add(im);
+      }
+      b.setSize(90, 90).setInteractive({ useHandCursor: true }).on('pointerup', () => toast(this, got ? `${e.name} — earned` : `${e.name}: ${e.hint}`, 'star4'));
     });
     // Milestones.
     const ms = Object.entries(MILESTONES).map(([h, g]) => `${ordinal(+h)} Hour: ${g}${rec.milestones.includes(+h) ? ' ✓' : ''}`).join('   ·   ');
@@ -292,27 +307,36 @@ export class NightScene extends Phaser.Scene {
     return { c, x, y, close };
   }
 
+  /** The hour's little scene, as on a page: the landing, then what waits behind this door. */
+  private tale(c: Phaser.GameObjects.Container, x: number, y: number, n: NightNode): void {
+    const t = text(this, x, y, HOUR_TALES[n.hour - 1], { size: 23, font: 'letter', italic: true, color: CSS.cream, wrap: 1000, align: 'center', lineSpacing: 5 }).setOrigin(0.5);
+    c.add(t);
+    c.add(text(this, x, y + t.height / 2 + 26, KIND_TALES[n.kind], { size: 21, italic: true, color: n.kind === 'omen' ? '#e8a090' : CSS.goldLight, wrap: 1000, align: 'center' }).setOrigin(0.5));
+    t.setAlpha(0);
+    this.tweens.add({ targets: t, alpha: 1, duration: 900, ease: 'Sine.easeOut' });
+  }
+
   private battlePanel(run: NightRun, n: NightNode): void {
     const k = KIND[n.kind];
     const stage = stageFor(run, n);
-    const { c, x, y, close } = this.panel(1080, 640, n.kind === 'boss' ? k.name : `${k.name} · the ${ordinal(n.hour)} Hour`, n.kind === 'boss' ? 'THE TOP OF THE CLOCK' : 'A DOOR ON THE STAIR');
-    c.add(text(this, x, y - 160, k.blurb, { size: 24, italic: true, color: CSS.creamDim, wrap: 920, align: 'center' }).setOrigin(0.5));
+    const { c, x, y, close } = this.panel(1160, 780, n.kind === 'boss' ? k.name : `${k.name} · the ${ordinal(n.hour)} Hour`, n.kind === 'boss' ? 'THE TOP OF THE CLOCK' : 'A DOOR ON THE STAIR');
+    this.tale(c, x, y - 196, n);
     // Who waits behind it.
     const foes = [...new Set((n.waves ?? []).flat())];
     foes.forEach((id, i) => {
       const e = getEnemy(id);
       const fx = x + (i - (foes.length - 1) / 2) * 170;
-      c.add(this.add.circle(fx, y - 30, 66, 0x15131a, 0.9).setStrokeStyle(1.5, e.boss ? C.danger : C.gold, 0.6));
-      const img = this.add.image(fx, y - 30, `enemy:${e.kind}`);
-      img.setScale(Math.min(120 / img.width, 120 / img.height));
+      c.add(this.add.circle(fx, y + 10, 62, 0x15131a, 0.9).setStrokeStyle(1.5, e.boss ? C.danger : C.gold, 0.6));
+      const img = this.add.image(fx, y + 10, `enemy:${e.kind}`);
+      img.setScale(Math.min(112 / img.width, 112 / img.height));
       c.add(img);
-      c.add(text(this, fx, y + 54, e.name, { size: 19, color: e.boss ? '#e8a090' : CSS.cream }).setOrigin(0.5));
+      c.add(text(this, fx, y + 92, e.name, { size: 19, color: e.boss ? '#e8a090' : CSS.cream }).setOrigin(0.5));
     });
     let info = `Level ${stage.level}  ·  ${stage.waves.length} wave${stage.waves.length > 1 ? 's' : ''}  ·  ${aliveTeam(run).length} Luminaries standing`;
     if (n.omen) info += run.keepsakes.includes('umbrella') ? '  ·  Omen sheltered by the Black Umbrella' : `  ·  Omen: ${omen(n.omen).name} — ${omen(n.omen).blurb}`;
-    c.add(text(this, x, y + 112, info, { size: 21, color: n.omen ? '#e8b0a0' : CSS.creamDim, wrap: 960, align: 'center' }).setOrigin(0.5));
-    c.add(new Button(this, x - 170, y + 220, { w: 260, h: 76, label: 'Not yet', style: 'dark', size: 26, sfx: 'back', onClick: close }));
-    c.add(new Button(this, x + 170, y + 220, {
+    c.add(text(this, x, y + 148, info, { size: 21, color: n.omen ? '#e8b0a0' : CSS.creamDim, wrap: 960, align: 'center' }).setOrigin(0.5));
+    c.add(new Button(this, x - 170, y + 270, { w: 260, h: 76, label: 'Not yet', style: 'dark', size: 26, sfx: 'back', onClick: close }));
+    c.add(new Button(this, x + 170, y + 270, {
       w: 320, h: 86, label: 'Open the door', style: 'amber', onClick: () => {
         run.path.push(n.id);
         saves.commit();
@@ -402,11 +426,13 @@ export class NightScene extends Phaser.Scene {
   }
 
   private sanctuary(run: NightRun, _n: NightNode): void {
-    const { c, x, y, close } = this.panel(1100, 600, 'Sanctuary', 'A LIT CHAPEL ON THE STAIR');
-    c.add(text(this, x, y - 140, 'Someone kept a votive burning here all year. The Dimmed will not cross its light.', { size: 24, italic: true, color: CSS.creamDim, wrap: 940, align: 'center' }).setOrigin(0.5));
+    const { c, x, y, close } = this.panel(1100, 700, 'Sanctuary', 'A LIT CHAPEL ON THE STAIR');
+    this.tale(c, x, y - 170, _n);
+    run.stats ??= { omens: 0, letters: 0, fell: false, sanctuaries: 0 };
+    run.stats.sanctuaries++;
     const fallen = run.team.filter((id) => run.hp[id] <= 0).length;
     const opt = (bx: number, title: string, desc: string, fn: () => string) => {
-      const b = this.add.container(bx, y + 60);
+      const b = this.add.container(bx, y + 110);
       b.add(this.add.rectangle(0, 0, 420, 230, 0x15131a, 0.9).setStrokeStyle(1.5, C.gold, 0.6));
       b.add(text(this, 0, -70, title, { size: 32, font: 'display', bold: true, color: CSS.goldLight }).setOrigin(0.5));
       b.add(text(this, 0, 20, desc, { size: 22, color: CSS.cream, wrap: 360, align: 'center', lineSpacing: 3 }).setOrigin(0.5));
@@ -433,10 +459,11 @@ export class NightScene extends Phaser.Scene {
   }
 
   private curio(run: NightRun, n: NightNode): void {
-    const { c, x, y, close } = this.panel(1400, 800, 'Curio Cabinet', 'A CLOCKMAKER’S CABINET');
+    const { c, x, y, close } = this.panel(1400, 860, 'Curio Cabinet', 'A CLOCKMAKER’S CABINET');
+    c.add(text(this, x, y - 296, HOUR_TALES[n.hour - 1], { size: 21, font: 'letter', italic: true, color: CSS.creamDim, wrap: 1200, align: 'center', lineSpacing: 4 }).setOrigin(0.5));
     const rng = new Rng(run.seed ^ (n.hour * 104729));
     const stock = [...draftKeepsakes(run, rng, 2), ...draftKeepsakes(run, rng, 1, true)].filter((v, i, a) => a.indexOf(v) === i);
-    const embers = text(this, x, y - 250, `You carry ${run.embers} Embers`, { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    const embers = text(this, x, y - 230, `You carry ${run.embers} Embers`, { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     c.add(embers);
     stock.forEach((id, i) => {
       const price = keepsake(id).rare ? CURIO.rareKeepsake : CURIO.keepsake;
@@ -501,6 +528,8 @@ export class NightScene extends Phaser.Scene {
       c.add(new Button(this, bx, y + 200, { w: 460, h: 84, label: ch.label, sub: ch.effect, style: i === 0 ? 'amber' : 'dark', size: 26, onClick: () => {
         const rng = new Rng(run.seed ^ 0x1e77e5);
         const msg = ch.apply(run, rng);
+        run.stats ??= { omens: 0, letters: 0, fell: false, sanctuaries: 0 };
+        run.stats.letters++;
         audio.sfx('tap');
         this.overlay = undefined;
         c.destroy();
@@ -523,24 +552,46 @@ export class NightScene extends Phaser.Scene {
     this.add.rectangle(W / 2, H / 2, W, H, 0x05070c, cleared ? 0.35 : 0.62);
     if (cleared) this.add.image(W / 2, H * 0.2, 'fx:glow').setTint(0xffd8a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(1800, 800).setAlpha(0.5);
     new Atmosphere(this, { depth: 40, fireflies: cleared ? 14 : 3 });
-    const title = text(this, W / 2, 220, cleared ? 'DAWN' : 'THE LIGHT FADES', { size: 110, font: 'display', bold: true, color: '#ffffff', spacing: 18, shadow: true }).setOrigin(0.5).setAlpha(0);
+    const title = text(this, W / 2, 170, cleared ? 'DAWN' : 'THE LIGHT FADES', { size: 110, font: 'display', bold: true, color: '#ffffff', spacing: 18, shadow: true }).setOrigin(0.5).setAlpha(0);
     if (cleared) title.setTint(0xfff3c8, 0xfff3c8, 0xd0a048, 0xd0a048);
     else title.setColor('#c8b8d8');
     this.tweens.add({ targets: title, alpha: 1, duration: 900, ease: 'Sine.easeOut' });
-    text(this, W / 2, 330, cleared ? 'The thirteenth hour struck, and then — for the first time in a year — the first.' : res.hours ? `The troupe held the clock until the ${ordinal(res.hours)} Hour.` : 'The night took the first stair.', { size: 30, italic: true, color: CSS.cream, wrap: 1300, align: 'center' }).setOrigin(0.5);
-    ornament(this, W / 2, 390, 700);
-    if (res.record) text(this, W / 2, 440, 'A new record', { size: 26, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0.5);
+    ornament(this, W / 2, 262, 700);
+    // The ending: its badge, its name and its short epilogue.
+    const told = res.endings[0];
+    let yy = 320;
+    if (told) {
+      const e = ending(told);
+      const key = dropIn(this, 'ui', e.badge);
+      if (key) {
+        const bg = this.add.image(560, 470, 'fx:glow').setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(380, 380).setAlpha(0.35);
+        const im = this.add.image(560, 470, key).setDisplaySize(220, 220).setAlpha(0).setScale(0.2);
+        this.tweens.add({ targets: im, alpha: 1, displayWidth: 220, displayHeight: 220, duration: 900, delay: 500, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: bg, alpha: 0.15, duration: 1800, yoyo: true, repeat: -1 });
+      }
+      text(this, 720, 330, res.newBadges.includes(told) ? 'A NEW ENDING' : 'ENDING', { size: 20, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0, 0.5);
+      text(this, 720, 380, e.name, { size: 48, font: 'display', bold: true, color: CSS.cream }).setOrigin(0, 0.5);
+      const ep = text(this, 720, 420, e.epilogue.join('\n\n'), { size: 24, font: 'letter', italic: true, color: CSS.cream, wrap: 820, lineSpacing: 5 }).setAlpha(0);
+      this.tweens.add({ targets: ep, alpha: 1, duration: 1400, delay: 900 });
+      const more = res.endings.slice(1).filter((id) => res.newBadges.includes(id));
+      if (more.length) text(this, 720, 440 + ep.height + 24, `Also earned: ${more.map((id) => ending(id).name).join(' · ')}`, { size: 21, italic: true, color: CSS.goldLight }).setOrigin(0, 0);
+      yy = 700;
+    } else {
+      text(this, W / 2, 330, res.hours ? `The troupe held the clock until the ${ordinal(res.hours)} Hour.` : 'The night took the first stair.', { size: 30, italic: true, color: CSS.cream, wrap: 1300, align: 'center' }).setOrigin(0.5);
+      yy = 560;
+    }
+    if (res.record) text(this, W / 2, yy + 186, 'A new record', { size: 24, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0.5);
     const tiles: [string, number][] = [['icon:glimmer', res.glimmer + res.bonus], ...Object.entries(res.items).map(([k, v]) => [`item:${k as ItemId}`, v as number] as [string, number])];
     tiles.forEach(([key, qty], i) => {
       const tx = W / 2 + (i - (tiles.length - 1) / 2) * 150;
-      const t = this.add.container(tx, 600).setAlpha(0);
+      const t = this.add.container(tx, yy + 60).setAlpha(0);
       t.add(this.add.rectangle(0, 0, 128, 128, 0x15131a, 0.85).setStrokeStyle(1.5, C.gold, 0.55));
       t.add(this.add.image(0, -10, key).setDisplaySize(84, 84));
       t.add(this.add.rectangle(0, 48, 128, 30, 0x000000, 0.6));
       t.add(text(this, 0, 48, formatQty(qty), { size: 22, bold: true, color: CSS.cream }).setOrigin(0.5));
-      this.tweens.add({ targets: t, alpha: 1, y: { from: 620, to: 600 }, duration: 380, delay: 600 + i * 120, ease: 'Sine.easeOut' });
+      this.tweens.add({ targets: t, alpha: 1, y: { from: yy + 80, to: yy + 60 }, duration: 380, delay: 600 + i * 120, ease: 'Sine.easeOut' });
     });
-    if (res.bonus) text(this, W / 2, 710, `Includes a first-time bonus of ${res.bonus} Glimmer`, { size: 22, italic: true, color: CSS.goldLight }).setOrigin(0.5);
-    new Button(this, W / 2, 860, { w: 420, h: 96, label: 'Return to the stair', style: 'amber', onClick: () => this.scene.restart({}) });
+    if (res.bonus) text(this, W / 2, yy + 150, `Includes ${res.bonus} bonus Glimmer for firsts`, { size: 21, italic: true, color: CSS.goldLight }).setOrigin(0.5);
+    new Button(this, W / 2, 990, { w: 420, h: 90, label: 'Return to the stair', style: 'amber', onClick: () => this.scene.restart({}) });
   }
 }

@@ -225,6 +225,21 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'The Red Ledger', text: 'He keeps an account of every minute the Dimming has stolen from the city, in red ink, in a ledger with a lock. He means to collect. All of it. With interest.' },
     { title: 'Pocket Watch', text: 'The chain at his waist holds his father’s watch. It has thirteen hours on its face, and it runs. He winds it every midnight, and every midnight, for one stroke, it is right.' },
   ],
+  sorrel: [
+    { title: 'The Wisteria Poet', text: 'Aurélien Glycine wrote verses for the Gloaming’s programmes — forty words a night, no more, printed beneath the cast list. Audiences came early to read them. When the Dimming came he went on writing, and found the dark would stop to listen.' },
+    { title: 'Wisteria', text: 'He carries a cutting of wisteria from the theatre’s back wall, where it grew over the stage door for fifty years. It flowers in the dark. He says it has simply not been told it should not.' },
+    { title: 'Punctuation', text: 'His poems are very short. A Dimmed thing can be held for exactly as long as it takes to read one, and he has learned to write them in the time it takes to lunge.' },
+  ],
+  lazare: [
+    { title: 'The Last Encore', text: 'Dante Carmin closed every show at the Gloaming with a duel — swords, real ones, against whoever in the audience dared. He never lost. On the last night of the decade nobody came up, so he bowed to an empty stage, and the lamps went out mid-bow.' },
+    { title: 'Red Lining', text: 'His coat is lined in the theatre’s curtain velvet; he cut it down himself the morning after. He says a performer should always carry his stage with him. He is only half joking.' },
+    { title: 'One More', text: 'He fights as though every bout is his last bow. It never quite is. The Dimmed keep calling for an encore, and Dante has never once refused an audience.' },
+  ],
+  lys: [
+    { title: 'The Green Room Herbalist', text: 'Odette Verveine kept the herbs in the Gloaming’s green room — chamomile for stage fright, honey and thyme for tired throats, something stronger for leading men. When the Dimming came, the actors stopped needing her. The city did not.' },
+    { title: 'The White Lily', text: 'The lily in her hair is from the opening-night bouquet of an opera that never had a second night. She has pressed it, dried it, and pinned it back every evening since. It is the only thing she keeps for herself.' },
+    { title: 'Nettle', text: 'She heals with one hand and stings with the other. Most of her remedies are very gentle. The ones she keeps for the Dimmed are not.' },
+  ],
   percival: [
     { title: 'The Pressed Lily', text: 'Perrine Lys kept the flower-press at the Vellmoor herbarium, where a century of summers lie flat between blotting paper. When the Dimming came she noticed it first: the oldest pages had begun to forget their colours.' },
     { title: 'The Herbarium', text: 'She presses moments the way others press flowers — a laugh, a lamplit doorway, the last warm evening of a year. Pressed, they cannot fade. The Dimming has tried. The pages hold.' },
@@ -338,6 +353,27 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'There is no thirteenth hour. I know. I have stood in it.',
     'Hands in pockets is not rudeness. It is so I do not wind every clock in the room.',
     'Midnight. Listen for the extra stroke — if you hear it, come and find me.',
+  ],
+  sorrel: [
+    'A line for you: “The lamp is small; the night is long; the lamp does not seem to mind.” …It needs work.',
+    'The wisteria flowered again last night. I have stopped asking it how.',
+    'Sit, sit. Poets are only useful in pairs — one to speak, one to pretend to listen.',
+    'Forty words a night. That was my contract. I have rather overrun it.',
+    'Every verse I write is a door the dark has to knock on first. It is getting very tired of knocking.',
+  ],
+  lazare: [
+    'Applause? No? Then I shall simply assume it.',
+    'I have bowed to empty houses before. You learn to hear the ovation anyway.',
+    'The coat? Curtain velvet. A performer carries his stage with him.',
+    'One more bout. There is always one more bout. That is the whole secret of the encore.',
+    'If you see me hesitate, it is only for effect. Mostly.',
+  ],
+  lys: [
+    'Stand still. You have the look of someone who has not slept since Tuesday.',
+    'Chamomile, thyme, a little honey. Nothing for the Dimmed in this one — I am not cruel to my friends.',
+    'The lily? Opening night. There was never a second. I keep it so somebody remembers the first.',
+    'Nettle stings because it does not want to be picked. I can respect that.',
+    'If you are going to bleed, kindly do it near me.',
   ],
   percival: [
     'Don’t move. The light on you just now — I want to remember it properly.',

@@ -104,8 +104,8 @@ describe('achievements', () => {
     applyBattleResult(save, getStage('1-1'), true, 3, 0);
     expect(claimableCount(save)).toBeGreaterThanOrEqual(1);
     const g = save.glimmer;
-    expect(claimAchievement(save, 'first_light')).toBe(100);
-    expect(save.glimmer).toBe(g + 100);
+    expect(claimAchievement(save, 'first_light')).toBe(40);
+    expect(save.glimmer).toBe(g + 40);
     expect(claimAchievement(save, 'first_light')).toBe(0);
   });
 });

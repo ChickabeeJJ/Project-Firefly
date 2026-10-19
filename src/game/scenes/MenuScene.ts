@@ -158,7 +158,7 @@ export class MenuScene extends Phaser.Scene {
       ['summon', 'Lantern Rite', () => goTo(this, 'Summon')],
       ['shop', 'Pawnshop', () => goTo(this, 'Shop')],
       ['atlas', 'Atlas', () => openAtlas(this)],
-      ['trophy', 'Achievements', () => openAchievements(this, () => this.refreshBadge())],
+      ['trophy', 'Tasks', () => openAchievements(this, () => this.refreshBadge())],
       ['notice', 'Notice', () => openNotice(this)],
       ['profile', 'Profile', () => openProfile(this)],
       ['gramophone', 'Gramophone', () => openGramophone(this)],

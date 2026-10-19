@@ -1,3 +1,4 @@
+import { track } from './tasks';
 import type { SaveData } from '../persistence/schema';
 import { type ItemId, ITEMS } from './growth';
 
@@ -72,6 +73,7 @@ export function signIn(save: SaveData, now = new Date()): { reward: Reward; mile
   const day = now.getDate();
   if (sheet.days.includes(day)) return null;
   sheet.days.push(day);
+  track(save, 'signin', 1, now);
   const reward = dayReward(day);
   grant(save, reward);
   const reached: Reward[] = [];

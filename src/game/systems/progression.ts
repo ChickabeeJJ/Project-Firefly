@@ -1,3 +1,4 @@
+import { track } from './tasks';
 import { STAGES } from '../data/stages';
 import type { StageDef } from '../data/types';
 import { grant, type ItemId, stageItems } from './growth';
@@ -34,6 +35,9 @@ export interface VictoryOutcome {
 export function applyBattleResult(save: SaveData, stage: StageDef, won: boolean, rounds: number, fallen: number): VictoryOutcome {
   const stars = computeStars(stage, won, rounds, fallen);
   if (!won) return { stars, glimmer: 0, firstClear: false, items: {} };
+  track(save, stage.mode ? 'trial' : 'win');
+  if (stage.mode) track(save, 'win');
+  if (!stage.mode && stars.count === 3) track(save, 'perfect');
   if (stage.mode) {
     // Trials: fixed drops (half again on the first clear), no stars, no Glimmer.
     const firstClear = !save.hints.includes(`trial:${stage.id}`);

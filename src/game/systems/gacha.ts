@@ -1,3 +1,4 @@
+import { track } from './tasks';
 import { CHARACTERS } from '../data/characters';
 import type { Rarity } from '../data/types';
 import { MAX_RESONANCE } from '../battle/rules';
@@ -9,7 +10,7 @@ export const RITE = {
   rates: { 5: 0.01, 4: 0.24 } as Record<5 | 4, number>,
   /** A ★5 is guaranteed on this light if none came before. */
   pity: 70,
-  dupeRefund: 60,
+  dupeRefund: 10,
 };
 
 /** A Rite banner. Featured Luminaries take half of their rarity's results (R1999's rate-up). */
@@ -93,6 +94,7 @@ export function performRite(save: SaveData, count: number, rng: Rng, bannerId = 
   const cost = riteCost(count);
   if (save.glimmer < cost) return null;
   save.glimmer -= cost;
+  track(save, 'rite', count);
   const results: RiteResult[] = [];
   for (let i = 0; i < count; i++) {
     const rarity = rollRarity(rng, save.pity);
@@ -102,7 +104,14 @@ export function performRite(save: SaveData, count: number, rng: Rng, bannerId = 
     const feat = rarity === 5 && banner.featured ? [banner.featured] : rarity === 4 ? banner.featured4 ?? [] : [];
     const featPool = pool.filter((c) => feat.includes(c.id));
     const restPool = pool.filter((c) => !feat.includes(c.id));
-    const char = featPool.length && (rng.next() < 0.5 || !restPool.length) ? rng.pick(featPool) : rng.pick(restPool.length ? restPool : pool);
+    // Among the non-featured, a Luminary you do not own yet is three times as likely to answer.
+    const fresh = (c: (typeof pool)[number]) => (save.roster[c.id] ? 1 : 3);
+    const weighted = (list: typeof pool) => {
+      let r = rng.next() * list.reduce((a, c) => a + fresh(c), 0);
+      for (const c of list) if ((r -= fresh(c)) < 0) return c;
+      return list[list.length - 1];
+    };
+    const char = featPool.length && (rng.next() < 0.5 || !restPool.length) ? rng.pick(featPool) : weighted(restPool.length ? restPool : pool);
     save.history.unshift({ id: char.id, rarity, b: banner.id, t: Date.now() });
     if (save.history.length > 100) save.history.length = 100;
     const owned = save.roster[char.id];
