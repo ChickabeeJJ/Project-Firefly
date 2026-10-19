@@ -22,6 +22,12 @@ import { ResultScene } from './game/scenes/ResultScene';
 import { SummonScene } from './game/scenes/SummonScene';
 import { RosterScene } from './game/scenes/RosterScene';
 
+// Keys the game uses must never scroll the host page (CrazyGames requirement).
+window.addEventListener('keydown', (e) => {
+  if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown'].includes(e.key)) e.preventDefault();
+}, { passive: false });
+window.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
+
 // Browsers only allow audio after a user gesture.
 const unlock = () => audio.unlock();
 window.addEventListener('pointerdown', unlock, { capture: true });

@@ -407,7 +407,7 @@ export class LobbyScene extends Phaser.Scene {
   private tickClock(): void {
     const d = new Date();
     const key = d.toDateString();
-    const forced = new URLSearchParams(location.search).has('midnight');
+    const forced = import.meta.env.DEV && new URLSearchParams(location.search).has('midnight');
     if ((forced || (d.getHours() === 0 && d.getMinutes() === 0)) && this.struckOn !== key) {
       this.struckOn = key;
       this.thirteenthStroke();

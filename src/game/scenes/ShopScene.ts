@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { platform } from '../platform/PlatformAdapter';
 import { ensureBg } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { C, CSS, H, W } from '../config/theme';
@@ -12,6 +13,9 @@ const TABS: { id: string; name: string; items: ItemId[]; blurb: string }[] = [
 ];
 
 /** The Pawnshop: buy growth materials with Glimmer (R1999's Pawnshop / material shops). */
+const TIPS_PER_DAY = 3;
+const TIP_GLIMMER = 40;
+
 export class ShopScene extends Phaser.Scene {
   private tab = 'pawn';
   private body?: Phaser.GameObjects.Container;
@@ -49,6 +53,7 @@ export class ShopScene extends Phaser.Scene {
     });
     this.drawWallet();
     this.drawBody();
+    this.drawTip();
     audio.play('lobby');
   }
 
@@ -79,6 +84,53 @@ export class ShopScene extends Phaser.Scene {
       b.add(this.tile(x, y, o));
     });
     this.body = b;
+  }
+
+  /**
+   * "The Lamplighter's Tip": a short ad, chosen by the player, for a little Glimmer (three a day).
+   * Only offered where the platform actually serves ads.
+   */
+  private drawTip(): void {
+    if (!platform.adsAvailable) return;
+    const day = new Date().toDateString();
+    const read = (): number => {
+      try {
+        const o = JSON.parse(platform.getItem('firefly-tips') ?? '{}') as { d?: string; n?: number };
+        return o.d === day ? o.n ?? 0 : 0;
+      } catch {
+        return 0;
+      }
+    };
+    const left = TIPS_PER_DAY - read();
+    const c = this.add.container(195, 860);
+    const g = this.add.graphics();
+    g.fillGradientStyle(0x22302a, 0x22302a, 0x141a17, 0x141a17, 1).fillRect(-150, -90, 300, 180);
+    g.lineStyle(1.5, C.gold, 0.5).strokeRect(-150, -90, 300, 180);
+    c.add(g);
+    c.add(this.add.image(-92, -18, 'icon:glimmer').setDisplaySize(70, 70));
+    c.add(text(this, -48, -42, 'Lamplighter’s Tip', { size: 24, font: 'display', bold: true, color: CSS.cream }).setOrigin(0, 0.5));
+    c.add(text(this, -48, -8, `Watch a short ad\nfor +${TIP_GLIMMER} Glimmer`, { size: 19, italic: true, color: CSS.creamDim, lineSpacing: 2 }).setOrigin(0, 0.5));
+    c.add(text(this, 0, 58, left > 0 ? `${left} left today` : 'Back tomorrow', { size: 20, color: left > 0 ? CSS.amber : CSS.muted }).setOrigin(0.5));
+    if (left <= 0) {
+      c.setAlpha(0.6);
+      return;
+    }
+    c.setSize(300, 180).setInteractive({ useHandCursor: true });
+    softPress(c, () => {
+      c.disableInteractive();
+      void platform.rewardedAd().then((ok) => {
+        if (!this.scene.isActive()) return;
+        if (ok) {
+          saves.get().glimmer += TIP_GLIMMER;
+          saves.commit();
+          platform.setItem('firefly-tips', JSON.stringify({ d: day, n: read() + 1 }));
+          toast(this, `+${TIP_GLIMMER} Glimmer · thank you, Lamplighter`, 'glimmer');
+        } else {
+          toast(this, 'No tip this time — try again in a moment', 'glimmer');
+        }
+        this.scene.restart({ tab: this.tab });
+      });
+    }, 'tap', 1.03);
   }
 
   private tile(x: number, y: number, o: ShopOffer): Phaser.GameObjects.Container {

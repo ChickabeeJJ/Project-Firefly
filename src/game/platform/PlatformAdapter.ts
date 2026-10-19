@@ -16,11 +16,22 @@ interface CGData {
   setItem(key: string, value: string): void;
 }
 
+interface CGAdCallbacks {
+  adStarted?: () => void;
+  adFinished?: () => void;
+  adError?: (error: unknown) => void;
+}
+
+interface CGAd {
+  requestAd(type: 'midgame' | 'rewarded', callbacks: CGAdCallbacks): void;
+}
+
 interface CGSdk {
   init(): Promise<void>;
   environment?: string;
   game: CGGame;
   data?: CGData;
+  ad?: CGAd;
 }
 
 declare global {
@@ -90,11 +101,24 @@ class PlatformAdapter {
     this.call((s) => s.game.loadingStop());
   }
 
+  private firstPlay: (() => void)[] = [];
+  private played = false;
+
+  /** Runs once, the first time the player is actually playing (or at once if they already have). */
+  onFirstGameplay(cb: () => void): void {
+    if (this.played) cb();
+    else this.firstPlay.push(cb);
+  }
+
   /** Only called when the player is actually in an interactive battle. */
   gameplayStart(): void {
     if (this.inGameplay) return;
     this.inGameplay = true;
     this.call((s) => s.game.gameplayStart());
+    if (!this.played) {
+      this.played = true;
+      for (const cb of this.firstPlay.splice(0)) cb();
+    }
   }
 
   gameplayStop(): void {
@@ -105,6 +129,60 @@ class PlatformAdapter {
 
   happytime(): void {
     this.call((s) => s.game.happytime());
+  }
+
+  // ------------------------------------------------------------------ ads
+
+  private lastMidgame = 0;
+  private adListeners: ((playing: boolean) => void)[] = [];
+
+  /** Called with true when an ad takes the screen (mute, pause) and false when it hands it back. */
+  onAd(cb: (playing: boolean) => void): void {
+    this.adListeners.push(cb);
+  }
+
+  get adsAvailable(): boolean {
+    return !!this.sdk?.ad;
+  }
+
+  private showAd(type: 'midgame' | 'rewarded'): Promise<boolean> {
+    const ad = this.sdk?.ad;
+    if (!ad) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      let started = false;
+      const end = (ok: boolean) => {
+        if (started) for (const cb of this.adListeners) cb(false);
+        resolve(ok);
+      };
+      try {
+        ad.requestAd(type, {
+          adStarted: () => {
+            started = true;
+            for (const cb of this.adListeners) cb(true);
+          },
+          adFinished: () => end(true),
+          adError: () => end(false),
+        });
+      } catch {
+        resolve(false);
+      }
+    });
+  }
+
+  /**
+   * A between-battles break. Never more than once every three minutes, never in the first two
+   * minutes of a session; resolves when play may continue (whether or not an ad showed).
+   */
+  async midgameAd(): Promise<void> {
+    const now = performance.now();
+    if (now < 120000 || now - this.lastMidgame < 180000) return;
+    this.lastMidgame = now;
+    await this.showAd('midgame');
+  }
+
+  /** A player-chosen ad for a reward. Resolves true only if the ad was watched to the end. */
+  rewardedAd(): Promise<boolean> {
+    return this.showAd('rewarded');
   }
 
   getItem(key: string): string | null {

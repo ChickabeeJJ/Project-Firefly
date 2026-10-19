@@ -1,3 +1,4 @@
+import { platform } from '../platform/PlatformAdapter';
 import Phaser from 'phaser';
 import { audio, type Sfx } from '../audio/AudioController';
 import { C, CSS, FONT_BODY, FONT_DISPLAY, FONT_LETTER, H, W } from '../config/theme';
@@ -302,7 +303,11 @@ export function goTo(scene: Phaser.Scene, key: string, data?: object): void {
   scene.data.set('leaving', true);
   scene.input.enabled = false;
   scene.cameras.main.fadeOut(360, 8, 8, 10);
-  scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => scene.scene.start(key, data));
+  scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+    // A natural pause between battles is where a (rate-limited) midgame break may go.
+    const gate = scene.scene.key === 'Result' ? platform.midgameAd() : Promise.resolve();
+    void gate.then(() => scene.scene.start(key, data));
+  });
 }
 
 export function fadeIn(scene: Phaser.Scene): void {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { STARTER_TEAM } from '../data/characters';
 import { dropInUrl, loadDropInArt, streamCharacterArt } from '../art/assets';
 import { registerBaseArt } from '../art/registry';
 import { audio } from '../audio/AudioController';
@@ -55,8 +56,10 @@ export class BootScene extends Phaser.Scene {
 
     const t0 = performance.now();
     // The lobby's leader loads now at full size; the rest of the troupe streams in after.
-    const team = saves.load().team;
-    await loadDropInArt(this, (p) => this.progress(p * 0.85), [team[0]]);
+    // The team (who also carry the opening story) loads at full size now; everyone else waits
+    // until the player is actually playing, so the first download stays small.
+    const team = [...new Set([...saves.load().team, ...STARTER_TEAM])];
+    await loadDropInArt(this, (p) => this.progress(p * 0.85), team);
     const t1 = performance.now();
     this.progress(0.9, 'Lighting the lamps …');
     await new Promise((r) => this.time.delayedCall(30, r));
@@ -67,7 +70,19 @@ export class BootScene extends Phaser.Scene {
     audio.setPlatformMuted(platform.muted);
     platform.onMuteChange((m) => audio.setPlatformMuted(m));
     this.progress(1, 'The lamps are lit.');
-    void streamCharacterArt(this.game, team);
+    platform.onFirstGameplay(() => void streamCharacterArt(this.game, team));
+    // Returning players may browse menus for a while first: stream after a minute regardless.
+    this.game.events.once(Phaser.Core.Events.STEP, () => window.setTimeout(() => void streamCharacterArt(this.game, team), 60000));
+    // Ads take the screen: hold the game and its sound until they hand it back.
+    platform.onAd((playing) => {
+      if (playing) {
+        audio.suspend();
+        this.game.pause();
+      } else {
+        this.game.resume();
+        audio.resume();
+      }
+    });
     platform.loadingStop();
 
     const params = new URLSearchParams(location.search);

@@ -68,7 +68,14 @@ export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => v
  * Loads the remaining full-size character art in the background, `first` ids before the rest,
  * independent of any scene (so changing scenes never cancels it). Resolves when all are in.
  */
+let streaming: Promise<void> | null = null;
+
 export function streamCharacterArt(game: Phaser.Game, first: string[] = []): Promise<void> {
+  streaming ??= streamAll(game, first);
+  return streaming;
+}
+
+function streamAll(game: Phaser.Game, first: string[]): Promise<void> {
   const todo = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
     .filter((e): e is readonly [string, string] => !!e[0] && e[0].startsWith('hf:characters/') && !game.textures.exists(e[0]))
