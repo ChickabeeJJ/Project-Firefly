@@ -391,15 +391,15 @@ export const CHARACTERS: CharacterDef[] = [
   },
   {
     id: 'percival',
-    name: 'Percival Quill',
-    title: 'The Ink-Stained Reporter',
+    name: 'Perrine Lys',
+    title: 'The Pressed Lily',
     mood: 'sun',
     rarity: 4,
     role: 'Hexer',
     base: { hp: 950, atk: 128, def: 46 },
     verses: [
       {
-        id: 'percival_front', name: 'Front Page', type: 'debuff',
+        id: 'percival_front', name: 'Pressed Page', type: 'debuff',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.1 },
           { kind: 'status', target: 'enemy', status: 'frail', turns: 2 },
@@ -407,16 +407,16 @@ export const CHARACTERS: CharacterDef[] = [
         art: { motif: 'newspaper', layout: 'split', portrait: true },
       },
       {
-        id: 'percival_flash', name: 'Flashbulb', type: 'attack',
+        id: 'percival_flash', name: 'Lily Pin', type: 'attack',
         effects: [
           { kind: 'damage', target: 'enemy', power: 1.35 },
           { kind: 'status', target: 'enemy', status: 'daze', turns: 1, chance: [0.3, 0.5, 0.8] },
         ],
-        art: { motif: 'camera', layout: 'burst' },
+        art: { motif: 'cards', layout: 'burst' },
       },
     ],
     finale: {
-      id: 'percival_finale', name: 'Extra! Extra!', type: 'mass', finale: true,
+      id: 'percival_finale', name: 'Herbarium of Hours', type: 'mass', finale: true,
       effects: [
         { kind: 'damage', target: 'allEnemies', power: 2.2 },
         { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 },
@@ -424,14 +424,12 @@ export const CHARACTERS: CharacterDef[] = [
       art: { motif: 'newspaper', layout: 'rays', portrait: true },
     },
     look: {
-      eyeStyle: 'open', mouth: 'smirk',
-      skin: '#f0d4bc', hair: '#5a3a24', hairStyle: 'short', bangs: 'side', eyes: '#5a7a4a',
-      hat: 'fedora', hatColor: '#6a6560', hatAccent: '#2a2622',
-      outfit: 'vest', coat: '#5c5148', shirt: '#efe7d6', accent: '#3a5a8a', legs: '#3a3a40', shoes: '#1d1a18',
-      glasses: true, prop: 'camera',
+      eyeStyle: 'soft', mouth: 'smile',
+      skin: '#f4dccb', hair: '#cfc6b8', hairStyle: 'short', bangs: 'side', eyes: '#a8763c',
+      outfit: 'vest', coat: '#4a3024', shirt: '#f1e7d4', accent: '#c9a050', legs: '#3a2a20', shoes: '#241812',
     },
-    palette: { primary: '#d98a2b', secondary: '#f1ead8', ink: '#1e1a16' },
-    quote: 'If the dark has a secret, I want it above the fold.',
+    palette: { primary: '#7a4e30', secondary: '#f1e7d4', ink: '#1e1612' },
+    quote: 'Hold still. I only press the moments worth keeping — and you, I think, are one.',
   },
   {
     id: 'delphine',

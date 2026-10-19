@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { ensureBg } from '../art/registry';
+import { dropIn } from '../art/assets';
 import { audio } from '../audio/AudioController';
 import { getEnemy } from '../data/enemies';
 import { CHAPTERS, STAGES, getStage } from '../data/stages';
@@ -9,7 +10,7 @@ import { saves } from '../persistence/SaveService';
 import { frontierStage, isUnlocked, REWARDS, trialCleared, trialUnlocked } from '../systems/progression';
 import { TRIAL_FAMILIES, trialsOf, type TrialFamily } from '../data/trials';
 import { formatQty, fromLegacyLevel, insightLabel, ITEMS, type ItemId, stageItems } from '../systems/growth';
-import { CINEMATICS } from '../data/story';
+import { CINEMATICS, STAGE_INTERLUDES } from '../data/story';
 import { goToStage } from '../systems/storyFlow';
 import { deskPaperCanvas, playbillCanvas } from '../art/letterPaper';
 import { Atmosphere, Button, fadeIn, goTo, ornament, scrollable, softPress, text } from '../ui/kit';
@@ -247,54 +248,105 @@ export class StoryScene extends Phaser.Scene {
   private openMemories(): void {
     const c = this.add.container(0, 0).setDepth(3000);
     const dim = this.add.rectangle(W / 2, H / 2, W, H, 0x05060a, 0.85).setInteractive();
-    const panel = this.add.nineslice(W / 2, H / 2, 'ui:dark', undefined, 1100, 820, 14, 14, 14, 14);
-    const title = text(this, W / 2, H / 2 - 360, 'MEMORIES', { size: 48, font: 'display', bold: true, color: CSS.goldLight, spacing: 8 }).setOrigin(0.5);
-    c.add([dim, panel, title, ornament(this, W / 2, H / 2 - 312, 520)]);
-    const close = () => c.destroy();
+    const panel = this.add.nineslice(W / 2, H / 2, 'ui:dark', undefined, 1160, 880, 14, 14, 14, 14);
+    const title = text(this, W / 2, H / 2 - 384, 'MEMORIES', { size: 46, font: 'display', bold: true, color: CSS.goldLight, spacing: 8 }).setOrigin(0.5);
+    c.add([dim, panel, title, ornament(this, W / 2, H / 2 - 338, 520)]);
+    const close = () => {
+      audio.sfx('back');
+      c.destroy();
+    };
     dim.on('pointerup', (p: Phaser.Input.Pointer) => {
-      if (Math.abs(p.x - W / 2) > 550 || Math.abs(p.y - H / 2) > 410) close();
+      if (Math.abs(p.x - W / 2) > 580 || Math.abs(p.y - H / 2) > 440) close();
     });
-    c.add(new Button(this, W / 2 + 490, H / 2 - 360, { w: 64, h: 64, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: close }));
+    this.input.keyboard?.once('keydown-ESC', close);
+    c.add(new Button(this, W / 2 + 524, H / 2 - 384, { w: 60, h: 60, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: close }));
+
+    // Story order: each chapter's opening, its interludes in stage order, then its ending.
+    const stageOf = new Map(Object.entries(STAGE_INTERLUDES).map(([st, id]) => [id, getStage(st).index]));
+    const rank = (id: string): [number, number] => {
+      if (id === 'prologue') return [1, 0];
+      const m = id.match(/^ch(\d)_(open|end|i\d+)$/);
+      if (!m) return [9, 0];
+      return [Number(m[1]), m[2] === 'open' ? 1 : m[2] === 'end' ? 99 : 10 + (stageOf.get(id) ?? Number(m[2].slice(1)))];
+    };
+    const ordered = [...CINEMATICS].sort((x, y) => {
+      const [a1, b1] = rank(x.id);
+      const [a2, b2] = rank(y.id);
+      return a1 - a2 || b1 - b2;
+    });
+    const seenCount = ordered.filter((cin) => saves.hasHint(`cine:${cin.id}`)).length;
+    c.add(text(this, W / 2, H / 2 - 300, `${seenCount} of ${ordered.length} remembered  ·  drag or scroll`, { size: 20, italic: true, color: CSS.creamDim }).setOrigin(0.5));
+
+    const area = new Phaser.Geom.Rectangle(W / 2 - 540, H / 2 - 270, 1080, 690);
     const list = this.add.container(0, 0);
     c.add(list);
-    const scroll = scrollable(this, list, new Phaser.Geom.Rectangle(W / 2 - 500, H / 2 - 290, 1000, 680), CINEMATICS.length * 76 + 20);
-    CINEMATICS.forEach((cin, i) => {
-      const y = H / 2 - 250 + i * 76;
+    const rows: { y: number; row: Phaser.GameObjects.Container }[] = [];
+    let y = area.y + 30;
+    let lastCh = 0;
+    ordered.forEach((cin) => {
+      const ch = rank(cin.id)[0];
+      if (ch !== lastCh) {
+        lastCh = ch;
+        if (rows.length) y += 14;
+        const chap = CHAPTERS.find((x) => x.id === ch);
+        list.add(text(this, W / 2 - 500, y, chap ? `CHAPTER ${ch}  ·  ${chap.name.toUpperCase()}` : 'OTHER', { size: 20, font: 'display', color: CSS.goldLight, spacing: 4 }).setOrigin(0, 0.5));
+        list.add(this.add.rectangle(W / 2 - 500, y + 22, 1000, 1, C.gold, 0.3).setOrigin(0, 0.5));
+        y += 58;
+      }
       const seen = saves.hasHint(`cine:${cin.id}`);
       const row = this.add.container(W / 2, y);
-      row.add(this.add.rectangle(0, 0, 960, 64, seen ? 0x1a1820 : 0x101014, 0.9).setStrokeStyle(1.5, C.gold, seen ? 0.5 : 0.15));
-      row.add(text(this, -450, 0, seen ? cin.name : '— not yet witnessed —', { size: 28, font: 'display', bold: seen, color: seen ? CSS.cream : CSS.muted }).setOrigin(0, 0.5));
+      row.add(this.add.rectangle(0, 0, 1000, 62, seen ? 0x1a1820 : 0x0e0e12, 0.92).setStrokeStyle(1.2, C.gold, seen ? 0.45 : 0.12));
+      const label = cin.name.replace(/^Chapter [IV]+ · /, '');
+      row.add(text(this, -470, 0, seen ? label : '— not yet witnessed —', { size: 26, font: seen ? 'display' : 'body', italic: !seen, color: seen ? CSS.cream : CSS.muted }).setOrigin(0, 0.5));
+      if (seen && cin.clock) row.add(text(this, 300, 0, cin.clock, { size: 20, color: CSS.creamDim }).setOrigin(0.5));
       if (seen) {
-        row.add(text(this, 450, 0, 'Replay ▸', { size: 24, italic: true, color: CSS.goldLight }).setOrigin(1, 0.5));
-        row.setSize(960, 64).setInteractive({ useHandCursor: true });
-        row.on('pointerup', () => {
-          if (scroll.wasDrag() || !scroll.visible(list.y + y)) return;
-          audio.sfx('tap');
-          goTo(this, 'Cinematic', { ids: [cin.id], next: { scene: 'Story' } });
-        });
+        row.add(text(this, 470, 0, 'Replay  ▸', { size: 22, italic: true, color: CSS.goldLight }).setOrigin(1, 0.5));
+        row.setSize(1000, 62).setInteractive({ useHandCursor: true });
+        row.on('pointerover', () => row.list[0] instanceof Phaser.GameObjects.Rectangle && (row.list[0] as Phaser.GameObjects.Rectangle).setFillStyle(0x2a2430, 0.95));
+        row.on('pointerout', () => row.list[0] instanceof Phaser.GameObjects.Rectangle && (row.list[0] as Phaser.GameObjects.Rectangle).setFillStyle(0x1a1820, 0.92));
       }
+      rows.push({ y, row });
       list.add(row);
+      y += 72;
     });
+    const scroll = scrollable(this, list, area, y - area.y + 20);
+    for (const { y: ry, row } of rows) {
+      row.on('pointerup', () => {
+        // Hidden rows (scrolled out of the window) and drag releases never start a replay.
+        if (scroll.wasDrag() || !scroll.visible(list.y + ry) || !c.active) return;
+        audio.sfx('tap');
+        const id = ordered[rows.findIndex((r) => r.row === row)].id;
+        goTo(this, 'Cinematic', { ids: [id], next: { scene: 'Story', data: { mode: 'story' } } });
+      });
+    }
   }
 
   // ------------------------------------------------------------------ modes
 
   /** Bottom tab bar, as in the reference: Story · Resource · Insight. */
   private tabBar(): void {
-    const tabs: [Mode, string, string][] = [['story', 'Story', 'story'], ['resource', 'Supplies', 'shop'], ['insight', 'Kindling', 'eye']];
+    const tabs: [Mode, string, string, string][] = [['story', 'Story', 'story', 'books'], ['resource', 'Supplies', 'shop', 'key'], ['insight', 'Kindling', 'eye', 'lantern']];
     const bar = this.add.container(W / 2, H - 46).setDepth(95);
     const light = this.mode !== 'story' && !this.family;
     const g = this.add.graphics();
     g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, light ? 0.18 : 0.7, light ? 0.18 : 0.7).fillRect(-W / 2, -60, W, 106);
     bar.add(g);
-    tabs.forEach(([m, label, icon], i) => {
+    tabs.forEach(([m, label, icon, art], i) => {
       const x = (i - 1) * 190;
       const on = m === this.mode;
-      const col = light ? (on ? '#c8501e' : '#3a342c') : on ? CSS.amber : CSS.cream;
+      const col = light ? (on ? '#c8501e' : '#5a4a36') : on ? CSS.amber : CSS.cream;
       const t = this.add.container(x, 0);
-      t.add(this.add.image(0, -14, `icon:${icon}`).setDisplaySize(40, 40).setTint(Phaser.Display.Color.HexStringToColor(col).color));
-      t.add(text(this, 0, 20, label, { size: 22, color: col }).setOrigin(0.5));
-      if (on) t.add(this.add.rectangle(0, 40, 110, 4, C.amber, 1));
+      const painted = dropIn(this, 'ui', `motif_${art}`);
+      if (painted) {
+        // Painted emblem on a soft disc; the active tab glows, the others rest a little smaller.
+        t.add(this.add.circle(0, -16, 30, light ? 0xf6eedc : 0x0b0c10, light ? 0.55 : 0.35));
+        if (on) t.add(this.add.image(0, -16, 'fx:glow').setTint(0xffd27a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(110, 110).setAlpha(0.45));
+        t.add(this.add.image(0, -16, painted).setDisplaySize(on ? 58 : 50, on ? 58 : 50).setAlpha(on ? 1 : 0.85));
+      } else {
+        t.add(this.add.image(0, -14, `icon:${icon}`).setDisplaySize(40, 40).setTint(Phaser.Display.Color.HexStringToColor(col).color));
+      }
+      t.add(text(this, 0, 26, label, { size: 22, color: col, bold: on }).setOrigin(0.5));
+      if (on) t.add(this.add.rectangle(0, 44, 90, 3, C.amber, 1));
       t.setSize(170, 90).setInteractive({ useHandCursor: true });
       softPress(t, () => {
         if (on && !this.family) return;

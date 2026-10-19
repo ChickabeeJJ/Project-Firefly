@@ -69,7 +69,7 @@ description to insert.
 ### New Luminaries (this update)
 | id | Name · title | Mood / rarity / role | Description to insert |
 |---|---|---|---|
-| `percival` | Percival Quill · The Ink-Stained Reporter | Sun ★4 Hexer | wry young newspaper reporter, short brown hair, round glasses, grey fedora with a black band and a press card, brown waistcoat over a cream shirt, blue tie, ink-stained fingers, holding a vintage box camera with a flashbulb |
+| `percival` | Perrine Lys · The Pressed Lily | Sun ★4 Hexer | (painted) herbarium keeper, short ash hair, white lily, dark gloves, brown and cream ruffled dress |
 | `delphine` | Delphine Moreau · The Midnight Violinist | Moon ★5 Striker | melancholy violinist, dark navy bob with straight bangs, sea-teal eyes, deep teal cloche hat with a gold band, dark teal drop-waist evening dress with gold art-deco trim, playing a violin under her chin, ghostly teal notes |
 | `teddy` | Teddy Brass · The Boiler-Room Mechanic | Star ★3 Guardian | sunny young mechanic, curly ginger-blond hair, freckles, slate-blue beret, blue-grey work jacket with orange patches, cream shirt with sleeves rolled up, big brass wrench over one shoulder, soot smudge on one cheek |
 | `evangeline` | Lady Evangeline Ash · The Parasol Heiress | Sun ★5 Healer | graceful aristocratic heiress, pale-gold wavy hair, rose eyes, cream cloche hat with a pink ribbon, blush-pink lace tea dress, pearl necklace, holding an open frilled lace parasol, teacup motif, soft sunny glow |

@@ -50,6 +50,14 @@ function size(scene: Phaser.Scene, key: string): { w: number; h: number } {
 export const FACE_POINTS: Record<string, [number, number]> = {
   wren: [0.572, 0.2], odile: [0.495, 0.135], evangeline: [0.45, 0.17], bastian: [0.52, 0.2], augustin: [0.5, 0.08],
   clementine: [0.555, 0.17], delphine: [0.56, 0.17], hesper: [0.61, 0.11], ichabod: [0.62, 0.17], kit: [0.54, 0.125], marigold: [0.6, 0.1], ottoline: [0.6, 0.1], teddy: [0.54, 0.085],
+  percival: [0.565, 0.2],
+};
+
+/** Painted emblem (ui/motif_<name>, or a stat icon) standing in for each code-drawn card motif. */
+const MOTIF_ART: Record<string, string> = {
+  candle: 'lantern', lantern: 'lantern', cards: 'hourglass', newspaper: 'scroll', note: 'scroll', crescent: 'orb', swirl: 'orb',
+  eye: 'orb', crystal: 'orb', meteor: 'fire', telescope: 'compass', wings: 'dove', metronome: 'metronome', rain: 'umbrella',
+  camera: 'key', shield: 'stat_def', fist: 'stat_atk', glove: 'stat_atk',
 };
 
 export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper', 'kit']);
@@ -194,7 +202,9 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const panel = vp ? { img: source(scene, vp), ...size(scene, vp) } : undefined;
     for (const v of [...c.verses, c.finale]) {
       const painted = dropIn(scene, 'cards', v.id);
-      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody, panel));
+      const mk = dropIn(scene, 'ui', `motif_${MOTIF_ART[v.art.motif] ?? ''}`) ?? (MOTIF_ART[v.art.motif]?.startsWith('stat_') ? dropIn(scene, 'ui', MOTIF_ART[v.art.motif]) : null);
+      const motifArt = mk ? { img: source(scene, mk), ...size(scene, mk) } : undefined;
+      add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody, panel, motifArt));
     }
   }
   for (const e of ENEMIES) {

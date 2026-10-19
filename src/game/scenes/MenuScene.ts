@@ -180,6 +180,7 @@ export class MenuScene extends Phaser.Scene {
         // Painted button with its name set beneath in the book face.
         const halo = this.add.image(0, -16, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 160).setAlpha(0);
         const im = this.add.image(0, -16, art).setDisplaySize(th - 22, th - 22);
+        if (icon === 'shop') im.setScale(im.scaleX * 1.14); // the scales are a wide, slight shape
         const lb = text(this, 0, th / 2 - 8, label, { size: 21, italic: true, color: CSS.cream, shadow: true }).setOrigin(0.5);
         c.add([halo, im, lb]);
         if (icon === 'trophy') {

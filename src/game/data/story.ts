@@ -210,6 +210,11 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Moths', text: 'Pale moths follow her everywhere — not the Dimmed kind, she insists, but the old kind, that come to any lamp kept long enough. She talks to them. Sometimes they seem to answer.' },
     { title: 'The Vigil', text: 'She has sat beside a great many beds in the dark. She knows the exact weight of a hand that is letting go, and she has never once let go first.' },
   ],
+  percival: [
+    { title: 'The Pressed Lily', text: 'Perrine Lys kept the flower-press at the Vellmoor herbarium, where a century of summers lie flat between blotting paper. When the Dimming came she noticed it first: the oldest pages had begun to forget their colours.' },
+    { title: 'The Herbarium', text: 'She presses moments the way others press flowers — a laugh, a lamplit doorway, the last warm evening of a year. Pressed, they cannot fade. The Dimming has tried. The pages hold.' },
+    { title: 'Gloves', text: 'She never takes off the dark gloves. Ink, she says, and pollen. The truth is that whatever she touches bare-handed she remembers forever, and some things she would rather only keep on paper.' },
+  ],
 };
 
 /** Things each Luminary says in the lobby (tap them, or on arrival). Night/first-visit lines are mixed in by the lobby. */
@@ -297,6 +302,13 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'I keep a list of everyone I have sat beside. It is very long. I read it to the moths.',
     'Rest your eyes. I will wake you if anything changes. I always do.',
     'There — a moth on your sleeve. That means you are a lamp now too. Be careful with it.',
+  ],
+  percival: [
+    'Don’t move. The light on you just now — I want to remember it properly.',
+    'A pressed flower keeps its shape, but not its scent. Some things you have to keep by heart.',
+    'I found a lily in a book from before the Dimming. It was still white. I cried a little. Don’t tell anyone.',
+    'The gloves stay on. Trust me, you would rather I forgot a few things about you.',
+    'Every page in my herbarium is a small refusal. The dark cannot have this one. Or this one.',
   ],
 };
 

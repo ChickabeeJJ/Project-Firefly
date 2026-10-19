@@ -683,7 +683,7 @@ function cinematicGrade(ctx: Ctx, pal: Pal): void {
   ctx.restore();
 }
 
-export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource): void {
+export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource): void {
   const pal: Pal = char.palette;
   const rnd = seeded(verse.id.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
   ctx.save();
@@ -708,14 +708,20 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, pain
     portrait(ctx, char, painted);
     ctx.save();
     ctx.translate(CARD_W * 0.68, CARD_H * 0.28);
-    ctx.scale(0.62, 0.62);
-    MOTIFS[verse.art.motif](ctx, pal);
+    if (motifArt) paintedMotif(ctx, motifArt, 112);
+    else {
+      ctx.scale(0.62, 0.62);
+      MOTIFS[verse.art.motif](ctx, pal);
+    }
     ctx.restore();
   } else {
     ctx.save();
     ctx.translate(CARD_W * 0.52, CARD_H * 0.44);
-    ctx.scale(0.95, 0.95);
-    MOTIFS[verse.art.motif](ctx, pal);
+    if (motifArt) paintedMotif(ctx, motifArt, 210);
+    else {
+      ctx.scale(0.95, 0.95);
+      MOTIFS[verse.art.motif](ctx, pal);
+    }
     ctx.restore();
   }
   if (verse.finale) {
@@ -729,9 +735,20 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, pain
   grain(ctx, CARD_W, CARD_H, panel ? 0.025 : 0.07, verse.id.length * 13);
 }
 
-export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource): HTMLCanvasElement {
+/** A painted motif emblem (ui/motif_*) centred on the origin, with a soft halo behind it. */
+function paintedMotif(ctx: Ctx, art: PaintedSource, size: number): void {
+  const g = ctx.createRadialGradient(0, 0, size * 0.1, 0, 0, size * 0.62);
+  g.addColorStop(0, 'rgba(255,246,224,0.35)');
+  g.addColorStop(1, 'rgba(255,246,224,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-size, -size, size * 2, size * 2);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(art.img, -size / 2, -size / 2, size, size);
+}
+
+export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(CARD_W, CARD_H);
-  drawVerseArt(ctx, char, verse, painted, panel);
+  drawVerseArt(ctx, char, verse, painted, panel, motifArt);
   return canvas;
 }
 

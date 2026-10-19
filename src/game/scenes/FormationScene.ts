@@ -11,7 +11,7 @@ import { getStage, stageCode } from '../data/stages';
 import type { StageDef } from '../data/types';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
-import { Atmosphere, Button, fadeIn, goTo, ornament, text, toast } from '../ui/kit';
+import { Atmosphere, Button, fadeIn, goTo, ornament, softPress, text, toast } from '../ui/kit';
 import { PortraitCard } from '../ui/PortraitCard';
 
 /** Pre-battle check: goals, enemy intel and the three-Luminary team. */
@@ -39,11 +39,39 @@ export class FormationScene extends Phaser.Scene {
     ornament(this, 1340, 206, 560);
     text(this, 1340, 900, 'Tap a Luminary to swap them out', { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     this.buildTeam();
-    new Button(this, W - 260, H - 90, {
-      w: 400, h: 100, label: 'Start', sub: `${stageCode(this.stage)} · ${this.stage.name}`, style: 'amber', size: 40,
-      onClick: () => goTo(this, 'Battle', { stageId: this.stage.id }),
-    }).setDepth(90);
+    this.beginTicket(W - 250, H - 92);
     audio.play('lobby');
+  }
+
+  /** "Admit one" ticket, matching the stage playbill's stub: stub on the left, Begin on the right. */
+  private beginTicket(x: number, y: number): void {
+    const w = 420;
+    const h = 112;
+    const c = this.add.container(x, y).setDepth(90);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.35).fillRect(-w / 2 + 5, -h / 2 + 6, w, h);
+    g.fillStyle(0x9a3a1a, 1).fillRect(-w / 2, -h / 2, w, h);
+    g.fillGradientStyle(0xb8502a, 0xb8502a, 0x8a3014, 0x8a3014, 1).fillRect(-w / 2, -h / 2, w, h);
+    g.lineStyle(1, 0xf2d8b0, 0.55).strokeRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16);
+    // Perforation and the two half-moon notches of a torn ticket.
+    const sx = -w / 2 + 116;
+    g.fillStyle(0xf2d8b0, 0.6);
+    for (let yy = -h / 2 + 14; yy < h / 2 - 10; yy += 10) g.fillCircle(sx, yy, 1.8);
+    g.fillStyle(0x07080a, 1).fillCircle(sx, -h / 2, 9).fillCircle(sx, h / 2, 9);
+    c.add(g);
+    c.add(text(this, -w / 2 + 58, -18, 'ADMIT', { size: 15, font: 'display', color: '#f6e6c8', spacing: 4 }).setOrigin(0.5));
+    c.add(text(this, -w / 2 + 58, 6, 'ONE', { size: 22, font: 'display', bold: true, color: '#fff4e4', spacing: 4 }).setOrigin(0.5));
+    c.add(text(this, -w / 2 + 58, 34, stageCode(this.stage), { size: 15, color: '#f6e6c8' }).setOrigin(0.5));
+    const bx = sx + (w / 2 - sx) / 2;
+    c.add(text(this, bx - 18, -14, 'Begin', { size: 46, font: 'display', bold: true, color: '#fff4e4', shadow: true }).setOrigin(0.5));
+    const nm = text(this, bx - 18, 28, this.stage.name, { size: 18, italic: true, color: '#f6e6c8' }).setOrigin(0.5);
+    if (nm.width > w - 170) nm.setScale((w - 170) / nm.width);
+    c.add(nm);
+    const arrow = this.add.image(w / 2 - 34, -14, 'icon:back').setDisplaySize(30, 30).setFlipX(true).setTint(0xfff4e4);
+    c.add(arrow);
+    this.tweens.add({ targets: arrow, x: arrow.x + 6, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    c.setSize(w, h).setInteractive({ useHandCursor: true });
+    softPress(c, () => goTo(this, 'Battle', { stageId: this.stage.id }), 'tap', 1.03);
   }
 
   private buildIntel(): void {

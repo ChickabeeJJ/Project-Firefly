@@ -154,6 +154,8 @@ export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId:
   const posterKey = url ? dropIn(scene, 'idle', `${charId}_poster`) : null;
   if (!url || !posterKey) {
     const still = livingPortrait(scene, x, y, key, proceduralScale, paintedHeight, maxWidth);
+    // Settle the figure into the room's lamplight: a little dimmer and warmer than the raw art.
+    still.setTint(0xd6cbbd);
     const api: StagePortrait = {
       hit: still.hit,
       pose: () => still.pose(4, 0.006, 200, 140),
