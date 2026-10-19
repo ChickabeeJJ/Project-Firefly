@@ -305,6 +305,11 @@ for (const saga of SAGAS) {
 
 const byId = new Map([...STAGES, ...TRIALS].map((s) => [s.id, s]));
 
+/** Stages made at run time (The Long Night's encounters). */
+export function registerStage(def: StageDef): void {
+  byId.set(def.id, def);
+}
+
 export function getStage(id: string): StageDef {
   const s = byId.get(id);
   if (!s) throw new Error(`Unknown stage ${id}`);

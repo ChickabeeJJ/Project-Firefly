@@ -308,29 +308,26 @@ export class RosterScene extends Phaser.Scene {
     return c;
   }
 
-  /** Triangle emblem filled to show progress through the current Insight tier. */
-  /** Progress lantern: a brass lantern whose glass fills with amber light as the Luminary grows. */
-  private lanternGauge(cx: number, cy: number, fill: number): Phaser.GameObjects.Graphics {
+  /** Progress lantern: the painted brass lantern, its glass filling with light as the Luminary grows. */
+  private lanternGauge(cx: number, cy: number, fill: number): Phaser.GameObjects.Container {
+    const c = this.add.container(cx, cy);
+    const art = dropIn(this, 'ui', 'lantern_level');
+    const H0 = 220;
+    const k = H0 / 600; // the art is 508 x 600; its glass spans x 128..363, y 190..505
+    const gx = (128 - 254) * k;
+    const gw = (363 - 128) * k;
+    const gy = (190 - 300) * k;
+    const gh = (505 - 190) * k;
+    const f = Phaser.Math.Clamp(fill, 0, 1);
     const g = this.add.graphics();
-    const bw = 116;
-    const bh = 140;
-    const top = cy - bh / 2 + 10;
-    // Hanging ring and cap.
-    g.lineStyle(4, 0x6a5232, 1).strokeCircle(cx, top - 50, 11);
-    g.fillStyle(0x6a5232, 1).fillTriangle(cx - bw / 2 - 12, top - 4, cx + bw / 2 + 12, top - 4, cx, top - 40);
-    g.fillStyle(0x8a6c40, 1).fillRect(cx - bw / 2 - 14, top - 8, bw + 28, 10);
-    // Glass, then light rising from the wick.
-    g.fillStyle(0xe8dfcc, 1).fillRect(cx - bw / 2, top, bw, bh);
-    const lh = bh * Phaser.Math.Clamp(fill, 0, 1);
-    g.fillGradientStyle(C.accentPale, C.accentPale, C.amber, C.amber, 0.95, 0.95, 1, 1).fillRect(cx - bw / 2, top + bh - lh, bw, lh);
-    // Flame.
-    g.fillStyle(0xfff2c8, fill > 0 ? 1 : 0.4).fillEllipse(cx, top + bh - 30, 16, 30);
-    // Frame: panes and posts.
-    g.lineStyle(4, 0x5a4428, 1).strokeRect(cx - bw / 2, top, bw, bh);
-    g.lineStyle(2, 0x5a4428, 0.8).lineBetween(cx - bw / 6, top, cx - bw / 6, top + bh).lineBetween(cx + bw / 6, top, cx + bw / 6, top + bh);
-    g.fillStyle(0x8a6c40, 1).fillRect(cx - bw / 2 - 14, top + bh - 2, bw + 28, 12);
-    g.fillStyle(0x6a5232, 1).fillRect(cx - bw / 2 + 6, top + bh + 10, bw - 12, 10);
-    return g;
+    g.fillStyle(0x1a140e, 0.85).fillRect(gx, gy, gw, gh);
+    g.fillGradientStyle(C.accentPale, C.accentPale, C.amber, C.amber, 0.95, 0.95, 1, 1).fillRect(gx, gy + gh * (1 - f), gw, gh * f);
+    c.add(g);
+    const flame = this.add.image(0, gy + gh - 34, 'fx:glow').setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(70, 90).setAlpha(f > 0 ? 0.9 : 0.35);
+    c.add(flame);
+    this.tweens.add({ targets: flame, scaleY: flame.scaleY * 1.08, alpha: flame.alpha * 0.8, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    if (art) c.add(this.add.image(0, 0, art).setDisplaySize(508 * k, H0));
+    return c;
   }
 
   private openLevelUp(p: Phaser.GameObjects.Container, c: CharacterDef, statRows: Phaser.GameObjects.Text[], animate = true): void {
@@ -340,7 +337,7 @@ export class RosterScene extends Phaser.Scene {
     const s = this.sheet(p, 'Level Up');
     if (!animate) s.setAlpha(1);
     const cx = 1290 + (W - 1290) / 2;
-    s.add(this.lanternGauge(cx, 330, (o.level - 1) / (cap - 1)));
+    s.add(this.lanternGauge(cx, 304, (o.level - 1) / (cap - 1)));
     s.add(text(this, cx, 460, 'Lv', { size: 26, font: 'display', color: CSS.paperText }).setOrigin(0.5));
     s.add(this.add.rectangle(cx, 520, W - 1290 - 60, 1, 0x8a2a2a, 0.6));
     const dial = this.add.container(0, 0);
@@ -461,7 +458,7 @@ export class RosterScene extends Phaser.Scene {
     const s = this.sheet(p, 'Kindle');
     const cx = 1290 + (W - 1290) / 2;
     const state = insightState(save, c.id);
-    s.add(this.lanternGauge(cx, 320, o.insight / maxInsight(c.rarity)));
+    s.add(this.lanternGauge(cx, 294, o.insight / maxInsight(c.rarity)));
     const R = ['0', 'I', 'II', 'III'];
     if (state === 'max') {
       s.add(text(this, cx, 480, `${insightLabel(o.insight)} — fully awakened`, { size: 30, font: 'display', color: CSS.paperText }).setOrigin(0.5));

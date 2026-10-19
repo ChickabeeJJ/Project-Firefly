@@ -21,6 +21,7 @@ import { PauseScene } from './game/scenes/PauseScene';
 import { ResultScene } from './game/scenes/ResultScene';
 import { SummonScene } from './game/scenes/SummonScene';
 import { RosterScene } from './game/scenes/RosterScene';
+import { NightScene } from './game/scenes/NightScene';
 
 // Keys the game uses must never scroll the host page (CrazyGames requirement).
 window.addEventListener('keydown', (e) => {
@@ -45,7 +46,7 @@ const game = new Phaser.Game({
   // Real-time pacing on slow devices: no start-up delta clamp, tolerate frames up to 333 ms.
   fps: { target: 60, min: 3, panicMax: 0 },
   disableContextMenu: true,
-  scene: [BootScene, LobbyScene, MenuScene, CinematicScene, ShopScene, StoryScene, FormationScene, BattleScene, PauseScene, ResultScene, SummonScene, RosterScene],
+  scene: [BootScene, LobbyScene, MenuScene, CinematicScene, ShopScene, StoryScene, FormationScene, BattleScene, PauseScene, ResultScene, SummonScene, RosterScene, NightScene],
 });
 
 // When the screen is wider (or taller) than 16:9, paint the bars with a blurred snapshot of the scene.
@@ -74,4 +75,5 @@ window.setInterval(refreshBackdrop, 12000);
 
 if (import.meta.env.DEV) {
   (window as unknown as { __game: Phaser.Game }).__game = game;
+  void import('./game/persistence/SaveService').then((m) => ((window as unknown as { __saves: unknown }).__saves = m.saves));
 }

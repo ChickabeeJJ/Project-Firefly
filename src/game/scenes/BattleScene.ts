@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { dropIn } from '../art/assets';
 import { ensureBg, ensurePortrait, verseEmblem } from '../art/registry';
+import { aliveTeam, currentNode, omen, runMods, stageFor } from '../systems/longnight';
 import { audio } from '../audio/AudioController';
 import { chooseAutoAction } from '../battle/autoplay';
 import { describeEffects, describeVerse, STATUS_INFO, TYPE_LABEL } from '../battle/describe';
@@ -23,6 +24,14 @@ import { UnitView } from '../ui/UnitView';
 
 export interface BattleData {
   stageId: string;
+  /** A Long Night encounter: team, wounds and modifiers come from the run. */
+  night?: boolean;
+}
+
+/** What a Long Night battle reports back to the map. */
+export interface NightResult {
+  won: boolean;
+  hp: Record<string, number>;
 }
 
 export interface ResultData {
@@ -89,6 +98,8 @@ export class BattleScene extends Phaser.Scene {
   private fx!: BattleFx;
   private busy = true;
   private auto = false;
+  /** Fighting a Long Night encounter. */
+  night = false;
   private speed = 1;
   private ended = false;
   private resolveQueued = false;
@@ -139,20 +150,24 @@ export class BattleScene extends Phaser.Scene {
     this.tutBubble = undefined;
     fadeIn(this);
 
-    this.stage = getStage(data.stageId);
+    this.night = !!data.night && !!saves.get().night.run;
+    const run = this.night ? saves.get().night.run! : null;
+    const node = run ? currentNode(run) : undefined;
+    this.stage = run && node ? stageFor(run, node) : getStage(data.stageId);
     const save = saves.get();
-    const guided = !!this.stage.tutorial && !saves.hasHint('tutorialDone');
+    const guided = !this.night && !!this.stage.tutorial && !saves.hasHint('tutorialDone');
     // The script needs the starter trio, so the guided battle always fields them.
-    const team = guided ? ['wren', 'odile', 'bastian'] : save.team;
+    const team = guided ? ['wren', 'odile', 'bastian'] : run ? aliveTeam(run) : save.team;
     this.tutSteps = guided ? this.buildTutorial() : null;
     this.engine = new BattleEngine({
       stage: this.stage,
       team: team.map((id) => {
         const o = save.roster[id] ?? { level: 1, insight: 0, resonance: 0 };
-        return { charId: id, level: effectiveLevel(o), resonance: o.resonance };
+        return { charId: id, level: effectiveLevel(o), resonance: o.resonance, hpFrac: run ? run.hp[id] : 1 };
       }),
       seed: (Date.now() ^ (Math.random() * 1e9)) >>> 0,
       script: guided ? TUTORIAL_SCRIPT : undefined,
+      mods: run ? runMods(run, node) : undefined,
     });
 
     this.add.image(W / 2, H / 2, ensureBg(this, this.stage.bg)).setDisplaySize(W, H).setDepth(0);
@@ -212,8 +227,11 @@ export class BattleScene extends Phaser.Scene {
       }
     }
 
-    if (this.stage.rule) {
-      const rule = this.stage.rule === 'fireflyBloom'
+    const nr = this.night ? saves.get().night.run : null;
+    const nn = nr ? currentNode(nr) : undefined;
+    const nightOmen = nr && nn?.omen && !nr.keepsakes.includes('umbrella') ? omen(nn.omen) : null;
+    if (this.stage.rule || nightOmen) {
+      const rule = nightOmen ? { name: `Omen · ${nightOmen.name}`, desc: nightOmen.blurb } : this.stage.rule === 'fireflyBloom'
         ? { name: 'Firefly Bloom', desc: 'Two fireflies light your Verses each round.' }
         : { name: 'Restless Dim', desc: 'Enemies begin with 2 Ardor — Finales come early.' };
       const c = this.add.container(1700, 220).setDepth(300);
@@ -1196,6 +1214,17 @@ export class BattleScene extends Phaser.Scene {
     if (won && this.tutSteps) {
       saves.markHint('tutorialDone');
       for (const id of TUTORIAL_HINTS) saves.markHint(id);
+    }
+    if (this.night) {
+      // The Long Night: no stars or drops here — wounds go back to the map.
+      const hp: Record<string, number> = {};
+      for (const u of this.engine.allies) hp[u.defId] = u.alive ? u.hp / u.maxHp : 0;
+      audio.play(null);
+      audio.sfx(won ? 'victory' : 'defeat');
+      await this.fx.banner(won ? 'THE HOUR PASSES' : 'THE LIGHT FADES', won ? undefined : 'The night is too long for this troupe', won ? CSS.gold : '#c8b8d8');
+      const result: NightResult = { won, hp };
+      goTo(this, 'Night', { result });
+      return;
     }
     const outcome = applyBattleResult(save, this.stage, won, rounds, fallen);
     saves.commit();

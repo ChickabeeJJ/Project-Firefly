@@ -216,8 +216,6 @@ export class StoryScene extends Phaser.Scene {
       c.add(this.add.image(tx, 94, icon).setDisplaySize(56, 56));
       c.add(text(this, tx, 128, q, { size: 16, bold: true, color: ink }).setOrigin(0.5));
     });
-    // The perfect-clear bonus sits beside the heading, clear of the reward row and the ticket.
-    if (!cleared) c.add(text(this, rx + 290, 48, `+${REWARDS.perfectBonus} Glimmer for ★★★`, { size: 17, italic: true, color: sepia }).setOrigin(0, 0.5));
 
     // ---- ticket stub
     const sx = w / 2 - stub / 2 - 14;
@@ -327,14 +325,14 @@ export class StoryScene extends Phaser.Scene {
 
   /** Bottom tab bar, as in the reference: Story · Resource · Insight. */
   private tabBar(): void {
-    const tabs: [Mode, string, string, string][] = [['story', 'Story', 'story', 'books'], ['resource', 'Supplies', 'shop', 'key'], ['insight', 'Kindling', 'eye', 'lantern']];
+    const tabs: [Mode | 'night', string, string, string][] = [['story', 'Story', 'story', 'books'], ['resource', 'Supplies', 'shop', 'key'], ['insight', 'Kindling', 'eye', 'lantern'], ['night', 'Long Night', 'auto', 'watch']];
     const bar = this.add.container(W / 2, H - 46).setDepth(95);
     const light = this.mode !== 'story' && !this.family;
     const g = this.add.graphics();
     g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, light ? 0.18 : 0.7, light ? 0.18 : 0.7).fillRect(-W / 2, -60, W, 106);
     bar.add(g);
     tabs.forEach(([m, label, icon, art], i) => {
-      const x = (i - 1) * 190;
+      const x = (i - (tabs.length - 1) / 2) * 200;
       const on = m === this.mode;
       const col = light ? (on ? CSS.accentInk : '#5a4a36') : on ? CSS.amber : CSS.cream;
       const t = this.add.container(x, 0);
@@ -351,6 +349,10 @@ export class StoryScene extends Phaser.Scene {
       if (on) t.add(this.add.rectangle(0, 44, 90, 3, C.amber, 1));
       t.setSize(170, 90).setInteractive({ useHandCursor: true });
       softPress(t, () => {
+        if (m === 'night') {
+          goTo(this, 'Night');
+          return;
+        }
         if (on && !this.family) return;
         this.scene.restart({ mode: m, family: null });
       }, 'tap', 1.06);

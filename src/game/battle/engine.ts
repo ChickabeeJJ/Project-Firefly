@@ -14,6 +14,29 @@ export interface AllySetup {
   charId: string;
   level: number;
   resonance: number;
+  /** Starting HP as a fraction of max (The Long Night carries wounds between fights). */
+  hpFrac?: number;
+}
+
+/** Whole-battle modifiers (The Long Night's Keepsakes and Omens). All optional, 1 / 0 = no change. */
+export interface BattleMods {
+  allyAtk?: number;
+  allyDef?: number;
+  allyHp?: number;
+  enemyAtk?: number;
+  enemyHp?: number;
+  /** Added to the base critical chance. */
+  crit?: number;
+  /** Extra fireflies that light cards each round. */
+  lights?: number;
+  /** Lantern fireflies at the start of the battle. */
+  fireflies?: number;
+  /** Ardor every ally starts with. */
+  ardor?: number;
+  /** Ardor every enemy starts with. */
+  enemyArdor?: number;
+  /** Allies heal this fraction of max HP when a wave is cleared. */
+  waveHeal?: number;
 }
 
 /** Scripted beats for the guided tutorial (all keyed by round number). */
@@ -36,6 +59,7 @@ export interface BattleSetup {
   team: AllySetup[];
   seed: number;
   script?: BattleScript;
+  mods?: BattleMods;
 }
 
 export interface PlanResult {
@@ -72,6 +96,7 @@ export class BattleEngine {
 
   private readonly rng: Rng;
   private readonly script: BattleScript;
+  readonly mods: BattleMods;
   private nextCid = 1;
   private undoStack: Snapshot[] = [];
 
@@ -79,14 +104,19 @@ export class BattleEngine {
     this.stage = setup.stage;
     this.rng = new Rng(setup.seed);
     this.script = setup.script ?? {};
+    const md = (this.mods = setup.mods ?? {});
     setup.team.forEach((m, i) => {
       const def = getCharacter(m.charId);
       const s = allyStats(def.base, m.level, m.resonance);
+      const maxHp = Math.round(s.hp * (md.allyHp ?? 1));
+      const hp = Math.max(1, Math.round(maxHp * Math.min(1, m.hpFrac ?? 1)));
       this.units.push({
         uid: `a${i}`, side: 'ally', defId: def.id, name: def.name, mood: def.mood, level: m.level,
-        maxHp: s.hp, hp: s.hp, atk: s.atk, def: s.def, shield: 0, ardor: 0, statuses: [], alive: true, slot: i,
+        maxHp, hp, atk: Math.round(s.atk * (md.allyAtk ?? 1)), def: Math.round(s.def * (md.allyDef ?? 1)),
+        shield: 0, ardor: Math.min(ARDOR_MAX, md.ardor ?? 0), statuses: [], alive: true, slot: i,
       });
     });
+    this.fireflies = Math.min(LANTERN.capacity, md.fireflies ?? 0);
   }
 
   // ---------------------------------------------------------------- queries
@@ -153,12 +183,14 @@ export class BattleEngine {
       const def = getEnemy(id);
       const s = enemyStats(def.base, this.stage.level);
       if (this.script.enemyHpMult) s.hp = Math.round(s.hp * this.script.enemyHpMult);
+      s.hp = Math.round(s.hp * (this.mods.enemyHp ?? 1));
+      s.atk = Math.round(s.atk * (this.mods.enemyAtk ?? 1));
       const uid = `e${index}_${i}`;
       uids.push(uid);
       this.units.push({
         uid, side: 'enemy', defId: def.id, name: def.name, mood: def.mood, level: this.stage.level,
         maxHp: s.hp, hp: s.hp, atk: s.atk, def: s.def, shield: 0,
-        ardor: this.stage.rule === 'restlessDim' ? 2 : 0,
+        ardor: Math.min(ARDOR_MAX, (this.stage.rule === 'restlessDim' ? 2 : 0) + (this.mods.enemyArdor ?? 0)),
         statuses: [], alive: true, slot: i, wave: index, patternIndex: 0, intent: null, boss: def.boss,
       });
     });
@@ -242,7 +274,7 @@ export class BattleEngine {
         return;
       }
     }
-    const count = LANTERN.lightsPerRound + (this.stage.rule === 'fireflyBloom' ? 1 : 0);
+    const count = LANTERN.lightsPerRound + (this.stage.rule === 'fireflyBloom' ? 1 : 0) + (this.mods.lights ?? 0);
     this.lightRandom(count, ev);
   }
 
@@ -466,6 +498,7 @@ export class BattleEngine {
     if (this.aliveEnemies.length === 0) {
       ev.push({ t: 'waveClear', wave: this.wave });
       if (this.wave + 1 < this.waveCount) {
+        if (this.mods.waveHeal) for (const u of this.aliveAllies) this.healUnit(u, u.maxHp * this.mods.waveHeal, ev, true);
         this.spawnWave(this.wave + 1, ev);
         return false;
       }
@@ -603,7 +636,7 @@ export class BattleEngine {
 
   private dealDamage(src: Unit, tgt: Unit, raw: number, ev: BattleEvent[]): void {
     if (!tgt.alive) return;
-    const crit = src.side === 'ally' && this.rng.chance(CRIT_CHANCE);
+    const crit = src.side === 'ally' && this.rng.chance(CRIT_CHANCE + (this.mods.crit ?? 0));
     const variance = this.rng.range(0.95, 1.05);
     const amount = Math.max(1, Math.round(raw * this.damageFactor(src, tgt) * (crit ? CRIT_MULT : 1) * variance));
     const absorbed = Math.min(tgt.shield, amount);
