@@ -63,9 +63,11 @@ export interface NightRecord {
   milestones: number[];
   /** Ending badges earned (ids of ENDINGS). */
   badges: string[];
+  /** The troupe chosen for the night; empty means the main team climbs. */
+  team: string[];
 }
 
-export const freshNight = (): NightRecord => ({ run: null, best: 0, clears: 0, runs: 0, milestones: [], badges: [] });
+export const freshNight = (): NightRecord => ({ run: null, best: 0, clears: 0, runs: 0, milestones: [], badges: [], team: [] });
 
 // ------------------------------------------------------------------ the story of each hour
 
@@ -389,8 +391,14 @@ export function buildMap(rng: Rng): NightNode[] {
 
 // ------------------------------------------------------------------ the run
 
+/** Who climbs: the night's own troupe if one is chosen, otherwise the main team. */
+export function nightTeam(save: SaveData): string[] {
+  const own = save.night.team.filter((id) => save.roster[id]);
+  return own.length ? own : save.team.filter((id) => save.roster[id]);
+}
+
 export function startRun(save: SaveData, seed: number): NightRun {
-  const team = save.team.filter((id) => save.roster[id]);
+  const team = nightTeam(save);
   const lv = team.reduce((a, id) => a + effectiveLevel(save.roster[id]), 0) / Math.max(1, team.length);
   const rng = new Rng(seed);
   const run: NightRun = {
@@ -540,5 +548,6 @@ export function sanitizeNight(raw: unknown): NightRecord {
     run, best: n(o.best, HOURS), clears: n(o.clears, 1e6), runs: n(o.runs, 1e6),
     milestones: Array.isArray(o.milestones) ? (o.milestones as unknown[]).filter((x): x is number => typeof x === 'number') : [],
     badges: Array.isArray(o.badges) ? (o.badges as unknown[]).filter((x): x is string => typeof x === 'string' && ENDINGS.some((e) => e.id === x)) : [],
+    team: Array.isArray(o.team) ? [...new Set((o.team as unknown[]).filter((x): x is string => typeof x === 'string'))].slice(0, 3) : [],
   };
 }

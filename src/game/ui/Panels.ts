@@ -170,13 +170,16 @@ function drawTasks(scene: Phaser.Scene, c: Phaser.GameObjects.Container, defs: T
     // Progress bar.
     row.add(scene.add.rectangle(-rowW / 2 + 40, 22, 420, 10, 0x000000, 0.18).setOrigin(0, 0.5));
     row.add(scene.add.rectangle(-rowW / 2 + 40, 22, 420 * (cur / goal), 10, C.amber, 0.95).setOrigin(0, 0.5));
-    row.add(text(scene, -rowW / 2 + 480, 22, `${cur} / ${goal}`, { size: 20, color: dark ? CSS.paperSub : CSS.muted }).setOrigin(0, 0.5));
-    // Rewards.
+    row.add(text(scene, -rowW / 2 + 476, 22, `${cur} / ${goal}`, { size: 24, bold: true, color: dark ? (cur >= goal ? '#4a7a3a' : CSS.paperText) : CSS.muted }).setOrigin(0, 0.5));
+    // Rewards: small dark tiles, the amount on a strip along the bottom.
     const rewards: [string, number][] = [['icon:glimmer', d.glimmer], ...Object.entries(d.items ?? {}).map(([k, v]) => [`item:${k}`, v as number] as [string, number])];
     rewards.forEach(([key, q], k) => {
-      const rx = 40 + k * 118;
-      row.add(scene.add.image(rx - 20, 0, key).setDisplaySize(52, 52).setAlpha(st === 'claimed' ? 0.5 : 1));
-      row.add(text(scene, rx + 10, 16, formatQty(q), { size: 19, bold: true, color: dark ? CSS.paperText : CSS.muted }).setOrigin(0, 0.5));
+      const tile = scene.add.container(-10 + k * 92, 0).setAlpha(st === 'claimed' ? 0.5 : 1);
+      tile.add(scene.add.rectangle(0, 0, 80, 80, 0x1c1814, 0.92).setStrokeStyle(1.5, C.gold, 0.6));
+      tile.add(scene.add.image(0, -9, key).setDisplaySize(54, 54));
+      tile.add(scene.add.rectangle(0, 28, 80, 24, 0x000000, 0.55));
+      tile.add(text(scene, 0, 28, formatQty(q), { size: 19, bold: true, color: CSS.cream }).setOrigin(0.5));
+      row.add(tile);
     });
     if (st === 'claimed') row.add(scene.add.image(rowW / 2 - 90, 0, 'icon:check').setDisplaySize(44, 44));
     else {
