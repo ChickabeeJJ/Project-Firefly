@@ -28,7 +28,7 @@ const LORE: { title: string; text: string }[] = [
   { title: 'Wick Dust', text: 'Ash from a wick that burned through the Dimming still remembers being light. Feed it to a Luminary and they grow brighter.' },
 ];
 
-const VERSION = 'Project Firefly · V1.5';
+const VERSION = 'Project Firefly · V1.0';
 
 /** Startup: loading screen over the painted lighthouse, then a title card that waits for a tap. */
 export class BootScene extends Phaser.Scene {

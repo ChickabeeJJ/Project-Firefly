@@ -16,7 +16,7 @@ import { LOBBY_GREETINGS, LOBBY_LINES } from '../data/story';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
 /** The newest Luminaries, advertised on the lobby banner. */
-const FEATURED = ['ottoline', 'marigold', 'ichabod'];
+const FEATURED = ['cassian', 'rook', 'nell'];
 /** Right-hand column: centre x and shared width. */
 const RIGHT_X = 1620;
 const COL_W = 470;
@@ -39,6 +39,9 @@ export class LobbyScene extends Phaser.Scene {
   private hidden = false;
   private face = { x: 960, y: 260 };
   private hands: Phaser.GameObjects.Image[] = [];
+  /** Set while the midnight chime holds the hands on the thirteenth mark. */
+  private striking = false;
+  private struckOn = '';
   private clockTime!: Phaser.GameObjects.Text;
   private clockDate!: Phaser.GameObjects.Text;
 
@@ -360,14 +363,14 @@ export class LobbyScene extends Phaser.Scene {
     const cx = 100;
     const cy = 988;
     const c = this.add.container(0, 0);
-    c.add(this.add.image(cx, cy, 'fx:glow').setTint(0xffc070).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(330, 300).setAlpha(0.16));
+    c.add(this.add.image(cx, cy, 'fx:glow').setTint(0xff9a40).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(330, 300).setAlpha(0.09));
     c.add(this.add.image(cx, cy, 'ui:clockFace').setScale(s));
     const hand = (key: string, counter = 0) => this.add.image(cx, cy, key).setOrigin(0.5, 1 - counter / this.textures.get(key).getSourceImage().height).setScale(s);
     this.hands = [hand('ui:clockHour'), hand('ui:clockMin'), hand('ui:clockSec', 26)];
     c.add(this.hands);
     c.add(this.add.circle(cx, cy, 6, 0xd8b060).setStrokeStyle(1.5, 0x3a2208));
     // Date and time beside the dial, set like a ticket stub.
-    this.clockTime = text(this, cx + 104, cy - 20, '', { size: 46, font: 'display', color: '#f4ead4', spacing: 2, shadow: true }).setOrigin(0, 0.5);
+    this.clockTime = text(this, cx + 104, cy - 20, '', { size: 46, font: 'display', color: '#e8cc9a', spacing: 2, shadow: true }).setOrigin(0, 0.5);
     this.clockDate = text(this, cx + 106, cy + 26, '', { size: 22, font: 'letter', italic: true, color: CSS.creamDim, shadow: true }).setOrigin(0, 0.5);
     c.add([this.clockTime, this.clockDate, this.add.rectangle(cx + 114, cy + 4, 190, 1, 0xe8dcc0, 0.45).setOrigin(0, 0.5)]);
     this.ui.add(c);
@@ -377,6 +380,13 @@ export class LobbyScene extends Phaser.Scene {
 
   private tickClock(): void {
     const d = new Date();
+    const key = d.toDateString();
+    const forced = new URLSearchParams(location.search).has('midnight');
+    if ((forced || (d.getHours() === 0 && d.getMinutes() === 0)) && this.struckOn !== key) {
+      this.struckOn = key;
+      this.thirteenthStroke();
+    }
+    if (this.striking) return;
     const sec = d.getSeconds() + d.getMilliseconds() / 1000;
     const min = d.getMinutes() + sec / 60;
     const hr = (d.getHours() % 12) + min / 60;
@@ -390,6 +400,53 @@ export class LobbyScene extends Phaser.Scene {
     }
     this.clockTime.setText(`${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`);
     this.clockDate.setText(d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }));
+  }
+
+  /**
+   * Easter egg: at midnight the lobby clock strikes twelve, and then once more — the Thirteenth
+   * Stroke from the night of the Dimming. The hands stand on the red mark until it passes.
+   */
+  private thirteenthStroke(): void {
+    const [h, m, sec] = this.hands;
+    const cx = h.x;
+    const cy = h.y;
+    const gap = 420;
+    for (let k = 0; k < 12; k++) {
+      this.time.delayedCall(k * gap, () => {
+        audio.sfx('lantern');
+        const ring = this.add.circle(cx, cy, 56, 0xffc070, 0).setStrokeStyle(2, 0xffc070, 0.5).setDepth(50);
+        this.tweens.add({ targets: ring, scale: 1.8, alpha: 0, duration: 700, onComplete: () => ring.destroy() });
+      });
+    }
+    this.time.delayedCall(12 * gap + 900, () => {
+      this.striking = true;
+      audio.sfx('finale');
+      this.cameras.main.shake(600, 0.006);
+      const a13 = 15; // half an hour past XII: the red lozenge
+      this.tweens.add({ targets: [h, m, sec], angle: a13, duration: 500, ease: 'Back.easeOut' });
+      this.clockTime.setText('XIII').setColor('#d0505a');
+      const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x3a0a14, 0.5).setDepth(45);
+      this.tweens.add({ targets: veil, alpha: 0, duration: 2600, ease: 'Sine.easeOut', onComplete: () => veil.destroy() });
+      // Thirteen fireflies slip out of the dial and drift up into the room.
+      for (let i = 0; i < 13; i++) {
+        const f = this.add.image(cx, cy, 'fx:glow').setTint(0xffe08a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(26, 26).setDepth(60);
+        this.tweens.add({
+          targets: f, x: cx + Phaser.Math.Between(60, 760), y: cy - Phaser.Math.Between(220, 820), alpha: 0,
+          duration: Phaser.Math.Between(2600, 4200), delay: i * 90, ease: 'Sine.easeOut', onComplete: () => f.destroy(),
+        });
+      }
+      this.say('Thirteen. Did you hear it? There is no thirteenth hour — and yet, every midnight, the clocks remember one.');
+      if (!saves.hasHint('egg:thirteenth')) {
+        saves.get().glimmer += 130;
+        saves.markHint('egg:thirteenth');
+        this.refreshDots();
+        toast(this, 'The Thirteenth Stroke  ·  +130 Glimmer', 'glimmer');
+      }
+      this.time.delayedCall(4200, () => {
+        this.clockTime.setColor('#e8cc9a');
+        this.striking = false;
+      });
+    });
   }
 
   private say(line: string): void {

@@ -623,14 +623,18 @@ export interface PaintedSource {
   h: number;
 }
 
-function portrait(ctx: Ctx, char: CharacterDef, painted?: PaintedSource): void {
-  // Comic close-up of the caster in the lower left, partially cropped by the card edge.
+function portrait(ctx: Ctx, char: CharacterDef, painted?: PaintedSource, face?: [number, number]): void {
+  // A bust close-up of the caster: the face sits in the upper third, the figure runs off the edges.
   if (painted) {
-    const s = (CARD_H * 1.05) / painted.h;
+    const [fx, fy] = face ?? [0.5, 0.15];
+    // Head size estimated from how far down the face sits: low faces mean seated or close framing.
+    const head = Math.min(0.16, Math.max(0.075, fy * 0.8));
+    const s = (CARD_H * 0.26) / (head * painted.h);
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.55)';
     ctx.shadowBlur = 18;
-    ctx.drawImage(painted.img, CARD_W * 0.36 - (painted.w * s) / 2, CARD_H * 0.16, painted.w * s, painted.h * s);
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(painted.img, CARD_W * 0.46 - fx * painted.w * s, CARD_H * 0.33 - fy * painted.h * s, painted.w * s, painted.h * s);
     ctx.restore();
     return;
   }
@@ -683,7 +687,7 @@ function cinematicGrade(ctx: Ctx, pal: Pal): void {
   ctx.restore();
 }
 
-export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource): void {
+export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource, face?: [number, number]): void {
   const pal: Pal = char.palette;
   const rnd = seeded(verse.id.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
   ctx.save();
@@ -705,11 +709,23 @@ export function drawVerseArt(ctx: Ctx, char: CharacterDef, verse: VerseDef, pain
     cinematicGrade(ctx, pal);
   }
   if (verse.art.portrait) {
-    portrait(ctx, char, painted);
+    portrait(ctx, char, painted, face);
+    // The emblem sits low in the corner, clear of the face, on a soft shadow so it reads over cloth.
+    const low = ctx.createLinearGradient(0, CARD_H * 0.55, 0, CARD_H);
+    low.addColorStop(0, 'rgba(0,0,0,0)');
+    low.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = low;
+    ctx.fillRect(0, 0, CARD_W, CARD_H);
     ctx.save();
-    ctx.translate(CARD_W * 0.68, CARD_H * 0.28);
-    if (motifArt) paintedMotif(ctx, motifArt, 112);
-    else {
+    ctx.translate(CARD_W * 0.75, CARD_H * 0.72);
+    if (motifArt) {
+      const plate = ctx.createRadialGradient(0, 0, 4, 0, 0, 62);
+      plate.addColorStop(0, 'rgba(10,8,12,0.55)');
+      plate.addColorStop(1, 'rgba(10,8,12,0)');
+      ctx.fillStyle = plate;
+      ctx.fillRect(-70, -70, 140, 140);
+      paintedMotif(ctx, motifArt, 100);
+    } else {
       ctx.scale(0.62, 0.62);
       MOTIFS[verse.art.motif](ctx, pal);
     }
@@ -746,9 +762,9 @@ function paintedMotif(ctx: Ctx, art: PaintedSource, size: number): void {
   ctx.drawImage(art.img, -size / 2, -size / 2, size, size);
 }
 
-export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource): HTMLCanvasElement {
+export function verseArtCanvas(char: CharacterDef, verse: VerseDef, painted?: PaintedSource, panel?: PaintedSource, motifArt?: PaintedSource, face?: [number, number]): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(CARD_W, CARD_H);
-  drawVerseArt(ctx, char, verse, painted, panel, motifArt);
+  drawVerseArt(ctx, char, verse, painted, panel, motifArt, face);
   return canvas;
 }
 

@@ -210,6 +210,21 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Moths', text: 'Pale moths follow her everywhere — not the Dimmed kind, she insists, but the old kind, that come to any lamp kept long enough. She talks to them. Sometimes they seem to answer.' },
     { title: 'The Vigil', text: 'She has sat beside a great many beds in the dark. She knows the exact weight of a hand that is letting go, and she has never once let go first.' },
   ],
+  rook: [
+    { title: 'The Midnight Envoy', text: 'Ambroise Morrow was the last ambassador Vellmoor ever sent anywhere. When the Dimming came, the city council — what was left of it — sent him to the one power no one had yet tried to talk to.' },
+    { title: 'The Open Hand', text: 'He always offers his hand first. The glove is for the Dimming’s sake, he says: it is rude to make the dark touch skin. Three times it has nearly taken the hand. Three times it has let go.' },
+    { title: 'Terms', text: 'He keeps every treaty he has ever signed in a tasselled case at his hip. One of them is blank, but for a single line at the bottom, already signed in a hand that is not his.' },
+  ],
+  nell: [
+    { title: 'The Blue Hour', text: 'Mireille Brume sang at the Opéra Azur until the night the chandeliers went out mid-aria. She finished the song in the dark. When the lamps were relit, half the audience was gone, and she was still singing.' },
+    { title: 'Lilies of the Valley', text: 'The blue flowers in her hair were cut from the theatre’s last bouquet. They have not wilted. She is not certain they are still flowers.' },
+    { title: 'Hush', text: 'Her voice can quiet a Dimmed thing for exactly as long as she can hold a note. She has been practising her breath for two years. The record is four minutes and eleven seconds.' },
+  ],
+  cassian: [
+    { title: 'The Clockmaker’s Heir', text: 'Cassian Vire is the only son of A. Vire, who built the Cathedral Clock — and, if you look closely at the carriage clock in your own parlour, that one too. On the night of the Thirteenth Stroke, his father went up the tower to stop the bell, and did not come down.' },
+    { title: 'The Red Ledger', text: 'He keeps an account of every minute the Dimming has stolen from the city, in red ink, in a ledger with a lock. He means to collect. All of it. With interest.' },
+    { title: 'Pocket Watch', text: 'The chain at his waist holds his father’s watch. It has thirteen hours on its face, and it runs. He winds it every midnight, and every midnight, for one stroke, it is right.' },
+  ],
   percival: [
     { title: 'The Pressed Lily', text: 'Perrine Lys kept the flower-press at the Vellmoor herbarium, where a century of summers lie flat between blotting paper. When the Dimming came she noticed it first: the oldest pages had begun to forget their colours.' },
     { title: 'The Herbarium', text: 'She presses moments the way others press flowers — a laugh, a lamplit doorway, the last warm evening of a year. Pressed, they cannot fade. The Dimming has tried. The pages hold.' },
@@ -302,6 +317,27 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'I keep a list of everyone I have sat beside. It is very long. I read it to the moths.',
     'Rest your eyes. I will wake you if anything changes. I always do.',
     'There — a moth on your sleeve. That means you are a lamp now too. Be careful with it.',
+  ],
+  rook: [
+    'Sit, please. Every negotiation begins with someone choosing not to stand.',
+    'I have shaken hands with the Dimming. It was cold, and very polite. That frightened me more than anything.',
+    'The glove? A courtesy. One does not make the dark touch skin.',
+    'There is always a third option. It is usually the one nobody wanted to say out loud.',
+    'You have the look of someone who keeps their word. Rare, these days. I collect it.',
+  ],
+  nell: [
+    'Shh. Listen — the house goes quiet just before the dark comes in. Like an audience.',
+    'I finished the aria. Somebody had to. The music does not stop just because the lights do.',
+    'The flowers in my hair have not wilted in two years. I try not to ask them why.',
+    'Sing with me? No? Then hum. The Dimming hates a held note.',
+    'Blue is the colour of the hour between. Not quite day. Not quite gone.',
+  ],
+  cassian: [
+    'Your clock runs fast by a hair. Father would have hated that. Leave it — I rather like it.',
+    'Every minute the Dimming takes goes in the ledger. Red ink. I intend to collect.',
+    'There is no thirteenth hour. I know. I have stood in it.',
+    'Hands in pockets is not rudeness. It is so I do not wind every clock in the room.',
+    'Midnight. Listen for the extra stroke — if you hear it, come and find me.',
   ],
   percival: [
     'Don’t move. The light on you just now — I want to remember it properly.',

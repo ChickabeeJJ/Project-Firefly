@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { fitPortrait } from '../art/assets';
-import { ensureBg, ensurePortrait } from '../art/registry';
+import { ensureBg, ensurePortrait, FACE_POINTS } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { Rng } from '../battle/rng';
 import { MAX_RESONANCE } from '../battle/rules';
@@ -29,7 +29,7 @@ export class SummonScene extends Phaser.Scene {
   private revealAllBtn?: Button;
   private bigReveal = false;
   private prompt?: Phaser.GameObjects.Text;
-  private bannerId = 'dove';
+  private bannerId = BANNERS[0].id;
 
   constructor() {
     super('Summon');
@@ -63,6 +63,10 @@ export class SummonScene extends Phaser.Scene {
       const rays = this.add.image(1450, 420, 'fx:glow').setTint(Phaser.Display.Color.HexStringToColor(fc.palette.secondary).color).setDisplaySize(1300, 1300).setAlpha(0.35).setBlendMode(Phaser.BlendModes.ADD);
       ui.add(rays);
       const art = fitPortrait(this.add.image(1480, H + 70, ensurePortrait(this, fc.id)).setOrigin(0.5, 1), 1.1, 1230, 1100);
+      // Full-length figures stand tall: keep the head clear of the top edge.
+      const fy = (FACE_POINTS[fc.id] ?? [0.5, 0.2])[1];
+      const headTop = art.y - art.displayHeight * (1 - fy) - art.displayHeight * Math.min(0.16, Math.max(0.075, fy * 0.8)) * 0.7;
+      if (headTop < 110) art.setY(art.y + 110 - headTop);
       ui.add(art);
       const ax = art.x;
       art.setX(ax + 80).setAlpha(0);
@@ -190,7 +194,9 @@ export class SummonScene extends Phaser.Scene {
     if (b.featured) {
       // Face-and-shoulders crop of the featured art.
       thumb = this.add.image(0, 0, ensurePortrait(this, b.featured));
-      thumb.setScale(w / (thumb.width * 0.42)).setOrigin(0.45, 0.2);
+      const [fx, fy] = FACE_POINTS[b.featured] ?? [0.45, 0.2];
+      const head = Math.min(0.16, Math.max(0.075, fy * 0.8)) * thumb.height;
+      thumb.setScale(Math.max((h * 0.62) / head, w / thumb.width)).setOrigin(fx, fy).setY(-h * 0.08);
     } else {
       thumb = this.add.image(0, 0, ensureBg(this, 'lake')).setDisplaySize(w * 1.4, h * 1.4);
     }

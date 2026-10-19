@@ -25,6 +25,10 @@ export interface Banner {
 
 export const BANNERS: Banner[] = [
   {
+    id: 'thirteenth', name: 'The Thirteenth Hour', tag: 'Event', featured: 'cassian', featured4: ['rook', 'nell'],
+    blurb: 'The clockmaker’s son has come to collect every stolen minute. Cassian Vire answers the light more often.',
+  },
+  {
     id: 'dove', name: 'The Caged Dove', tag: 'Event', featured: 'evangeline', featured4: ['kit', 'teddy'],
     blurb: 'Every dove she sets free carries a name home. Aveline Halcyon answers the light more often.',
   },

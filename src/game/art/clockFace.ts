@@ -16,10 +16,10 @@ export function clockFaceCanvas(): HTMLCanvasElement {
   ctx.shadowBlur = 18;
   ctx.shadowOffsetY = 6;
   const bez = ctx.createLinearGradient(c - R, c - R, c + R, c + R);
-  bez.addColorStop(0, '#f6dc9a');
-  bez.addColorStop(0.35, '#a8742c');
-  bez.addColorStop(0.55, '#f2cf86');
-  bez.addColorStop(1, '#4a2e10');
+  bez.addColorStop(0, '#d9b46a');
+  bez.addColorStop(0.35, '#8a5a22');
+  bez.addColorStop(0.55, '#cfa25a');
+  bez.addColorStop(1, '#3a220a');
   ctx.fillStyle = bez;
   ctx.beginPath();
   ctx.arc(c, c, R, 0, Math.PI * 2);
@@ -45,9 +45,9 @@ export function clockFaceCanvas(): HTMLCanvasElement {
   ctx.fill();
   // Enamel face with aged warmth.
   const face = ctx.createRadialGradient(c - 30, c - 40, 10, c, c, R - 18);
-  face.addColorStop(0, '#fbf3e0');
-  face.addColorStop(0.75, '#efe0bf');
-  face.addColorStop(1, '#cdb58a');
+  face.addColorStop(0, '#e9d2a6');
+  face.addColorStop(0.75, '#d9bc8a');
+  face.addColorStop(1, '#a8844e');
   ctx.fillStyle = face;
   ctx.beginPath();
   ctx.arc(c, c, R - 18, 0, Math.PI * 2);
@@ -108,8 +108,8 @@ export function clockFaceCanvas(): HTMLCanvasElement {
   ctx.fillText('A. Vire · Vellmoor', c, c + 52);
   // Glass glare.
   const glare = ctx.createLinearGradient(c - R, c - R, c, c);
-  glare.addColorStop(0, 'rgba(255,255,255,0.28)');
-  glare.addColorStop(1, 'rgba(255,255,255,0)');
+  glare.addColorStop(0, 'rgba(255,224,170,0.12)');
+  glare.addColorStop(1, 'rgba(255,224,170,0)');
   ctx.fillStyle = glare;
   ctx.beginPath();
   ctx.ellipse(c - 34, c - 44, R * 0.62, R * 0.36, -0.7, 0, Math.PI * 2);

@@ -1,7 +1,7 @@
 {
   "name": "project-firefly",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Project Firefly — a card-incantation battler for CrazyGames.",
   "type": "module",
   "scripts": {

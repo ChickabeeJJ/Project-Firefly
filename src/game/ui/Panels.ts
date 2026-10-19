@@ -171,6 +171,7 @@ const HOW_TO = [
 ];
 
 const WHATS_NEW = [
+  ['Version 1.0 · The Thirteenth Hour', 'Cassian Vire, Ambroise Morrow, Mireille Brume and Perrine Lys join the Troupe. Listen to the parlour clock at midnight.'],
   ['Chapter 3 · The Drowned Docks', 'Drowned brides, bilge shades and a siren in the mirror. Boss: Keeper Brine.'],
   ['Chapter 4 · The Clock Without Hands', 'Climb the Cathedral Clock and face The Hourless King.'],
   ['New faces', 'Corvin, Seraphine, Columbine, Lucien, Aldric, Ophelia, Valerian and Elias have new portraits and new names.'],
