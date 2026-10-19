@@ -51,7 +51,12 @@ export class BootScene extends Phaser.Scene {
     platform.loadingStart();
     await loadFonts();
     this.buildLoading();
-    document.getElementById('boot')?.remove();
+    // The page's copy of the painting stays until the game's has faded in over it: one loading screen.
+    const boot = document.getElementById('boot');
+    if (boot) {
+      this.time.delayedCall(900, () => (boot.style.opacity = '0'));
+      this.time.delayedCall(1600, () => boot.remove());
+    }
 
     const t0 = performance.now();
     // The lobby's leader loads now at full size; the rest of the troupe streams in after.
