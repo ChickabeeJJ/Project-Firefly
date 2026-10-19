@@ -117,7 +117,7 @@ export function clockFaceCanvas(): HTMLCanvasElement {
   return canvas;
 }
 
-/** A blued-steel clock hand, pointing up, pivot at (w/2, len). */
+/** A black-steel clock hand, pointing up, pivot at (w/2, len). */
 export function clockHandCanvas(len: number, w: number, color = '#1c2436', counter = 0): HTMLCanvasElement {
   // Slim Breguet hands: a fine tapered shaft, an open ring near the tip, then a slender lance.
   // The second hand is a plain needle with a ringed counterweight.
@@ -139,9 +139,9 @@ export function clockHandCanvas(len: number, w: number, color = '#1c2436', count
     return canvas;
   }
   const steel = ctx.createLinearGradient(0, 0, w, 0);
-  steel.addColorStop(0, '#0c121e');
-  steel.addColorStop(0.5, color === '#1c2436' ? '#3a4e78' : color);
-  steel.addColorStop(1, '#0c121e');
+  steel.addColorStop(0, '#060606');
+  steel.addColorStop(0.5, color === '#1c2436' ? '#2e2c2a' : color);
+  steel.addColorStop(1, '#060606');
   const ringY = len * (w > 18 ? 0.3 : 0.2);
   const r = w * 0.3;
   const shaft = w * 0.1;
@@ -182,7 +182,7 @@ export function clockHandCanvas(len: number, w: number, color = '#1c2436', count
 }
 
 /**
- * Breguet-style hand for the ornate dials: a blued-steel blade with a gilt edge, pointing up, pivot
+ * Breguet-style hand for the ornate dials: a black-steel blade with a gilt edge, pointing up, pivot
  * at (w/2, len). 'hour' carries an open moon ring, 'minute' a small lozenge, 'second' a counterweight.
  */
 export function vintageHandCanvas(kind: 'hour' | 'minute' | 'second', len: number): HTMLCanvasElement {
@@ -191,9 +191,9 @@ export function vintageHandCanvas(kind: 'hour' | 'minute' | 'second', len: numbe
   const { canvas, ctx } = makeCanvas(w, Math.ceil(len + tail));
   const cx = w / 2;
   const steel = ctx.createLinearGradient(0, 0, w, 0);
-  steel.addColorStop(0, '#0e1420');
-  steel.addColorStop(0.5, '#34466a');
-  steel.addColorStop(1, '#0e1420');
+  steel.addColorStop(0, '#060606');
+  steel.addColorStop(0.5, '#2e2c2a');
+  steel.addColorStop(1, '#060606');
   ctx.fillStyle = steel;
   ctx.strokeStyle = '#d6b264';
   ctx.lineWidth = 1.2;

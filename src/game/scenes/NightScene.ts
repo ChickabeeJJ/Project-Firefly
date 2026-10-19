@@ -80,7 +80,7 @@ export class NightScene extends Phaser.Scene {
     if (ornate) this.add.image(cx, cy, ornate).setDisplaySize(440, 440);
     else this.add.circle(cx, cy, 230, 0x2a2016).setStrokeStyle(6, C.gold);
     const best = rec.best;
-    if (!this.textures.exists('ui:nightHand')) this.textures.addCanvas('ui:nightHand', clockHandCanvas(140, 30));
+    if (!this.textures.exists('ui:nightHand')) this.textures.addCanvas('ui:nightHand', clockHandCanvas(140, 19));
     const hand = this.add.image(cx, cy, 'ui:nightHand').setOrigin(0.5, 1);
     const angle = (best / HOURS) * 360;
     hand.setAngle(0);
