@@ -17,7 +17,7 @@ import { effectiveLevel, insightLabel } from '../systems/growth';
 import { platform } from '../platform/PlatformAdapter';
 import { applyBattleResult } from '../systems/progression';
 import { BattleFx } from '../ui/BattleFx';
-import { CARD_DH, CardView, HAND_SCALE } from '../ui/CardView';
+import { CARD_DH, CARD_DW, CardView, HAND_SCALE } from '../ui/CardView';
 import { Atmosphere, DiamondButton, fadeIn, goTo, text, toast } from '../ui/kit';
 import { UnitView } from '../ui/UnitView';
 
@@ -56,6 +56,8 @@ interface TutStep {
   card?: (c: Card) => boolean;
   lantern?: boolean;
   tap?: boolean;
+  /** Area outlined for the player (defaults to the card or lantern the step asks for). */
+  focus?: (s: BattleScene) => { x: number; y: number; w: number; h: number } | null;
 }
 
 /** Stage 1-1 for new players: a scripted, hand-held first battle. */
@@ -200,6 +202,15 @@ export class BattleScene extends Phaser.Scene {
     new DiamondButton(this, 1850, 76, 'pause', () => this.openPause('pause')).setDepth(300);
     text(this, 1650, 132, 'AUTO', { size: 22, font: 'display', bold: true, color: CSS.creamDim, spacing: 2 }).setOrigin(0.5).setDepth(300);
     text(this, 1750, 132, 'SPEED', { size: 22, font: 'display', bold: true, color: CSS.creamDim, spacing: 2 }).setOrigin(0.5).setDepth(300);
+    // Remembered from the last fight (the guided first battle always starts by hand, at normal speed).
+    if (!this.tutSteps) {
+      const st = saves.get().settings;
+      if (st.speed === 2) this.setSpeed(2);
+      if (st.auto) {
+        this.auto = true;
+        this.autoBtn.setOn(true);
+      }
+    }
 
     if (this.stage.rule) {
       const rule = this.stage.rule === 'fireflyBloom'
@@ -1127,6 +1138,8 @@ export class BattleScene extends Phaser.Scene {
     }
     this.auto = !this.auto;
     this.autoBtn.setOn(this.auto);
+    saves.get().settings.auto = this.auto;
+    saves.commit();
     toast(this, this.auto ? 'Auto battle on' : 'Auto battle off', 'auto');
     if (this.auto && this.canPlan()) this.autoStep();
   }
@@ -1152,6 +1165,10 @@ export class BattleScene extends Phaser.Scene {
     this.tweens.timeScale = s;
     this.time.timeScale = s;
     this.speedBtn?.setOn(s > 1);
+    if (saves.get().settings.speed !== s) {
+      saves.get().settings.speed = s;
+      saves.commit();
+    }
   }
 
   private openPause(mode: 'pause' | 'intel'): void {
@@ -1249,7 +1266,11 @@ export class BattleScene extends Phaser.Scene {
     const normal = (c: Card) => !c.finale;
     return {
       1: [
-        { msg: 'A Mothling! The icon above an enemy shows its next move — and who it will hit. Plan around it.', at: atEnemy, tap: true },
+        { msg: 'A Mothling! The icon above an enemy shows its next move — and who it will hit. Plan around it.', at: atEnemy, tap: true, focus: (s) => {
+          const e = s.engine.aliveEnemies[0];
+          const v = e && s.views.get(e.uid);
+          return v ? { x: v.x, y: (v.top - 70 + v.y) / 2, w: 300, h: v.y - v.top + 150 } : null;
+        } },
         { msg: 'These are your Verses. Each round you get 3 Beats to cast them.\n\nTap Lullaby Dose — the card between the two Strikes.', at: atCard(lullaby), card: lullaby },
         { msg: 'The two Strikes slid together and merged into a ★★ Verse — much stronger! Cast it.', at: atCard(strike2), card: strike2 },
         { msg: 'One Beat left. Cast any Verse — the round then plays out on its own.', at: () => ({ x: HAND_CX, y: HAND_Y - CARD_DH / 2 - 20, dir: 'down' }), card: normal },
@@ -1298,6 +1319,42 @@ export class BattleScene extends Phaser.Scene {
     if (b) this.tweens.add({ targets: b, scale: 1.04, duration: 90, yoyo: true });
   }
 
+  /** The rectangle a tutorial step wants the player to look at or tap. */
+  private tutFocus(step: TutStep): { x: number; y: number; w: number; h: number } | null {
+    if (step.focus) return step.focus(this);
+    if (step.card) {
+      const card = this.engine.hand.find((c) => step.card!(c) && this.handOrder.includes(c.cid));
+      const v = card && this.cards.get(card.cid);
+      return v ? { x: v.homeX, y: v.homeY - 30, w: CARD_DW + 22, h: CARD_DH + 22 } : null;
+    }
+    if (step.lantern) return { x: this.lantern.x + 100, y: this.lantern.y, w: 340, h: 190 };
+    return null;
+  }
+
+  /** Pulsing gilt outline with corner brackets around what to tap, so the guide is unmistakable. */
+  private focusRing(r: { x: number; y: number; w: number; h: number }): Phaser.GameObjects.Container {
+    const c = this.add.container(r.x, r.y);
+    const g = this.add.graphics();
+    const hw = r.w / 2;
+    const hh = r.h / 2;
+    g.lineStyle(10, C.gold, 0.22).strokeRoundedRect(-hw - 3, -hh - 3, r.w + 6, r.h + 6, 12);
+    g.lineStyle(3.5, 0xffe7a8, 1).strokeRoundedRect(-hw, -hh, r.w, r.h, 10);
+    const L = Math.min(34, r.w / 4);
+    g.lineStyle(5, 0xfff0c0, 1);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const cx = sx * (hw + 10);
+      const cy = sy * (hh + 10);
+      g.beginPath();
+      g.moveTo(cx, cy - sy * L);
+      g.lineTo(cx, cy);
+      g.lineTo(cx - sx * L, cy);
+      g.strokePath();
+    }
+    c.add(g);
+    this.tweens.add({ targets: c, scale: { from: 1, to: 1.04 }, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return c;
+  }
+
   private drawTutBubble(step: TutStep): void {
     if (this.ended) return;
     const at = step.at(this);
@@ -1313,6 +1370,13 @@ export class BattleScene extends Phaser.Scene {
         this.tutAdvance();
       });
     }
+    // The outline lives on its own top layer so cards and units never cover it.
+    const f = this.tutFocus(step);
+    if (f) {
+      const ring = this.focusRing(f).setDepth(900);
+      c.once(Phaser.GameObjects.Events.DESTROY, () => ring.destroy());
+      c.on('tut-fade', () => this.tweens.add({ targets: ring, alpha: 0, duration: 160 }));
+    }
     this.tutBubble = c;
   }
 
@@ -1321,6 +1385,7 @@ export class BattleScene extends Phaser.Scene {
     if (!c) return;
     this.tutBubble = undefined;
     this.tweens.killTweensOf(c);
+    c.emit('tut-fade');
     this.tweens.add({ targets: c, alpha: 0, duration: 160, onComplete: () => c.destroy() });
   }
 

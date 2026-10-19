@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropIn, idleVideoUrl, isDropIn } from '../art/assets';
+import { artScale, dropIn, idleVideoUrl, isDropIn } from '../art/assets';
 
 // Brings still character art to life without extra frames.
 //
@@ -141,7 +141,7 @@ export class LivingSprite extends Phaser.GameObjects.Container {
  */
 export function livingPortrait(scene: Phaser.Scene, x: number, y: number, key: string, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): LivingSprite {
   const ls = new LivingSprite(scene, x, y, key, { sway: 3, breathe: 0.003, speed: 0.8 });
-  const s = isDropIn(key) ? Math.min(paintedHeight / ls.height, maxWidth / ls.width) : proceduralScale;
+  const s = isDropIn(key) ? Math.min(paintedHeight / ls.height, maxWidth / ls.width) * artScale(key) : proceduralScale;
   ls.setScale(s);
   return ls;
 }

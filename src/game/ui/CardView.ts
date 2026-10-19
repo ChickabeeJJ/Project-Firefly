@@ -4,7 +4,7 @@ import { FRAME } from '../art/cardFrame';
 import { TYPE_LABEL } from '../battle/describe';
 import type { Card } from '../battle/types';
 import { findVerse } from '../data/characters';
-import { CSS, TYPE_CSS } from '../config/theme';
+import { C, CSS, TYPE_CSS } from '../config/theme';
 import { text } from './kit';
 
 export const HAND_SCALE = 0.6;
@@ -107,7 +107,7 @@ export class CardView extends Phaser.GameObjects.Container {
   refresh(): void {
     this.stars.forEach((s, i) => {
       const on = this.card.finale || i < this.card.rank;
-      s.setTint(this.card.finale ? 0xf6d27a : on ? 0xc8e47a : 0x4a4650).setAlpha(on ? 1 : 0.7);
+      s.setTint(this.card.finale ? 0xf6d27a : on ? C.accentStar : 0x4a4650).setAlpha(on ? 1 : 0.7);
     });
     this.litGlow.setVisible(this.card.lit);
     this.fly.setVisible(this.card.lit);

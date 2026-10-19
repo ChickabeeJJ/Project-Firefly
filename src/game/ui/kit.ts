@@ -1,7 +1,8 @@
 import { platform } from '../platform/PlatformAdapter';
 import Phaser from 'phaser';
 import { audio, type Sfx } from '../audio/AudioController';
-import { C, CSS, FONT_BODY, FONT_DISPLAY, FONT_LETTER, H, W } from '../config/theme';
+import { C, CSS, FONT_BODY, FONT_DISPLAY, FONT_LETTER, H, THEME_ID, W } from '../config/theme';
+import { diamondCanvas } from '../art/uiTextures';
 
 // Shared UI building blocks. Everything is sized for the 1920×1080 logical canvas; the smallest
 // body text is 24 px so it stays legible in the 907×510 embed.
@@ -175,12 +176,12 @@ export class Button extends Phaser.GameObjects.Container {
 /** Diamond icon button (corner HUD). */
 export class DiamondButton extends Phaser.GameObjects.Container {
   private icon: Phaser.GameObjects.Image;
-  private plate: Phaser.GameObjects.Graphics;
+  private plate: Phaser.GameObjects.Image;
   private lit = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number, iconKey: string, private onClick: () => void, size = 76) {
     super(scene, x, y);
-    this.plate = scene.add.graphics();
+    this.plate = scene.add.image(0, 0, '__DEFAULT');
     this.draw(size);
     this.icon = scene.add.image(0, 0, `icon:${iconKey}`).setDisplaySize(size * 0.5, size * 0.5);
     this.add([this.plate, this.icon]);
@@ -196,18 +197,9 @@ export class DiamondButton extends Phaser.GameObjects.Container {
   }
 
   private draw(size: number): void {
-    const h = size / 2;
-    this.plate.clear();
-    this.plate.fillStyle(this.lit ? C.amber : 0xd9d4c4, this.lit ? 0.85 : 0.18);
-    this.plate.lineStyle(2, this.lit ? C.gold : 0xe8e0cc, this.lit ? 0.9 : 0.45);
-    this.plate.beginPath();
-    this.plate.moveTo(0, -h);
-    this.plate.lineTo(h, 0);
-    this.plate.lineTo(0, h);
-    this.plate.lineTo(-h, 0);
-    this.plate.closePath();
-    this.plate.fillPath();
-    this.plate.strokePath();
+    const key = `ui:diamond${size}:${this.lit ? 'on' : 'off'}:${THEME_ID}`;
+    if (!this.scene.textures.exists(key)) this.scene.textures.addCanvas(key, diamondCanvas(size, this.lit));
+    this.plate.setTexture(key);
   }
 
   setOn(on: boolean): this {
@@ -272,7 +264,7 @@ export class Atmosphere {
       }
     }
     for (let i = 0; i < (opts.fireflies ?? 0); i++) {
-      const s = scene.add.image(0, 0, 'fx:firefly').setBlendMode(Phaser.BlendModes.ADD).setDepth(depth - 4).setScale(0.6 + Math.random() * 0.5);
+      const s = scene.add.image(0, 0, 'fx:firefly').setBlendMode(Phaser.BlendModes.ADD).setDepth(depth - 4).setScale(0.5 + Math.random() * 0.4);
       this.flies.push({ s, bx: Math.random() * W, by: 200 + Math.random() * (H - 300), ph: Math.random() * 100, sp: 0.3 + Math.random() * 0.5, r: 40 + Math.random() * 90 });
     }
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.update, this);

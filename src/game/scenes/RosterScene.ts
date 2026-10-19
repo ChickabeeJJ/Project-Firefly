@@ -322,7 +322,7 @@ export class RosterScene extends Phaser.Scene {
     // Glass, then light rising from the wick.
     g.fillStyle(0xe8dfcc, 1).fillRect(cx - bw / 2, top, bw, bh);
     const lh = bh * Phaser.Math.Clamp(fill, 0, 1);
-    g.fillGradientStyle(0xd8f2a8, 0xd8f2a8, 0x4f8a58, 0x4f8a58, 0.95, 0.95, 1, 1).fillRect(cx - bw / 2, top + bh - lh, bw, lh);
+    g.fillGradientStyle(C.accentPale, C.accentPale, C.amber, C.amber, 0.95, 0.95, 1, 1).fillRect(cx - bw / 2, top + bh - lh, bw, lh);
     // Flame.
     g.fillStyle(0xfff2c8, fill > 0 ? 1 : 0.4).fillEllipse(cx, top + bh - 30, 16, 30);
     // Frame: panes and posts.

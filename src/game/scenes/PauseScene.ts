@@ -5,7 +5,8 @@ import { LANTERN, MOOD_ADV } from '../battle/rules';
 import { getEnemy } from '../data/enemies';
 import { getStage } from '../data/stages';
 import type { StatusId } from '../data/types';
-import { C, CSS, H, MOOD_NAME, W } from '../config/theme';
+import { applyTheme, C, CSS, H, MOOD_NAME, THEMES, W } from '../config/theme';
+import { refreshThemeTextures } from '../art/registry';
 import { saves } from '../persistence/SaveService';
 import { Button, ornament, text, toast } from '../ui/kit';
 import type { BattleScene } from './BattleScene';
@@ -47,7 +48,7 @@ export class PauseScene extends Phaser.Scene {
   private buildPause(): void {
     const inBattle = this.data_.mode === 'pause';
     const pw = 760;
-    const ph = inBattle ? 700 : 720;
+    const ph = inBattle ? 700 : 800;
     const x = W / 2;
     const y = H / 2;
     this.add.nineslice(x, y, 'ui:paper', undefined, pw, ph, 16, 16, 16, 16);
@@ -122,6 +123,33 @@ export class PauseScene extends Phaser.Scene {
           reset.setData('armed', true);
           reset.setLabel('Tap again to erase');
         },
+      });
+      // Colour theme: a row of swatches; the room repaints at once.
+      text(this, x, cy + 378, 'THEME', { size: 20, font: 'display', bold: true, color: CSS.paperSub, spacing: 6 }).setOrigin(0.5);
+      const ids = Object.keys(THEMES);
+      ids.forEach((id, i) => {
+        const t = THEMES[id];
+        const sx = x + (i - (ids.length - 1) / 2) * 128;
+        const sy = cy + 440;
+        const on = (save.settings.theme ?? 'verdigris') === id;
+        const sw = this.add.container(sx, sy);
+        const g = this.add.graphics();
+        g.fillGradientStyle(t.light, t.light, t.dark, t.dark, 1).fillRoundedRect(-44, -26, 88, 52, 8);
+        g.lineStyle(on ? 3 : 1.5, on ? 0x2a241c : 0x9a8660, on ? 1 : 0.7).strokeRoundedRect(-44, -26, 88, 52, 8);
+        sw.add(g);
+        if (on) sw.add(text(this, 0, 0, '✓', { size: 26, bold: true, color: '#fff6e0' }).setOrigin(0.5));
+        sw.add(text(this, 0, 44, t.name, { size: 16, italic: true, color: on ? CSS.paperText : CSS.paperSub }).setOrigin(0.5));
+        sw.setSize(96, 60).setInteractive({ useHandCursor: true }).on('pointerup', () => {
+          if (on) return;
+          audio.sfx('tap');
+          save.settings.theme = id;
+          saves.commit();
+          applyTheme(id);
+          refreshThemeTextures(this);
+          const from = this.data_.from ?? 'Lobby';
+          this.scene.stop(from);
+          this.scene.start(from);
+        });
       });
       new Button(this, x + pw / 2 - 50, y - ph / 2 + 50, { w: 64, h: 64, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: () => this.close() });
       text(this, x, y + ph / 2 - 36, 'Project Firefly · Vellmoor, 1929', { size: 22, italic: true, color: CSS.paperSub }).setOrigin(0.5);
