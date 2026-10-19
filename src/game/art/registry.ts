@@ -86,6 +86,7 @@ export const FACE_POINTS: Record<string, [number, number]> = {
   clementine: [0.555, 0.17], delphine: [0.56, 0.17], hesper: [0.61, 0.11], ichabod: [0.62, 0.17], kit: [0.54, 0.125], marigold: [0.6, 0.1], ottoline: [0.6, 0.1], teddy: [0.54, 0.085],
   percival: [0.565, 0.2], rook: [0.55, 0.095], nell: [0.545, 0.115], cassian: [0.575, 0.08],
   sorrel: [0.54, 0.085], lazare: [0.5, 0.08], lys: [0.585, 0.1], raphael: [0.56, 0.085], severin: [0.475, 0.1],
+  emile: [0.5, 0.1], nine: [0.585, 0.33], tock: [0.5, 0.34], folio: [0.42, 0.38], cendrine: [0.555, 0.13],
 };
 
 /** Painted emblem (ui/motif_<name>, or a stat icon) standing in for each code-drawn card motif. */

@@ -17,7 +17,7 @@ import { saves } from '../persistence/SaveService';
 import { effectiveLevel, insightLabel } from '../systems/growth';
 import { platform } from '../platform/PlatformAdapter';
 import { applyBattleResult } from '../systems/progression';
-import { BattleFx } from '../ui/BattleFx';
+import { BattleFx, FINALE_BANNER } from '../ui/BattleFx';
 import { CARD_DH, CARD_DW, CardView, HAND_SCALE } from '../ui/CardView';
 import { Atmosphere, DiamondButton, fadeIn, goTo, text, toast } from '../ui/kit';
 import { UnitView } from '../ui/UnitView';
@@ -501,7 +501,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (e.finale) {
       audio.sfx('finale');
-      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, char.title, Phaser.Display.Color.HexStringToColor(char.palette.primary).color, FACE_POINTS[char.id]);
+      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, char.title, Phaser.Display.Color.HexStringToColor(char.palette.primary).color, FACE_POINTS[char.id], FINALE_BANNER[char.id]);
       this.fx.shake(0.006, 260);
     }
     this.showCastBanner(verse.name + (e.rank > 1 ? '  ' + '★'.repeat(e.rank) : ''), describeVerse(verse, e.rank, e.lit), e.finale ? CSS.gold : CSS.goldLight);

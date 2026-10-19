@@ -669,6 +669,206 @@ export const CHARACTERS: CharacterDef[] = [
     quote: 'Every letter I carry was written and never sent. I deliver them now, to whatever is left at the address.',
   },
   {
+    id: 'cendrine',
+    name: 'Cendrine Valois',
+    title: 'The Widow of Ash',
+    mood: 'moon',
+    rarity: 5,
+    role: 'Hexer',
+    base: { hp: 1020, atk: 150, def: 48 },
+    verses: [
+      {
+        id: 'cendrine_veil', name: 'Mourning Veil', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'allEnemies', power: 0.7 },
+          { kind: 'status', target: 'allEnemies', status: 'weak', turns: 2 },
+        ],
+        art: { motif: 'crescent', layout: 'spiral', portrait: true },
+      },
+      {
+        id: 'cendrine_ember', name: 'Banked Embers', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.5 },
+          { kind: 'status', target: 'enemy', status: 'burn', turns: 2, power: 0.3 },
+        ],
+        art: { motif: 'candle', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'cendrine_finale', name: 'All That Remains', type: 'mass', finale: true,
+      effects: [
+        { kind: 'damage', target: 'allEnemies', power: 2.4 },
+        { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 },
+        { kind: 'status', target: 'allEnemies', status: 'burn', turns: 2, power: 0.35 },
+      ],
+      art: { motif: 'crescent', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccc', hair: '#a89e94', hairStyle: 'long', bangs: 'side', eyes: '#8a7a6a',
+      outfit: 'robe', coat: '#1e1a1a', shirt: '#ece4d8', accent: '#b89a5a', legs: '#f2dccc', shoes: '#1a1416', skirt: true,
+    },
+    palette: { primary: '#4a4038', secondary: '#e8dcc8', ink: '#120e0c' },
+    quote: 'They burned my house with the lamps still lit. I kept the ash. It is surprising, what ash remembers.',
+  },
+  {
+    id: 'emile',
+    name: 'Émile Sauge',
+    title: 'The Marginalia Reader',
+    mood: 'moon',
+    rarity: 4,
+    role: 'Support',
+    base: { hp: 990, atk: 120, def: 50 },
+    verses: [
+      {
+        id: 'emile_margin', name: 'A Note in the Margin', type: 'buff',
+        effects: [
+          { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
+          { kind: 'light', amount: 1 },
+        ],
+        art: { motif: 'note', layout: 'split', portrait: true },
+      },
+      {
+        id: 'emile_pressed', name: 'Pressed Sage', type: 'heal',
+        effects: [
+          { kind: 'heal', target: 'woundedAlly', power: 0.9 },
+          { kind: 'status', target: 'allAllies', status: 'regen', turns: 2, power: 0.15 },
+        ],
+        art: { motif: 'wings', layout: 'rings' },
+      },
+    ],
+    finale: {
+      id: 'emile_finale', name: 'Read Aloud', type: 'buff', finale: true,
+      effects: [
+        { kind: 'heal', target: 'allAllies', power: 0.8 },
+        { kind: 'status', target: 'allAllies', status: 'might', turns: 3 },
+        { kind: 'light', amount: 2 },
+      ],
+      art: { motif: 'note', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccc', hair: '#8a8478', hairStyle: 'long', bangs: 'side', eyes: '#7a8a7a',
+      outfit: 'tailcoat', coat: '#1e2220', shirt: '#ece6da', accent: '#3a5a50', legs: '#1e1c1c', shoes: '#1a1416',
+    },
+    palette: { primary: '#2e4a44', secondary: '#e6e0d4', ink: '#0e1412' },
+    quote: 'Every book in Vellmoor has someone else’s handwriting in it. I read those first.',
+  },
+  {
+    id: 'nine',
+    name: 'Clerk No. 9',
+    title: 'The Sorting Engine',
+    mood: 'star',
+    rarity: 4,
+    role: 'Striker',
+    base: { hp: 960, atk: 140, def: 44 },
+    verses: [
+      {
+        id: 'nine_telegram', name: 'Urgent Telegram', type: 'attack',
+        effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.5, hits: 4 }],
+        art: { motif: 'newspaper', layout: 'burst', portrait: true },
+      },
+      {
+        id: 'nine_stamp', name: 'Postmarked', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.4 },
+          { kind: 'status', target: 'enemy', status: 'daze', turns: 1, chance: [0.25, 0.4, 0.55] },
+        ],
+        art: { motif: 'camera', layout: 'split' },
+      },
+    ],
+    finale: {
+      id: 'nine_finale', name: 'Mass Mailing', type: 'mass', finale: true,
+      effects: [{ kind: 'damage', target: 'allEnemies', power: 0.55, hits: 4 }],
+      art: { motif: 'newspaper', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'flat',
+      skin: '#e8e0d0', hair: '#1e2236', hairStyle: 'short', bangs: 'straight', eyes: '#f2d892',
+      outfit: 'tailcoat', coat: '#e8e0d0', shirt: '#1e2236', accent: '#c8a04a', legs: '#1e2236', shoes: '#1a1416',
+    },
+    palette: { primary: '#2a3050', secondary: '#ece4d2', ink: '#0e1020' },
+    quote: 'LETTER RECEIVED. LETTER SORTED. LETTER DELIVERED. :)',
+  },
+  {
+    id: 'tock',
+    name: 'Old Tock',
+    title: 'The Walking Hourglass',
+    mood: 'moon',
+    rarity: 3,
+    role: 'Guardian',
+    base: { hp: 1220, atk: 98, def: 64 },
+    verses: [
+      {
+        id: 'tock_turn', name: 'Turn the Glass', type: 'shield',
+        effects: [{ kind: 'shield', target: 'allAllies', power: 0.6 }],
+        art: { motif: 'cards', layout: 'rings', portrait: true },
+      },
+      {
+        id: 'tock_lamp', name: 'Lamp on a Crook', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.1 },
+          { kind: 'shield', target: 'self', power: 0.5 },
+        ],
+        art: { motif: 'lantern', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'tock_finale', name: 'Borrowed Minutes', type: 'shield', finale: true,
+      effects: [
+        { kind: 'shield', target: 'allAllies', power: 1.2 },
+        { kind: 'status', target: 'allEnemies', status: 'daze', turns: 1, chance: [0.2, 0.35, 0.5] },
+      ],
+      art: { motif: 'cards', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'flat',
+      skin: '#c8a060', hair: '#2a3050', hairStyle: 'short', bangs: 'straight', eyes: '#f2d892',
+      outfit: 'robe', coat: '#ece4d2', shirt: '#2a3050', accent: '#b8863a', legs: '#c8a060', shoes: '#1a1416',
+    },
+    palette: { primary: '#2a3460', secondary: '#e8dcc0', ink: '#0e1020' },
+    quote: 'Tick. Tock. No hurry. There is always a little sand left, if you tip the glass.',
+  },
+  {
+    id: 'folio',
+    name: 'Folio',
+    title: 'The Ink-Stained Tome',
+    mood: 'star',
+    rarity: 3,
+    role: 'Hexer',
+    base: { hp: 930, atk: 124, def: 44 },
+    verses: [
+      {
+        id: 'folio_blot', name: 'Ink Blot', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 0.9 },
+          { kind: 'status', target: 'enemy', status: 'frail', turns: 2 },
+        ],
+        art: { motif: 'note', layout: 'split', portrait: true },
+      },
+      {
+        id: 'folio_footnote', name: 'Footnote', type: 'attack',
+        effects: [{ kind: 'damage', target: 'enemy', power: 0.6, hits: 2 }],
+        art: { motif: 'newspaper', layout: 'spiral' },
+      },
+    ],
+    finale: {
+      id: 'folio_finale', name: 'Errata', type: 'mass', finale: true,
+      effects: [
+        { kind: 'damage', target: 'allEnemies', power: 1.4 },
+        { kind: 'status', target: 'allEnemies', status: 'weak', turns: 2 },
+      ],
+      art: { motif: 'note', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'open', mouth: 'flat',
+      skin: '#3a3a44', hair: '#1e2236', hairStyle: 'short', bangs: 'straight', eyes: '#f2d892',
+      outfit: 'robe', coat: '#2a2a34', shirt: '#ece4d2', accent: '#b8863a', legs: '#1e1c1c', shoes: '#1a1416',
+    },
+    palette: { primary: '#24304e', secondary: '#e8dcc0', ink: '#0c0e1a' },
+    quote: 'Mind the ink. It does not wash out. That is rather the point of it.',
+  },
+  {
     id: 'delphine',
     name: 'Fae Nivelle',
     title: 'The Lantern Wyrm',

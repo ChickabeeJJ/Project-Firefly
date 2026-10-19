@@ -267,9 +267,9 @@ export class LobbyScene extends Phaser.Scene {
     const save = saves.get();
     const c = this.add.container(40, 34);
     const plate = this.add.nineslice(0, 0, 'ui:dark', undefined, 440, 112, 12, 12, 12, 12).setOrigin(0).setAlpha(0.85);
-    const ring = this.add.circle(62, 56, 42, 0x15120f).setStrokeStyle(4, C.gold, 0.9);
-    const lv = text(this, 62, 48, `${playerLevel(save)}`, { size: 40, font: 'display', bold: true, color: CSS.goldLight }).setOrigin(0.5);
-    const lvl = text(this, 62, 82, 'LV', { size: 16, bold: true, color: CSS.creamDim, spacing: 3 }).setOrigin(0.5);
+    const ring = this.add.circle(62, 56, 37, 0x15120f).setStrokeStyle(3.5, C.gold, 0.9);
+    const lv = text(this, 62, 47, `${playerLevel(save)}`, { size: 34, font: 'display', bold: true, color: CSS.goldLight }).setOrigin(0.5);
+    const lvl = text(this, 62, 76, 'LV', { size: 14, bold: true, color: CSS.creamDim, spacing: 3 }).setOrigin(0.5);
     const name = text(this, 124, 22, 'Lamplighter', { size: 34, font: 'display', bold: true, color: CSS.cream });
     const id = text(this, 126, 68, `ID  ${save.playerId}`, { size: 22, color: CSS.creamDim, spacing: 1 });
     c.add([plate, ring, lv, lvl, name, id]);
@@ -485,9 +485,9 @@ export class LobbyScene extends Phaser.Scene {
   private buildClock(): void {
     if (!this.textures.exists('ui:clockFace')) {
       this.textures.addCanvas('ui:clockFace', clockFaceCanvas());
-      this.textures.addCanvas('ui:clockHour', clockHandCanvas(84, 22));
-      this.textures.addCanvas('ui:clockMin', clockHandCanvas(118, 16));
-      this.textures.addCanvas('ui:clockSec', clockHandCanvas(126, 6, '#9a1e22', 26));
+      this.textures.addCanvas('ui:clockHour', clockHandCanvas(84, 24));
+      this.textures.addCanvas('ui:clockMin', clockHandCanvas(120, 18));
+      this.textures.addCanvas('ui:clockSec', clockHandCanvas(128, 8, '#9a1e22', 28));
     }
     const s = 0.56;
     const cx = 100;
@@ -496,7 +496,7 @@ export class LobbyScene extends Phaser.Scene {
     c.add(this.add.image(cx, cy, 'fx:glow').setTint(0xff9a40).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(330, 300).setAlpha(0.09));
     c.add(this.add.image(cx, cy, 'ui:clockFace').setScale(s));
     const hand = (key: string, counter = 0) => this.add.image(cx, cy, key).setOrigin(0.5, 1 - counter / this.textures.get(key).getSourceImage().height).setScale(s);
-    this.hands = [hand('ui:clockHour'), hand('ui:clockMin'), hand('ui:clockSec', 26)];
+    this.hands = [hand('ui:clockHour'), hand('ui:clockMin'), hand('ui:clockSec', 28)];
     c.add(this.hands);
     c.add(this.add.circle(cx, cy, 6, 0xd8b060).setStrokeStyle(1.5, 0x3a2208));
     // Date and time beside the dial, set like a ticket stub.

@@ -119,26 +119,65 @@ export function clockFaceCanvas(): HTMLCanvasElement {
 
 /** A blued-steel clock hand, pointing up, pivot at (w/2, len). */
 export function clockHandCanvas(len: number, w: number, color = '#1c2436', counter = 0): HTMLCanvasElement {
+  // Slim Breguet hands: a fine tapered shaft, an open ring near the tip, then a slender lance.
+  // The second hand is a plain needle with a ringed counterweight.
   const { canvas, ctx } = makeCanvas(w, len + counter);
   const cx = w / 2;
-  ctx.fillStyle = color;
+  ctx.lineJoin = 'round';
+  if (counter) {
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = Math.max(1.6, w * 0.3);
+    ctx.beginPath();
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, len + counter * 0.55);
+    ctx.stroke();
+    ctx.lineWidth = Math.max(1.4, w * 0.24);
+    ctx.beginPath();
+    ctx.arc(cx, len + counter * 0.72, w * 0.32, 0, Math.PI * 2);
+    ctx.stroke();
+    return canvas;
+  }
+  const steel = ctx.createLinearGradient(0, 0, w, 0);
+  steel.addColorStop(0, '#0c121e');
+  steel.addColorStop(0.5, color === '#1c2436' ? '#3a4e78' : color);
+  steel.addColorStop(1, '#0c121e');
+  const ringY = len * (w > 18 ? 0.3 : 0.2);
+  const r = w * 0.3;
+  const shaft = w * 0.1;
+  ctx.fillStyle = steel;
+  ctx.strokeStyle = '#d6b264';
+  ctx.lineWidth = 0.9;
+  // Shaft: tapers from the pivot to the ring.
   ctx.beginPath();
-  ctx.moveTo(cx, 0);
-  ctx.lineTo(cx + w * 0.22, len * 0.18);
-  ctx.lineTo(cx + w * 0.12, len * 0.3);
-  ctx.lineTo(cx + w * 0.5, len * 0.55);
-  ctx.lineTo(cx + w * 0.16, len * 0.62);
-  ctx.lineTo(cx + w * 0.14, len + counter);
-  ctx.lineTo(cx - w * 0.14, len + counter);
-  ctx.lineTo(cx - w * 0.16, len * 0.62);
-  ctx.lineTo(cx - w * 0.5, len * 0.55);
-  ctx.lineTo(cx - w * 0.12, len * 0.3);
-  ctx.lineTo(cx - w * 0.22, len * 0.18);
+  ctx.moveTo(cx - w * 0.17, len);
+  ctx.lineTo(cx - shaft, ringY + r * 0.8);
+  ctx.lineTo(cx + shaft, ringY + r * 0.8);
+  ctx.lineTo(cx + w * 0.17, len);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = 'rgba(160,190,255,0.35)';
-  ctx.lineWidth = 1;
   ctx.stroke();
+  // Lance: a slim leaf from the ring to the point.
+  ctx.beginPath();
+  ctx.moveTo(cx - shaft, ringY - r * 0.8);
+  ctx.quadraticCurveTo(cx - w * 0.2, ringY - r - (ringY - r) * 0.45, cx, 0);
+  ctx.quadraticCurveTo(cx + w * 0.2, ringY - r - (ringY - r) * 0.45, cx + shaft, ringY - r * 0.8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // The open ring.
+  ctx.lineWidth = w * 0.13;
+  ctx.strokeStyle = steel;
+  ctx.beginPath();
+  ctx.arc(cx, ringY, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 0.8;
+  ctx.strokeStyle = '#d6b264';
+  for (const rr of [r + w * 0.065, r - w * 0.065]) {
+    ctx.beginPath();
+    ctx.arc(cx, ringY, rr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
   return canvas;
 }
 
