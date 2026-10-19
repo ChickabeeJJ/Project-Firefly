@@ -72,7 +72,7 @@ def render(segs, W, H, outfile):
 
 # Landscape 1920x1080
 render([
-    cover_seg(f'{C}/cover_landscape_1920x1080.png', 75, 1920, 1080),
+    cover_seg(f'{C}/key_landscape_1920x1080.png', 75, 1920, 1080),
     game_seg('battle', 1920, 1080),
     game_seg('story', 1920, 1080),
     game_seg('summon', 1920, 1080),
@@ -81,7 +81,7 @@ render([
 
 # Portrait 1080x1620 (2:3): eased camera pans across the 16:9 game.
 render([
-    cover_seg(f'{C}/cover_portrait_1080x1620.png', 75, 1080, 1620),
+    cover_seg(f'{C}/key_portrait_1080x1620.png', 75, 1080, 1620),
     game_seg('battle', 1080, 1620, pan=[(0, 140), (0.6, 140), (0.78, 1150), (1, 1150)]),
     game_seg('story', 1080, 1620, pan=[(0, 1000), (0.7, 1000), (1, 260)]),
     game_seg('summon', 1080, 1620, pan=[(0, 600), (1, 600)]),
