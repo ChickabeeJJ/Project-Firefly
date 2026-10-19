@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { needCharacterArt } from '../art/assets';
 import { ART_FACES_LEFT, ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS } from '../data/characters';
@@ -48,6 +49,9 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'
  * handwritten letters, the bell that struck thirteen, and chapter title cards. Tap to advance
  * (the first tap finishes the line), SKIP to jump to the end.
  */
+/** Lines (or narration) a speaker must hold the stage alone for before they take the centre. */
+const SOLO_LINES = 4;
+
 export class CinematicScene extends Phaser.Scene {
   private beats: Beat[] = [];
   private i = -1;
@@ -65,11 +69,13 @@ export class CinematicScene extends Phaser.Scene {
   private ending = false;
   private bells = 0;
   private seg = -1;
-  private cast: { who: string; side: 'L' | 'R'; obj: LivingSprite | Phaser.GameObjects.Image; spoke: number }[] = [];
+  private cast: { who: string; side: 'L' | 'R' | 'C'; obj: LivingSprite | Phaser.GameObjects.Image; spoke: number }[] = [];
   private lineNo = 0;
   private nextMark!: Phaser.GameObjects.Text;
   private auto = false;
   private asking = false;
+  /** False until the speakers' art is in and the opening fade has begun. */
+  private started = false;
 
   constructor() {
     super('Cinematic');
@@ -143,22 +149,25 @@ export class CinematicScene extends Phaser.Scene {
 
     const boss = data.ids.some((id) => id.startsWith('stage:') && getStage(id.slice(6)).boss);
     audio.play(boss ? 'boss' : data.ids.some((id) => !id.startsWith('stage:')) ? 'rite' : 'lobby');
-    // Upload every speaker's portrait to the GPU up front (a big texture's first draw can
-    // otherwise hitch mid-scene); each is drawn once, invisibly small, then removed.
-    const speakers = new Set(this.beats.flatMap((b) => (b.shot.kind === 'line' ? [b.shot.who] : [])));
-    for (const who of speakers) {
-      if (!CHARACTERS.some((c) => c.id === who)) continue;
-      const warm = this.add.image(0, 0, ensurePortrait(this, who)).setScale(0.002).setAlpha(0.01).setDepth(-1);
-      this.time.delayedCall(120, () => warm.destroy());
-    }
-    this.cameras.main.fadeIn(500, 0, 0, 0);
-    this.time.delayedCall(450, () => this.advance());
+    // Every speaker's full art is decoded and on the GPU before the first line (behind the black
+    // fade), so nothing uploads mid-scene. A slow connection waits at most a couple of seconds.
+    const speakers = [...new Set(this.beats.flatMap((b) => (b.shot.kind === 'line' ? [b.shot.who] : [])))].filter((who) => CHARACTERS.some((c) => c.id === who));
+    this.started = false;
+    this.cameras.main.fadeOut(1, 0, 0, 0);
+    const start = () => {
+      if (this.started || !this.scene.isActive()) return;
+      this.started = true;
+      this.cameras.main.fadeIn(500, 0, 0, 0);
+      this.time.delayedCall(450, () => this.advance());
+    };
+    void needCharacterArt(this.game, speakers).then(start);
+    this.time.delayedCall(2500, start);
   }
 
   // ===================================================================== flow
 
   private advance(): void {
-    if (this.ending) return;
+    if (this.ending || !this.started) return;
     if (this.typer && this.typing) {
       this.typer.remove();
       this.typer = undefined;
@@ -241,13 +250,13 @@ export class CinematicScene extends Phaser.Scene {
     let n = 0;
     this.typer?.remove();
     this.typer = this.time.addEvent({
-      delay: 24, loop: true, callback: () => {
+      delay: 48, loop: true, callback: () => {
         if (!t.active) {
           this.typer?.remove();
           this.typer = undefined;
           return;
         }
-        n = Math.min(full.length, n + speed);
+        n = Math.min(full.length, n + speed * 2);
         t.setText(full.slice(0, n));
         if (n >= full.length) {
           this.typer?.remove();
@@ -325,7 +334,10 @@ export class CinematicScene extends Phaser.Scene {
   private line(who: string, str: string): void {
     this.clearUi();
     const info = this.castFor(who);
-    if (info.key) this.enter(who, info.key, info.enemy);
+    if (info.key) {
+      this.enter(who, info.key, info.enemy);
+      this.recentre(who);
+    }
     this.dimCast(!info.key, who);
     const name = text(this, TX, NAME_Y, info.name, { size: 32, color: info.enemy ? '#e7a0b8' : CSS.cream, spacing: 1, shadow: true }).setOrigin(0, 0.5);
     const rule = this.add.rectangle(TX, RULE_Y, WRAP, 1, info.enemy ? 0xb04a6a : 0xe8dcc0, 0.35).setOrigin(0, 0.5);
@@ -343,22 +355,83 @@ export class CinematicScene extends Phaser.Scene {
     this.type(body, str, 2);
   }
 
+  /** Who a line's art belongs to (character or Dimmed id), or null for a voice without art. */
+  private artOf(who: string): string | null {
+    const ch = CHARACTERS.find((c) => c.id === who);
+    if (ch) return ch.id;
+    const en = ENEMIES.find((e) => e.id === who || e.name === who);
+    return en ? en.id : null;
+  }
+
+  /** True when `who` holds the stage alone for a good while from this beat: nobody else with art speaks for the next several lines. */
+  private aloneAhead(who: string): boolean {
+    const me = this.artOf(who);
+    let lines = 0;
+    for (let j = this.i; j < this.beats.length; j++) {
+      const b = this.beats[j];
+      if (b.seg !== this.beats[this.i].seg) break;
+      const s = b.shot;
+      if (s.kind === 'line') {
+        const other = this.artOf(s.who);
+        if (other && other !== me) break;
+        lines++;
+      } else if (s.kind === 'narrate' || s.kind === 'letter') lines++;
+      if (lines >= SOLO_LINES) return true;
+    }
+    return false;
+  }
+
+  /** Mirror an actor so they face the middle from their side (or their own way when centred). */
+  private face(c: { who: string; side: 'L' | 'R' | 'C'; obj: LivingSprite | Phaser.GameObjects.Image }, enemy: boolean): void {
+    const looksLeft = enemy || ART_FACES_LEFT.has(c.who);
+    const base = Math.abs(c.obj.scaleX);
+    c.obj.scaleX = c.side !== 'C' && (c.side === 'L') === looksLeft ? -base : base;
+  }
+
+  /**
+   * A speaker who will have the stage to themselves for a while moves to the centre: whoever
+   * shares it has been silent for some lines and stays silent, so they bow out.
+   */
+  private recentre(who: string): void {
+    const me = this.cast.find((c) => c.who === who);
+    if (!me || me.side === 'C' || !this.aloneAhead(who)) return;
+    const others = this.cast.filter((c) => c !== me);
+    if (others.some((o) => this.lineNo - o.spoke < SOLO_LINES)) return;
+    for (const o of others) {
+      const obj = o.obj;
+      this.tweens.add({ targets: obj, alpha: 0, x: obj.x + (o.side === 'L' ? -60 : 60), duration: 380, onComplete: () => obj.destroy() });
+    }
+    this.cast = [me];
+    me.side = 'C';
+    this.face(me, !CHARACTERS.some((c) => c.id === me.who));
+    this.tweens.add({ targets: me.obj, x: W / 2, duration: 620, ease: 'Sine.easeInOut' });
+  }
+
   /**
    * Two-handed staging: the first speaker takes the left, whoever answers takes the right, and they
    * turn to face each other. A third voice replaces whoever has been quiet longest, on that side.
+   * Someone who will be alone on stage for a while stands in the centre instead, and steps to the
+   * left as soon as anyone joins them.
    */
   private enter(who: string, key: string, enemy: boolean): void {
     if (this.cast.some((c) => c.who === who)) return;
-    let side: 'L' | 'R' = 'L';
-    if (this.cast.length === 1) side = this.cast[0].side === 'L' ? 'R' : 'L';
+    let side: 'L' | 'R' | 'C' = 'L';
+    if (this.cast.length === 0 && this.aloneAhead(who)) side = 'C';
+    else if (this.cast.length === 1 && this.cast[0].side === 'C') {
+      const solo = this.cast[0];
+      solo.side = 'L';
+      this.face(solo, !CHARACTERS.some((c) => c.id === solo.who));
+      this.tweens.add({ targets: solo.obj, x: W * 0.3, duration: 520, ease: 'Sine.easeInOut' });
+      side = 'R';
+    } else if (this.cast.length === 1) side = this.cast[0].side === 'L' ? 'R' : 'L';
     else if (this.cast.length >= 2) {
       const quiet = this.cast.reduce((a, b) => (a.spoke <= b.spoke ? a : b));
-      side = quiet.side;
+      side = quiet.side === 'C' ? 'L' : quiet.side;
       const o = quiet.obj;
       this.tweens.add({ targets: o, alpha: 0, x: o.x + (side === 'L' ? -60 : 60), duration: 380, onComplete: () => o.destroy() });
       this.cast = this.cast.filter((c) => c !== quiet);
     }
-    const x = side === 'L' ? W * 0.3 : W * 0.7;
+    const x = side === 'C' ? W / 2 : side === 'L' ? W * 0.3 : W * 0.7;
     let obj: LivingSprite | Phaser.GameObjects.Image;
     if (enemy) {
       const glow = this.add.image(x, H / 2, 'fx:glow').setTint(0x6a2a8a).setDisplaySize(900, 820).setAlpha(0.4).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
@@ -372,12 +445,13 @@ export class CinematicScene extends Phaser.Scene {
       obj = livingPortrait(this, x, H + 160, key, 0.82, 1180, 900).setDepth(10);
     }
     obj.setData('scale', Math.abs(obj.scaleY));
-    // Face the middle of the stage: painted art looks right unless listed as facing left.
-    const looksLeft = enemy || ART_FACES_LEFT.has(who); // the Dimmed are painted facing the troupe (left)
-    if ((side === 'L') === looksLeft) obj.scaleX = -obj.scaleX;
-    obj.setAlpha(0).setX(x + (side === 'L' ? -50 : 50));
+    // Face the middle of the stage: painted art looks right unless listed as facing left (the
+    // Dimmed are painted facing the troupe, left). Centred, everyone keeps their own way.
+    const actor = { who, side, obj, spoke: 0 };
+    this.face(actor, enemy);
+    obj.setAlpha(0).setX(x + (side === 'R' ? 50 : -50));
     this.tweens.add({ targets: obj, alpha: 1, x, duration: 460, ease: 'Sine.easeOut' });
-    this.cast.push({ who, side, obj, spoke: 0 });
+    this.cast.push(actor);
   }
 
   /** Segmented clock stamp in the corner, the way the reference opens a scene. */

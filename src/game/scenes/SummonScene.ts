@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { fitPortrait } from '../art/assets';
+import { fitPortrait, needCharacterArt } from '../art/assets';
 import { ensureBg, ensurePortrait, FACE_POINTS } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { Rng } from '../battle/rng';
@@ -330,6 +330,8 @@ export class SummonScene extends Phaser.Scene {
       return;
     }
     saves.commit();
+    // Start decoding the answers' full art now, so it is in by the time the ritual reveals them.
+    void needCharacterArt(this.game, [...new Set(res.map((r) => r.id))]);
     this.results = res;
     this.stage = 'ritual';
     this.tweens.add({ targets: this.ui, alpha: 0, duration: 300, onComplete: () => this.ui.destroy() });
