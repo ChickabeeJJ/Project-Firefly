@@ -112,7 +112,10 @@ export function isDropIn(key: string): boolean {
  * Per-character height for painted art that is framed differently from the rest of the cast: a
  * full-length standing figure fitted to the same height as seated or knee-up art reads as a giant.
  */
-const ART_HEIGHT: Record<string, number> = { cassian: 0.84, lazare: 0.84, lys: 0.84, sorrel: 0.92 };
+const ART_HEIGHT: Record<string, number> = {
+  cassian: 0.84, lazare: 0.84, lys: 0.84, kit: 0.86, nell: 0.86, rook: 0.86, hesper: 0.88, teddy: 0.88, sorrel: 0.9,
+  raphael: 0.84, severin: 0.9,
+};
 
 /** Height factor for a character texture key (hf:characters/<id>, hf:battle/<id>, hfp:<id>…). */
 export function artScale(key: string): number {

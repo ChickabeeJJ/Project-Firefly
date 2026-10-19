@@ -128,7 +128,7 @@ export class Button extends Phaser.GameObjects.Container {
       this.add(ic);
     }
     if (o.sub) {
-      this.subText = text(scene, 0, 24, o.sub, { size: 22, color: style === 'amber' ? '#ffe2c8' : CSS.paperSub }).setOrigin(0.5);
+      this.subText = text(scene, 0, 24, o.sub, { size: 22, color: style === 'amber' ? '#ffe2c8' : style === 'dark' ? CSS.creamDim : CSS.paperSub }).setOrigin(0.5);
       this.add(this.subText);
     }
     this.setSize(o.w, o.h);

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { dropIn } from '../art/assets';
-import { ensureBg, ensurePortrait, verseEmblem } from '../art/registry';
+import { FACE_POINTS, ensureBg, ensurePortrait, verseEmblem } from '../art/registry';
 import { aliveTeam, currentNode, omen, runMods, stageFor } from '../systems/longnight';
 import { audio } from '../audio/AudioController';
 import { chooseAutoAction } from '../battle/autoplay';
@@ -501,7 +501,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (e.finale) {
       audio.sfx('finale');
-      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, char.title, Phaser.Display.Color.HexStringToColor(char.palette.primary).color);
+      await this.fx.cutIn(ensurePortrait(this, char.id), verse.name, char.name, char.title, Phaser.Display.Color.HexStringToColor(char.palette.primary).color, FACE_POINTS[char.id]);
       this.fx.shake(0.006, 260);
     }
     this.showCastBanner(verse.name + (e.rank > 1 ? '  ' + '★'.repeat(e.rank) : ''), describeVerse(verse, e.rank, e.lit), e.finale ? CSS.gold : CSS.goldLight);

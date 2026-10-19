@@ -235,6 +235,16 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Red Lining', text: 'His coat is lined in the theatre’s curtain velvet; he cut it down himself the morning after. He says a performer should always carry his stage with him. He is only half joking.' },
     { title: 'One More', text: 'He fights as though every bout is his last bow. It never quite is. The Dimmed keep calling for an encore, and Dante has never once refused an audience.' },
   ],
+  severin: [
+    { title: 'The Wandering Compass', text: 'Séverin Boussole left Vellmoor at seventeen with a borrowed suitcase and a compass that only ever pointed home. He walked every road on the continent to prove it wrong. When word came that the city had gone dark, the needle had not moved in twenty years, and he followed it back.' },
+    { title: 'The Suitcase', text: 'Brass corners, a broken lock, and a lining stitched with the names of every town he slept in. He sits on it, shelters behind it, and once, on the docks, swung it hard enough to put a Dimmed thing into the river. It contains, he insists, only socks.' },
+    { title: 'True North', text: 'His compass has no letters on its face, only a little painted lamp where north should be. He says it points to whoever is waiting up for you. In Vellmoor, lately, that has been the troupe.' },
+  ],
+  raphael: [
+    { title: 'The Unsent Letter', text: 'Raphaël Cachet sorted mail at the Vellmoor post office, in the room where undeliverable letters go to wait. Thousands of them: wrong addresses, dead recipients, words written at midnight and never posted. When the Dimming came, Raphaël opened the room and began to deliver them all.' },
+    { title: 'Red Wax', text: 'Every letter Raphaël carries is sealed in red. A seal is a promise that the words inside belong to someone. The Dimmed, who have no names, find that very hard to bear.' },
+    { title: 'Return to Sender', text: 'Some letters are not kind. Raphaël delivers those too, to the dark, unopened. What the Dimmed read in them, nobody knows. They do not come back for a second.' },
+  ],
   lys: [
     { title: 'The Green Room Herbalist', text: 'Odette Verveine kept the herbs in the Gloaming’s green room — chamomile for stage fright, honey and thyme for tired throats, something stronger for leading men. When the Dimming came, the actors stopped needing her. The city did not.' },
     { title: 'The White Lily', text: 'The lily in her hair is from the opening-night bouquet of an opera that never had a second night. She has pressed it, dried it, and pinned it back every evening since. It is the only thing she keeps for herself.' },
@@ -367,6 +377,20 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'The coat? Curtain velvet. A performer carries his stage with him.',
     'One more bout. There is always one more bout. That is the whole secret of the encore.',
     'If you see me hesitate, it is only for effect. Mostly.',
+  ],
+  severin: [
+    'Sit down, the suitcase can take two. It has taken worse.',
+    'Twenty years on the road, and the compass never once agreed with me. I have stopped arguing.',
+    'Every city I left had a lamp in a window for someone. Vellmoor kept one for me. I only found out last month.',
+    'If you are lost, say so. Being lost is just the start of a very good map.',
+    'Socks. It is mostly socks. Do not open it.',
+  ],
+  raphael: [
+    'There is a letter here addressed to you. No, I will not say from whom. That would spoil it.',
+    'Undeliverable is only a word. I have delivered stranger things.',
+    'Red wax means the words belong to someone. Remember that, if you ever write to me.',
+    'I read none of them. I simply know which ones are heavy.',
+    'The dark has a great deal of post waiting. I am working through it alphabetically.',
   ],
   lys: [
     'Stand still. You have the look of someone who has not slept since Tuesday.',

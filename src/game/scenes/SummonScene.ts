@@ -229,8 +229,8 @@ export class SummonScene extends Phaser.Scene {
     else g.fillStyle(0xf6f0e4, 1).fillRect(-w / 2, -h / 2, w, h);
     g.lineStyle(1.5, primary ? 0xffc89a : 0xc8b890, 0.9).strokeRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8);
     c.add(g);
-    c.add(this.add.image(-w / 2 + 44, 0, 'icon:glimmer').setDisplaySize(52, 52));
-    c.add(text(this, -w / 2 + 76, 0, `${cost}`, { size: 24, bold: true, color: primary ? '#fff2e0' : CSS.paperText }).setOrigin(0, 0.5));
+    c.add(this.add.image(-w / 2 + 46, 0, 'icon:glimmer').setDisplaySize(58, 58));
+    c.add(text(this, -w / 2 + 82, 0, cost.toLocaleString('en-US'), { size: 34, bold: true, color: primary ? '#fff2e0' : CSS.paperText }).setOrigin(0, 0.5));
     c.add(text(this, w / 2 - 24, 0, `Light ×${count}`, { size: 38, color: primary ? '#fff6ec' : CSS.paperText }).setOrigin(1, 0.5));
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     if (save.glimmer < cost) c.setAlpha(0.6);
