@@ -207,7 +207,7 @@ export class SummonScene extends Phaser.Scene {
     c.add(thumb);
     c.add(this.add.rectangle(0, 0, w, h, 0x000000, on ? 0.05 : 0.45).setStrokeStyle(1, 0xe8dcc0, on ? 0.8 : 0.3));
     const tag = text(this, -w / 2 + 8, -h / 2 + 18, b.tag, { size: 22, color: '#fff4e4' }).setOrigin(0, 0.5);
-    c.add(this.add.rectangle(-w / 2, -h / 2 + 18, tag.width + 18, 30, b.featured ? 0x3f7a4a : 0x3a4f6a, 0.92).setOrigin(0, 0.5));
+    c.add(this.add.rectangle(-w / 2, -h / 2 + 18, tag.width + 18, 30, b.featured ? C.accentDeep : 0x3a4f6a, 0.92).setOrigin(0, 0.5));
     c.add(tag);
     c.add(text(this, -w / 2 + 8, h / 2 - 20, b.name, { size: 21, color: CSS.cream, shadow: true }).setOrigin(0, 0.5));
     if (on) c.add(this.add.rectangle(0, h / 2 + 10, w, 4, C.gold, 0.9));
@@ -225,7 +225,7 @@ export class SummonScene extends Phaser.Scene {
     const w = 420;
     const h = 84;
     const g = this.add.graphics();
-    if (primary) g.fillGradientStyle(0x62a066, 0x58945d, 0x3c6e45, 0x3c6e45, 1).fillRect(-w / 2, -h / 2, w, h);
+    if (primary) g.fillGradientStyle(C.amberLight, C.amber, C.accentDeep, C.accentDeep, 1).fillRect(-w / 2, -h / 2, w, h);
     else g.fillStyle(0xf6f0e4, 1).fillRect(-w / 2, -h / 2, w, h);
     g.lineStyle(1.5, primary ? 0xffc89a : 0xc8b890, 0.9).strokeRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8);
     c.add(g);

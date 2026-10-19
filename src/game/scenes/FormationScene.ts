@@ -50,8 +50,8 @@ export class FormationScene extends Phaser.Scene {
     const c = this.add.container(x, y).setDepth(90);
     const g = this.add.graphics();
     g.fillStyle(0x000000, 0.35).fillRect(-w / 2 + 5, -h / 2 + 6, w, h);
-    g.fillStyle(0x2c5636, 1).fillRect(-w / 2, -h / 2, w, h);
-    g.fillGradientStyle(0x4f8a58, 0x4f8a58, 0x2c5636, 0x2c5636, 1).fillRect(-w / 2, -h / 2, w, h);
+    g.fillStyle(C.accentDark, 1).fillRect(-w / 2, -h / 2, w, h);
+    g.fillGradientStyle(C.amber, C.amber, C.accentDeep, C.accentDeep, 1).fillRect(-w / 2, -h / 2, w, h);
     g.lineStyle(1, 0xf2d8b0, 0.55).strokeRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16);
     // Perforation and the two half-moon notches of a torn ticket.
     const sx = -w / 2 + 116;
@@ -83,7 +83,7 @@ export class FormationScene extends Phaser.Scene {
     y += 140;
     text(this, x, y, 'GOALS', { size: 26, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 });
     ['Drive back the Dimming', `Win within ${s.starRounds} rounds`, 'No Luminary falls'].forEach((g, i) => {
-      this.add.image(x + 18, y + 56 + i * 48, 'icon:star4').setDisplaySize(26, 26).setTint(0x9fd27a);
+      this.add.image(x + 18, y + 56 + i * 48, 'icon:star4').setDisplaySize(26, 26).setTint(C.accentStar);
       text(this, x + 46, y + 56 + i * 48, g, { size: 28, color: CSS.cream }).setOrigin(0, 0.5);
     });
     y += 230;

@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { VerseDef } from '../data/types';
 import { CHARACTERS, getCharacter } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
-import { dropIn } from './assets';
+import { artScale, dropIn } from './assets';
 import { backgroundCanvas, type BgId } from './backgrounds';
 import { CARD_H, CARD_W, PCARD_H, PCARD_W, portraitCardCanvas, verseArtCanvas } from './cardArt';
 import { dollCanvas, drawDoll } from './doll';
@@ -10,7 +10,7 @@ import { enemyCanvas } from './enemyArt';
 import { iconCanvas, ICON_NAMES } from './icons';
 import { ITEM_ICON_IDS, itemIconCanvas } from './itemIcons';
 import { grain, makeCanvas, mix, rgba } from './paint';
-import { uiTextureSpecs } from './uiTextures';
+import { accentButton, uiTextureSpecs } from './uiTextures';
 
 // Turns art into Phaser textures. Drop-in images (src/assets/art) win over procedural art and are
 // normalised to the same sizes, so scenes never need to know which one they got.
@@ -252,7 +252,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
     // Painted figures are full-proportioned (not chibi) and wider, so they stand a little shorter.
-    add(scene, `doll:${c.id}`, battle ? facingRight(fitBox(scene, battle, PAINTED_DOLL_H, PAINTED_DOLL_W), c.id) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
+    add(scene, `doll:${c.id}`, battle ? facingRight(fitBox(scene, battle, Math.round(PAINTED_DOLL_H * artScale(battle)), PAINTED_DOLL_W), c.id) : dollCanvas(c.look, BATTLE_DOLL_SCALE));
     add(scene, `head:${c.id}`, headCanvas(scene, c.id));
     // Mid-size body art (battle/<id>, 640 px) keeps boot light; full art streams in later.
     const body = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
@@ -377,4 +377,11 @@ export function ensurePortraitCard(scene: Phaser.Scene, charId: string): string 
   grain(ctx, PCARD_W, PCARD_H, 0.015, charId.length * 31);
   add(scene, key, canvas);
   return key;
+}
+
+/** Re-renders the textures that carry the accent colour after the player picks a new theme. */
+export function refreshThemeTextures(scene: Phaser.Scene): void {
+  const tex = scene.textures;
+  if (tex.exists('ui:btnAmber')) tex.remove('ui:btnAmber');
+  tex.addCanvas('ui:btnAmber', accentButton());
 }

@@ -203,15 +203,52 @@ export class BattleFx {
 
   /** Short centred banner ("WAVE 2", "ROUND 3"). */
   banner(str: string, sub?: string, color: string = CSS.cream): Promise<void> {
+    const sc = this.scene;
+    if (!sc.textures.exists('ui:bannerBand')) {
+      // A band of ink that fades out to both sides, rather than a hard-edged box.
+      const cv = document.createElement('canvas');
+      cv.width = 1024;
+      cv.height = 8;
+      const g = cv.getContext('2d')!;
+      const grad = g.createLinearGradient(0, 0, 1024, 0);
+      grad.addColorStop(0, 'rgba(6,7,10,0)');
+      grad.addColorStop(0.22, 'rgba(6,7,10,0.82)');
+      grad.addColorStop(0.78, 'rgba(6,7,10,0.82)');
+      grad.addColorStop(1, 'rgba(6,7,10,0)');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 1024, 8);
+      sc.textures.addCanvas('ui:bannerBand', cv);
+    }
+    const gold = color === CSS.gold;
     return new Promise((resolve) => {
-      const c = this.scene.add.container(W / 2, H * 0.42).setDepth(650).setAlpha(0);
-      const band = this.scene.add.rectangle(0, 0, W, sub ? 150 : 110, 0x07080a, 0.72);
-      const t = text(this.scene, 0, sub ? -18 : 0, str, { size: 64, font: 'display', bold: true, color, spacing: 12, shadow: true }).setOrigin(0.5);
-      c.add([band, t]);
-      if (sub) c.add(text(this.scene, 0, 40, sub, { size: 28, italic: true, color: CSS.creamDim }).setOrigin(0.5));
-      this.scene.tweens.add({ targets: c, alpha: 1, duration: 200 });
-      this.scene.tweens.add({ targets: t, scaleX: { from: 1.25, to: 1 }, duration: 380, ease: 'Cubic.easeOut' });
-      this.scene.tweens.add({ targets: c, alpha: 0, delay: 900, duration: 260, onComplete: () => { c.destroy(); resolve(); } });
+      const bh = sub ? 190 : 160;
+      const c = sc.add.container(W / 2, H * 0.42).setDepth(650).setAlpha(0);
+      const band = sc.add.image(0, 0, 'ui:bannerBand').setDisplaySize(W * 1.1, bh);
+      const glowL = sc.add.image(0, 0, 'fx:glow').setTint(gold ? 0xffd890 : 0x8a7aa8).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(1100, bh * 1.6).setAlpha(0.22);
+      const rule = (y: number) => {
+        const g = sc.add.graphics();
+        g.fillStyle(C.gold, 0.85).fillRect(-560, y - 1, 1120, 2);
+        g.fillStyle(C.gold, 0.35).fillRect(-470, y + 5, 940, 1);
+        g.fillStyle(C.gold, 1).fillPoints([new Phaser.Math.Vector2(0, y - 8), new Phaser.Math.Vector2(8, y), new Phaser.Math.Vector2(0, y + 8), new Phaser.Math.Vector2(-8, y)], true);
+        for (const sx of [-560, 560]) g.fillPoints([new Phaser.Math.Vector2(sx, y - 5), new Phaser.Math.Vector2(sx + 5, y), new Phaser.Math.Vector2(sx, y + 5), new Phaser.Math.Vector2(sx - 5, y)], true);
+        return g;
+      };
+      const t = text(sc, 0, sub ? -20 : 0, str, { size: 84, font: 'display', bold: true, color: '#ffffff', spacing: 22, shadow: true }).setOrigin(0.5);
+      if (gold) t.setTint(0xfff3c8, 0xfff3c8, 0xd0a048, 0xd0a048);
+      else t.setColor(color);
+      c.add([glowL, band, rule(-bh / 2 + 14), rule(bh / 2 - 14), t]);
+      if (sub) c.add(text(sc, 0, 50, sub, { size: 28, italic: true, color: CSS.creamDim }).setOrigin(0.5));
+      // A slow sheen across the letters.
+      const sheen = sc.add.image(-700, sub ? -20 : 0, 'fx:glow').setTint(0xfff6dc).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(160, 140).setAlpha(0.55);
+      c.add(sheen);
+      sc.tweens.add({ targets: sheen, x: 700, duration: 1100, delay: 250, ease: 'Sine.easeInOut' });
+      sc.tweens.add({ targets: c, alpha: 1, duration: 320, ease: 'Sine.easeOut' });
+      sc.tweens.add({ targets: t, scaleX: { from: 1.18, to: 1 }, scaleY: { from: 1.18, to: 1 }, duration: 620, ease: 'Cubic.easeOut' });
+      if (gold) {
+        this.rise(W / 2, H * 0.42, 0xffe9a8, 26);
+        sc.time.delayedCall(200, () => this.burst(W / 2, H * 0.42, 0xfff0c0, 14));
+      }
+      sc.tweens.add({ targets: c, alpha: 0, delay: 1500, duration: 420, ease: 'Sine.easeIn', onComplete: () => { c.destroy(); resolve(); } });
     });
   }
 
@@ -245,7 +282,8 @@ export class BattleFx {
 
       // Caster: large painted art sweeping in from the left, lit by a warm glow.
       const halo = sc.add.image(-470, 40, 'fx:glow').setTint(color).setDisplaySize(900, 700).setAlpha(0.7).setBlendMode(Phaser.BlendModes.ADD);
-      const portrait = fitPortrait(sc.add.image(-1100, BH / 2 + 40, portraitKey).setOrigin(0.5, 1), 0.66, 760);
+      // Centred on the band, so head and feet break its edges by the same amount.
+      const portrait = fitPortrait(sc.add.image(-1100, 6, portraitKey).setOrigin(0.5, 0.5), 0.66, 720);
       band.add([halo, portrait]);
 
       // Title block.

@@ -1,5 +1,6 @@
 import { cardAuraCanvas, cardFrameCanvas } from './cardFrame';
 import { CARD_H, CARD_W } from './cardArt';
+import { C, hex } from '../config/theme';
 import { type Ctx, glow, grain, makeCanvas, rgba, roundRectPath, seeded } from './paint';
 
 // Paper panels, buttons, card frames and FX particles.
@@ -63,6 +64,50 @@ function button(fill: string, fill2: string, line: string): HTMLCanvasElement {
   ctx.lineWidth = 2;
   ctx.stroke(roundRectPath(2, 2, 156, 76, 6));
   grain(ctx, 160, 80, 0.05, 3);
+  return canvas;
+}
+
+/** The accent button in the current theme, aged: a soft top light, a darker foot and heavier grain. */
+export function accentButton(): HTMLCanvasElement {
+  const canvas = button(hex(C.amber), hex(C.accentDeep), rgba(hex(C.accentPale), 0.42));
+  const ctx = canvas.getContext('2d')!;
+  const sheen = ctx.createLinearGradient(0, 0, 0, 40);
+  sheen.addColorStop(0, 'rgba(255,244,220,0.16)');
+  sheen.addColorStop(1, 'rgba(255,244,220,0)');
+  ctx.fillStyle = sheen;
+  ctx.fill(roundRectPath(4, 4, 152, 36, 5));
+  grain(ctx, 160, 80, 0.06, 11);
+  return canvas;
+}
+
+/** Diamond plate for the battle's Auto/Speed toggles: a vertical gradient in the theme accent when on. */
+export function diamondCanvas(size: number, on: boolean): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(size + 4, size + 4);
+  const c = size / 2 + 2;
+  const h = size / 2;
+  const path = new Path2D();
+  path.moveTo(c, c - h); path.lineTo(c + h, c); path.lineTo(c, c + h); path.lineTo(c - h, c); path.closePath();
+  const g = ctx.createLinearGradient(0, c - h, 0, c + h);
+  if (on) {
+    g.addColorStop(0, hex(C.amberLight));
+    g.addColorStop(0.5, hex(C.amber));
+    g.addColorStop(1, hex(C.accentDark));
+  } else {
+    g.addColorStop(0, 'rgba(217,212,196,0.24)');
+    g.addColorStop(1, 'rgba(217,212,196,0.08)');
+  }
+  ctx.fillStyle = g;
+  ctx.fill(path);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = on ? rgba('#e2be6a', 0.9) : rgba('#e8e0cc', 0.45);
+  ctx.stroke(path);
+  if (on) {
+    ctx.save();
+    ctx.clip(path);
+    ctx.fillStyle = 'rgba(255,244,220,0.14)';
+    ctx.fillRect(0, 0, size + 4, c * 0.8);
+    ctx.restore();
+  }
   return canvas;
 }
 
@@ -189,7 +234,9 @@ function softDot(size: number, color: string, hard = 0.15): HTMLCanvasElement {
 
 function fireflyTex(): HTMLCanvasElement {
   const { canvas, ctx } = makeCanvas(64, 64);
-  glow(ctx, 32, 32, 32, '#dcef72', 0.85);
+  // A small, bright body with only a faint halo: lamplight, not a bloom.
+  glow(ctx, 32, 32, 22, '#dcef72', 0.42);
+  glow(ctx, 32, 32, 9, '#eef8b0', 0.7);
   ctx.fillStyle = '#fbffe0';
   ctx.beginPath();
   ctx.arc(32, 32, 4.5, 0, Math.PI * 2);
@@ -462,7 +509,7 @@ export function uiTextureSpecs(): TexSpec[] {
     { key: 'ui:paper', canvas: framed(paper(640, 640, '#f2ead8', '#e2d6bd', 4), rgba('#9a8660', 0.6), 7) },
     { key: 'ui:paperPlain', canvas: paper(640, 640, '#f2ead8', '#e2d6bd', 9) },
     { key: 'ui:dark', canvas: darkPanel() },
-    { key: 'ui:btnAmber', canvas: button('#5e9a63', '#3c6e45', rgba('#e4ffd8', 0.5)) },
+    { key: 'ui:btnAmber', canvas: accentButton() },
     { key: 'ui:btnCream', canvas: button('#f4ecda', '#dccfb2', rgba('#7a6a4a', 0.5)) },
     { key: 'ui:btnDark', canvas: button('#2a2d33', '#1a1c20', rgba('#e2be6a', 0.45)) },
     { key: 'ui:btnGold', canvas: button('#e9c876', '#b08a3a', rgba('#fff3d0', 0.7)) },

@@ -116,7 +116,7 @@ export class StoryScene extends Phaser.Scene {
       }).setOrigin(0.5, 0));
       if (cleared) {
         for (let k = 0; k < 3; k++) {
-          tl.add(this.add.image(x + (k - 1) * 30, y - size - 26, 'icon:star4').setDisplaySize(26, 26).setTint(k < save.stars[s.id] ? 0x9fd27a : 0x3a3a42));
+          tl.add(this.add.image(x + (k - 1) * 30, y - size - 26, 'icon:star4').setDisplaySize(26, 26).setTint(k < save.stars[s.id] ? C.accentStar : 0x3a3a42));
         }
       }
       if (sel) {
@@ -153,7 +153,7 @@ export class StoryScene extends Phaser.Scene {
     c.add(this.add.image(0, 0, key));
     const ink = '#2a1d10';
     const sepia = '#6a5034';
-    const rust = '#3f6a44';
+    const rust = CSS.accentInk;
     const stub = 230;
     const lx = -w / 2 + 52;
 
@@ -216,7 +216,8 @@ export class StoryScene extends Phaser.Scene {
       c.add(this.add.image(tx, 94, icon).setDisplaySize(56, 56));
       c.add(text(this, tx, 128, q, { size: 16, bold: true, color: ink }).setOrigin(0.5));
     });
-    if (!cleared) c.add(text(this, rx + 40 + rewards.length * 92 - 20, 100, `+${REWARDS.perfectBonus} for ★★★`, { size: 17, italic: true, color: sepia }).setOrigin(0, 0.5));
+    // The perfect-clear bonus sits beside the heading, clear of the reward row and the ticket.
+    if (!cleared) c.add(text(this, rx + 290, 48, `+${REWARDS.perfectBonus} Glimmer for ★★★`, { size: 17, italic: true, color: sepia }).setOrigin(0, 0.5));
 
     // ---- ticket stub
     const sx = w / 2 - stub / 2 - 14;
@@ -224,7 +225,7 @@ export class StoryScene extends Phaser.Scene {
     perf.fillStyle(0x5a4026, 0.55);
     for (let y = -h / 2 + 22; y < h / 2 - 16; y += 12) perf.fillCircle(w / 2 - stub - 14, y, 2);
     c.add(perf);
-    c.add(this.add.rectangle(sx, 0, stub - 30, h - 56, 0x3c6e45, 0.92).setStrokeStyle(1.5, 0x1e3a24, 0.9));
+    c.add(this.add.rectangle(sx, 0, stub - 30, h - 56, C.accentDeep, 0.92).setStrokeStyle(1.5, C.accentDark, 0.9));
     c.add(this.add.rectangle(sx, 0, stub - 46, h - 72).setStrokeStyle(1, 0xf2d8b0, 0.5));
     c.add(text(this, sx, -86, 'ADMIT ONE', { size: 16, font: 'display', color: '#f6e6c8', spacing: 4 }).setOrigin(0.5));
     c.add(text(this, sx, -10, 'Begin', { size: 46, font: 'display', bold: true, color: '#fff4e4' }).setOrigin(0.5));
@@ -335,7 +336,7 @@ export class StoryScene extends Phaser.Scene {
     tabs.forEach(([m, label, icon, art], i) => {
       const x = (i - 1) * 190;
       const on = m === this.mode;
-      const col = light ? (on ? '#3f7a4a' : '#5a4a36') : on ? CSS.amber : CSS.cream;
+      const col = light ? (on ? CSS.accentInk : '#5a4a36') : on ? CSS.amber : CSS.cream;
       const t = this.add.container(x, 0);
       const painted = dropIn(this, 'ui', `motif_${art}`);
       if (painted) {
@@ -449,7 +450,7 @@ export class StoryScene extends Phaser.Scene {
     label.add(this.add.rectangle(3, 4, lw, 82, 0x000000, 0.18));
     label.add(this.add.rectangle(0, 0, lw, 82, 0xf2e8d0).setStrokeStyle(1, 0x8a6a3a, 0.5));
     label.add(this.add.rectangle(0, 2, lw - 24, 1, 0x8a6a3a, 0.4));
-    label.add(this.add.circle(-lw / 2 + 14, -26, 5, 0x3c6e45));
+    label.add(this.add.circle(-lw / 2 + 14, -26, 5, C.accentDeep));
     label.add([nm, sub]);
     c.add(label);
     // Item medallion.
@@ -510,7 +511,7 @@ export class StoryScene extends Phaser.Scene {
     const rec = fromLegacyLevel(sel.level, 4);
     const rl = text(this, px - 520, 262, 'Recommended:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5);
     d.add(rl);
-    d.add(text(this, px - 520 + rl.width + 12, 262, `${insightLabel(rec.insight)} Level ${rec.level}`, { size: 24, color: '#9fd27a' }).setOrigin(0, 0.5));
+    d.add(text(this, px - 520 + rl.width + 12, 262, `${insightLabel(rec.insight)} Level ${rec.level}`, { size: 24, color: CSS.accentStar }).setOrigin(0, 0.5));
     d.add(text(this, px - 520, 300, f.blurb, { size: 24, color: CSS.cream, wrap: 520, lineSpacing: 4 }));
     d.add(text(this, px - 520, 470, 'Rewards:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
     const first = !trialCleared(save, sel);

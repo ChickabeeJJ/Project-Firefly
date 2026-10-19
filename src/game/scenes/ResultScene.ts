@@ -28,9 +28,27 @@ export class ResultScene extends Phaser.Scene {
     const mvp = getCharacter(d.mvp);
 
     this.add.rectangle(W / 2, H / 2, W, H, 0x0b0c0f);
-    const disc = this.add.image(560, 520, 'fx:glow').setTint(d.won ? 0x9a2a26 : 0x3a3050).setDisplaySize(980, 980).setAlpha(0.85);
-    this.add.circle(560, 520, 330, d.won ? 0x7a1f1d : 0x2a2436, 1).setAlpha(0.9);
-    this.tweens.add({ targets: disc, alpha: 0.6, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // A low sun behind the MVP: deep red at its heart, sinking to black at the rim.
+    const sunKey = d.won ? 'ui:resultSunWon' : 'ui:resultSunLost';
+    if (!this.textures.exists(sunKey)) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 720;
+      const g = cv.getContext('2d')!;
+      const grad = g.createRadialGradient(360, 300, 20, 360, 360, 360);
+      const [a, b] = d.won ? ['rgba(150,36,32,0.78)', 'rgba(70,14,14,0.55)'] : ['rgba(70,60,96,0.7)', 'rgba(36,30,52,0.5)'];
+      grad.addColorStop(0, a);
+      grad.addColorStop(0.62, b);
+      grad.addColorStop(0.9, 'rgba(8,6,8,0.35)');
+      grad.addColorStop(1, 'rgba(8,6,8,0)');
+      g.fillStyle = grad;
+      g.beginPath();
+      g.arc(360, 360, 360, 0, Math.PI * 2);
+      g.fill();
+      this.textures.addCanvas(sunKey, cv);
+    }
+    const disc = this.add.image(560, 520, 'fx:glow').setTint(d.won ? 0x7a2420 : 0x3a3050).setDisplaySize(980, 980).setAlpha(0.45);
+    this.add.image(560, 520, sunKey).setDisplaySize(700, 700);
+    this.tweens.add({ targets: disc, alpha: 0.28, duration: 2400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const portrait = fitPortrait(this.add.image(560, H + 30, ensurePortrait(this, mvp.id)).setOrigin(0.5, 1), 0.98, 1060);
     if (!d.won) portrait.setTint(0x8a8aa0);
     portrait.setAlpha(0).setX(500);
@@ -38,15 +56,24 @@ export class ResultScene extends Phaser.Scene {
     new Atmosphere(this, { depth: 50, fireflies: d.won ? 10 : 0 });
 
     const rx = 1340;
-    const emblem = this.add.image(rx, 170, 'ui:emblem').setScale(1.15).setAlpha(0).setDepth(60);
-    this.tweens.add({ targets: emblem, alpha: d.won ? 0.4 : 0.2, angle: 30, duration: 1200, ease: 'Cubic.easeOut' });
-    if (d.won) {
-      const rays = this.add.image(rx, 170, 'fx:glow').setTint(C.gold).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(520, 520).setAlpha(0).setDepth(59);
-      this.tweens.add({ targets: rays, alpha: 0.35, duration: 900 });
+    // The painted lantern hangs behind the title, lit for a win and guttering for a loss.
+    const lanternArt = this.textures.exists('hf:ui/obj_lantern') ? 'hf:ui/obj_lantern' : this.textures.exists('hf:ui/lantern1') ? 'hf:ui/lantern1' : null;
+    const glow = this.add.image(rx, 160, 'fx:glow').setTint(d.won ? 0xffc878 : 0x8a7aa8).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(620, 460).setAlpha(0).setDepth(59);
+    this.tweens.add({ targets: glow, alpha: d.won ? 0.42 : 0.18, duration: 1000 });
+    if (d.won) this.tweens.add({ targets: glow, alpha: 0.3, duration: 1800, yoyo: true, repeat: -1, delay: 1000, ease: 'Sine.easeInOut' });
+    if (lanternArt) {
+      const lamp = this.add.image(rx, 40, lanternArt).setOrigin(0.5, 0.1).setDepth(60).setAlpha(0);
+      lamp.setScale(250 / lamp.height);
+      if (!d.won) lamp.setTint(0x6a6478);
+      this.tweens.add({ targets: lamp, alpha: d.won ? 0.34 : 0.2, duration: 1100, ease: 'Sine.easeOut' });
+      this.tweens.add({ targets: lamp, angle: { from: -3, to: 3 }, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    } else {
+      this.add.image(rx, 170, 'ui:emblem').setScale(1.15).setAlpha(0.3).setDepth(60);
     }
     const title = text(this, rx, 170, d.won ? 'VICTORY' : 'DEFEAT', {
-      size: 120, font: 'display', bold: true, color: d.won ? CSS.gold : '#b8a8c8', spacing: 14, shadow: true,
+      size: 120, font: 'display', bold: true, color: d.won ? '#ffffff' : '#b8a8c8', spacing: 14, shadow: true,
     }).setOrigin(0.5).setDepth(61).setAlpha(0).setScale(1.3);
+    if (d.won) title.setTint(0xfff3c8, 0xfff3c8, 0xd0a048, 0xd0a048);
     this.tweens.add({ targets: title, alpha: 1, scale: 1, duration: 520, ease: 'Back.easeOut' });
 
     let y = 320;
@@ -64,7 +91,7 @@ export class ResultScene extends Phaser.Scene {
       const yy = y + i * 58;
       this.add.rectangle(rx, yy, 680, 50, 0xffffff, 0.04).setDepth(60);
       text(this, rx - 320, yy, r.label, { size: 28, color: r.ok ? CSS.cream : CSS.muted }).setOrigin(0, 0.5).setDepth(61);
-      const st = this.add.image(rx + 310, yy, 'icon:star4').setDisplaySize(40, 40).setTint(r.ok ? 0x9fd27a : 0x4a4a52).setDepth(61).setScale(0);
+      const st = this.add.image(rx + 310, yy, 'icon:star4').setDisplaySize(40, 40).setTint(r.ok ? C.accentStar : 0x4a4a52).setDepth(61).setScale(0);
       this.time.delayedCall(700 + i * 260, () => {
         this.tweens.add({ targets: st, scale: 40 / 96, duration: 300, ease: 'Back.easeOut' });
         if (r.ok) audio.sfx('reveal3');
@@ -104,8 +131,17 @@ export class ResultScene extends Phaser.Scene {
     }
 
     const quote = d.won ? (stage.outro ? stage.outro : `“${mvp.quote}”  — ${mvp.name.split(' ')[0]}`) : '“We will light it again tomorrow.”';
-    const qt = text(this, 540, H - 66, quote, { size: 27, italic: true, color: CSS.cream, wrap: 880, align: 'center', shadow: true }).setOrigin(0.5).setDepth(70);
-    this.add.rectangle(540, H - 66, Math.min(980, qt.width + 70), qt.height + 26, 0x050406, 0.7).setDepth(69);
+    // The quote sits on a soft wash that fades out at either end, framed by two hairline rules.
+    const qt = text(this, 540, H - 70, quote, { size: 27, italic: true, color: CSS.cream, wrap: 860, align: 'center', shadow: true }).setOrigin(0.5).setDepth(70);
+    const qw = Math.min(1040, qt.width + 220);
+    const qh = qt.height + 40;
+    if (this.textures.exists('ui:bannerBand')) this.add.image(540, H - 70, 'ui:bannerBand').setDisplaySize(qw, qh).setAlpha(0.95).setDepth(69);
+    else this.add.rectangle(540, H - 70, qw, qh, 0x050406, 0.5).setDepth(69);
+    const qr = this.add.graphics().setDepth(69);
+    for (const ry of [H - 70 - qh / 2, H - 70 + qh / 2]) {
+      qr.fillStyle(C.gold, 0.5).fillRect(540 - qw * 0.32, ry, qw * 0.64, 1);
+      qr.fillStyle(C.gold, 0.9).fillPoints([new Phaser.Math.Vector2(540, ry - 4), new Phaser.Math.Vector2(544, ry), new Phaser.Math.Vector2(540, ry + 4), new Phaser.Math.Vector2(536, ry)], true);
+    }
 
     const next = nextStageId(stage.id);
     const firstRite = save.totalPulls === 0 && save.glimmer >= RITE.cost * 10;

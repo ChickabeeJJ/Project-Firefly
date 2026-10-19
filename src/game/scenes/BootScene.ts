@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { dropInUrl, loadDropInArt, streamCharacterArt } from '../art/assets';
 import { registerBaseArt } from '../art/registry';
 import { audio } from '../audio/AudioController';
-import { CSS, H, W } from '../config/theme';
+import { applyTheme, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { platform } from '../platform/PlatformAdapter';
 import { startPrologue } from '../systems/storyFlow';
@@ -60,6 +60,7 @@ export class BootScene extends Phaser.Scene {
     const t1 = performance.now();
     this.progress(0.9, 'Lighting the lamps …');
     await new Promise((r) => this.time.delayedCall(30, r));
+    applyTheme(saves.load().settings.theme);
     registerBaseArt(this);
     if (import.meta.env.DEV) console.info(`[boot] art loaded ${Math.round(t1 - t0)} ms, registered ${Math.round(performance.now() - t1)} ms`);
     const save = saves.load();

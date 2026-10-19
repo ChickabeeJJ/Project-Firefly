@@ -127,7 +127,7 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
       if (!sheet.milestones.includes(mc.getData('days')) || mc.getData('done')) continue;
       mc.setData('done', true);
       mc.add(scene.add.circle(0, 0, 44, 0x000000, 0.45));
-      mc.add(text(scene, 0, -2, '✓', { size: 44, bold: true, color: '#d8f2a8' }).setOrigin(0.5));
+      mc.add(text(scene, 0, -2, '✓', { size: 44, bold: true, color: CSS.accentStar }).setOrigin(0.5));
     }
   };
   markMedals();
@@ -221,7 +221,7 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
       if (res) {
         const pay = (r: Reward) => `+${r.n.toLocaleString('en-US')} ${rewardName(r)}`;
         // The reward rises off today's tile; the slips follow when the sheet is closed.
-        const rise = text(scene, todayTile.x, todayTile.y - 20, pay(res.reward), { size: 24, bold: true, italic: true, color: '#3f7a4a', shadow: false }).setOrigin(0.5).setAlpha(0);
+        const rise = text(scene, todayTile.x, todayTile.y - 20, pay(res.reward), { size: 24, bold: true, italic: true, color: CSS.accentInk, shadow: false }).setOrigin(0.5).setAlpha(0);
         root.add(rise);
         scene.tweens.add({ targets: rise, y: rise.y - 70, alpha: { from: 1, to: 0 }, duration: 1600, delay: 250, ease: 'Sine.easeOut', onComplete: () => rise.destroy() });
         pending.push([`Signed in · day ${sheet.days.length}  ${pay(res.reward)}`, res.reward.kind === 'glimmer' ? 'glimmer' : 'check']);

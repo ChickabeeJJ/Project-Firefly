@@ -96,8 +96,10 @@ export class LobbyScene extends Phaser.Scene {
     this.time.delayedCall(900, () => this.say(save.totalPulls === 0 && save.glimmer >= RITE.cost * 10
       ? LOBBY_GREETINGS.rite
       : hour >= 1 && hour < 5 ? LOBBY_GREETINGS.night : lines[lineAt]));
-    // First visit of the day: the sign-in sheet opens by itself, as the reference's does.
-    if (!signedToday(save)) this.time.delayedCall(1300, () => (this.bubble?.destroy(), openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); })));
+    // First visit of the day: the sign-in sheet opens by itself, as the reference's does. The
+    // one-time tour of the parlour (after the first battle) waits until it is put away.
+    if (!signedToday(save)) this.time.delayedCall(1300, () => (this.bubble?.destroy(), openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); this.maybeTour(); })));
+    else this.time.delayedCall(1400, () => this.maybeTour());
   }
 
   // ===================================================================== helpers
@@ -145,6 +147,91 @@ export class LobbyScene extends Phaser.Scene {
     softPress(c, onClick, 'tap', 1.06);
     this.ui.add(c);
     return c;
+  }
+
+  /**
+   * The parlour tour, shown once after the guided first battle: each stop outlines one part of
+   * the lobby with a note on what it is for. Tap to go on; Skip ends it.
+   */
+  private maybeTour(): void {
+    if (!saves.hasHint('tutorialDone') || saves.hasHint('tour:lobby') || this.hidden) return;
+    saves.markHint('tour:lobby');
+    const left = RIGHT_X - COL_W / 2;
+    const tw = (COL_W - 18) / 2;
+    const stops: { x: number; y: number; w: number; h: number; msg: string; side: 'left' | 'right' }[] = [
+      { x: RIGHT_X, y: 372, w: COL_W + 20, h: 132, side: 'left', msg: 'Enter the Stage carries the story on. Each stage you clear opens the next — and the tale of Vellmoor with it.' },
+      { x: RIGHT_X, y: 676, w: COL_W + 20, h: 152, side: 'left', msg: 'The Lantern Rite calls new Luminaries with Glimmer. You earn Glimmer from stages, tasks and the daily sign-in.' },
+      { x: left + COL_W - tw / 2, y: 528, w: tw + 20, h: 138, side: 'left', msg: 'The Troupe is where your Luminaries grow: spend Wick Dust and Sovereigns to level them, and materials to Kindle them.' },
+      { x: left + tw / 2, y: 528, w: tw + 20, h: 138, side: 'left', msg: 'Story holds every chapter, plus Supplies and Kindling stages that pay out levelling materials.' },
+      { x: 84, y: 400, w: 120, h: 118, side: 'right', msg: 'Tasks pay Glimmer for milestones — a red dot means something is ready to claim.' },
+      { x: 384, y: 196, w: 110, h: 108, side: 'right', msg: 'Sign in each day for rewards, with bonuses at 7, 15 and 25 days. That is the whole parlour — good luck, Lamplighter.' },
+    ];
+    const root = this.add.container(0, 0).setDepth(3000);
+    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x050608, 0.45).setInteractive();
+    root.add(veil);
+    let i = -1;
+    let stopC: Phaser.GameObjects.Container | undefined;
+    const end = () => {
+      this.tweens.add({ targets: root, alpha: 0, duration: 300, onComplete: () => root.destroy() });
+    };
+    const next = () => {
+      i++;
+      stopC?.destroy();
+      if (i >= stops.length) {
+        end();
+        return;
+      }
+      const st = stops[i];
+      const c = this.add.container(0, 0);
+      // Outline with corner brackets around the stop.
+      const ring = this.add.container(st.x, st.y);
+      const g = this.add.graphics();
+      const hw = st.w / 2;
+      const hh = st.h / 2;
+      g.lineStyle(3, C.gold, 0.95).strokeRoundedRect(-hw, -hh, st.w, st.h, 10);
+      g.lineStyle(5, 0xfff0c0, 1);
+      for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+        const cx = sx * (hw + 9);
+        const cy = sy * (hh + 9);
+        g.beginPath();
+        g.moveTo(cx, cy - sy * 26);
+        g.lineTo(cx, cy);
+        g.lineTo(cx - sx * 26, cy);
+        g.strokePath();
+      }
+      ring.add(g);
+      this.tweens.add({ targets: ring, scale: 1.04, alpha: 0.6, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      // The note, on paper, beside the stop.
+      const t = text(this, 0, 0, st.msg, { size: 25, color: CSS.paperText, wrap: 470, lineSpacing: 3 });
+      const bw = t.width + 48;
+      const bh = t.height + 74;
+      const bx = st.side === 'left' ? st.x - hw - 40 - bw : st.x + hw + 40;
+      const by = Phaser.Math.Clamp(st.y - bh / 2, 30, H - bh - 30);
+      c.add(this.add.nineslice(bx, by, 'ui:paperPlain', undefined, bw, bh, 12, 12, 12, 12).setOrigin(0));
+      c.add(t.setPosition(bx + 24, by + 18));
+      c.add(text(this, bx + 24, by + bh - 26, `${i + 1} / ${stops.length}`, { size: 18, color: CSS.paperSub }).setOrigin(0, 0.5));
+      c.add(text(this, bx + bw - 24, by + bh - 26, i === stops.length - 1 ? 'Done ▸' : 'Tap to continue ▸', { size: 19, italic: true, color: CSS.accentInk }).setOrigin(1, 0.5));
+      c.add(ring);
+      c.setAlpha(0);
+      this.tweens.add({ targets: c, alpha: 1, duration: 320, ease: 'Sine.easeOut' });
+      root.add(c);
+      stopC = c;
+    };
+    veil.on('pointerup', () => {
+      audio.sfx('tap');
+      next();
+    });
+    const skip = text(this, W - 60, H - 40, 'Skip tour', { size: 22, italic: true, color: CSS.creamDim }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+    skip.on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
+      e.stopPropagation();
+      audio.sfx('back');
+      end();
+    });
+    root.add(skip);
+    root.setAlpha(0);
+    this.tweens.add({ targets: root, alpha: 1, duration: 300 });
+    this.bubble?.destroy();
+    next();
   }
 
   private refreshSignDot(): void {
@@ -304,7 +391,7 @@ export class LobbyScene extends Phaser.Scene {
       if (art && this.textures.exists(art)) {
         // The painted emblem, warmly lit, set into the tile's right-hand side like the Rite lantern.
         c.add(this.add.image(tw / 2 - 46, -8, 'fx:glow').setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(140, 110).setAlpha(0.14));
-        const em = this.add.image(tw / 2 - 46, -12, art).setDisplaySize(84, 84);
+        const em = this.add.image(tw / 2 - 46, -12, art).setDisplaySize(84, 84).setAlpha(0.5).setTint(0xd8cfc0); // matches the Rite tile
         c.add(em);
         this.tweens.add({ targets: em, angle: { from: -2, to: 2 }, y: -15, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       } else {
@@ -363,7 +450,7 @@ export class LobbyScene extends Phaser.Scene {
     // Three clean lines on the left (chapter · title · next stage); the stub holds only an arrow.
     const room = w - stub - 50;
     const lx = -w / 2 + 26;
-    const k = fit(text(this, lx, -32, head, { size: 15, font: 'display', bold: true, color: '#3f7a4a', spacing: 2 }).setOrigin(0, 0.5), room);
+    const k = fit(text(this, lx, -32, head, { size: 15, font: 'display', bold: true, color: CSS.accentInk, spacing: 2 }).setOrigin(0, 0.5), room);
     const t = fit(text(this, lx, 2, 'Enter the Stage', { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0, 0.5), room);
     const st = fit(text(this, lx, 36, sub, { size: 18, italic: true, color: CSS.paperSub }).setOrigin(0, 0.5), room);
     const enter = this.add.circle(w / 2 - stub / 2, 0, 30, 0x2a241c, 0.9);

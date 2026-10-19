@@ -101,9 +101,21 @@ export function isDropIn(key: string): boolean {
   return key.startsWith('hf:') || key.startsWith('hfp:');
 }
 
+/**
+ * Per-character height for painted art that is framed differently from the rest of the cast: a
+ * full-length standing figure fitted to the same height as seated or knee-up art reads as a giant.
+ */
+const ART_HEIGHT: Record<string, number> = { cassian: 0.84 };
+
+/** Height factor for a character texture key (hf:characters/<id>, hf:battle/<id>, hfp:<id>…). */
+export function artScale(key: string): number {
+  const id = key.replace(/^hfp?:(?:characters\/|battle\/)?/, '').split(/[^a-z]/)[0];
+  return ART_HEIGHT[id] ?? 1;
+}
+
 /** Code-drawn portraits are chibi (short); painted key art is tall, so each gets its own size. */
 export function fitPortrait(img: Phaser.GameObjects.Image, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): Phaser.GameObjects.Image {
-  if (isDropIn(img.texture.key)) img.setScale(Math.min(paintedHeight / img.height, maxWidth / img.width));
+  if (isDropIn(img.texture.key)) img.setScale(Math.min(paintedHeight / img.height, maxWidth / img.width) * artScale(img.texture.key));
   else img.setScale(proceduralScale);
   return img;
 }

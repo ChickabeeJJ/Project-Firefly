@@ -26,7 +26,7 @@ export class ShopScene extends Phaser.Scene {
     this.tab = data.tab ?? this.tab;
     this.add.image(W / 2, H / 2, ensureBg(this, 'parlour')).setDisplaySize(W, H);
     this.add.rectangle(W / 2, H / 2, W, H, 0x0a0806, 0.86);
-    const warm = this.add.image(W, H, 'fx:glow').setTint(0xc9652f).setDisplaySize(1600, 1000).setAlpha(0.25);
+    const warm = this.add.image(W, H, 'fx:glow').setTint(C.amber).setDisplaySize(1600, 1000).setAlpha(0.18);
     warm.setBlendMode(Phaser.BlendModes.ADD);
     new Atmosphere(this, { depth: 40, fireflies: 2 });
     const back = this.add.container(64, 60);

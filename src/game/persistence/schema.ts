@@ -2,6 +2,7 @@ import { CHARACTERS, STARTER_TEAM } from '../data/characters';
 import { STAGES } from '../data/stages';
 import { MAX_RESONANCE } from '../battle/rules';
 import type { SignInRecord } from '../systems/signin';
+import { THEMES } from '../config/theme';
 import { fromLegacyLevel, type ItemId, ITEM_ORDER, levelCap, maxInsight } from '../systems/growth';
 
 export const SAVE_VERSION = 2;
@@ -19,6 +20,11 @@ export interface Settings {
   sfx: number;
   /** Lobby gramophone record. */
   track: 'lobby' | 'rite' | 'battle' | 'boss';
+  /** Accent colour preset (config/theme THEMES). */
+  theme: string;
+  /** Battle toggles, remembered between fights. */
+  auto: boolean;
+  speed: number;
 }
 
 const TRACKS = ['lobby', 'rite', 'battle', 'boss'] as const;
@@ -73,7 +79,7 @@ export function freshSave(): SaveData {
     stars: {},
     pity: 0,
     totalPulls: 0,
-    settings: { music: 0.6, sfx: 0.8, track: 'lobby' },
+    settings: { music: 0.6, sfx: 0.8, track: 'lobby', theme: 'verdigris', auto: false, speed: 1 },
     hints: [],
     playerId: 100000000 + Math.floor(Math.random() * 899999999),
     seen: [],
@@ -154,6 +160,9 @@ export function sanitizeSave(raw: unknown): SaveData {
       music: num(s.music, 0, 1, base.settings.music),
       sfx: num(s.sfx, 0, 1, base.settings.sfx),
       track: (TRACKS as readonly string[]).includes(s.track as string) ? (s.track as Settings['track']) : 'lobby',
+      theme: typeof s.theme === 'string' && s.theme in THEMES ? s.theme : 'verdigris',
+      auto: s.auto === true,
+      speed: s.speed === 2 ? 2 : 1,
     },
     hints: strings(r.hints, 1024),
     playerId: Math.round(num(r.playerId, 100000000, 999999999, base.playerId)),
