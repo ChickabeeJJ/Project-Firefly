@@ -45,10 +45,10 @@ export function text(scene: Phaser.Scene, x: number, y: number, str: string, o: 
  * plus a soft glow. Coordinates are world space.
  */
 export function pressFx(scene: Phaser.Scene, x: number, y: number, size = 90, depth = 4000): void {
-  const ring = scene.add.circle(x, y, size * 0.3).setStrokeStyle(2, C.gold, 0.85).setDepth(depth);
-  scene.tweens.add({ targets: ring, radius: size * 0.62, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
-  const g = scene.add.image(x, y, 'fx:glow').setTint(0xffe6b0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.1, size * 1.1).setAlpha(0.35).setDepth(depth);
-  scene.tweens.add({ targets: g, alpha: 0, duration: 320, onComplete: () => g.destroy() });
+  const ring = scene.add.circle(x, y, size * 0.34).setStrokeStyle(1.5, C.gold, 0.6).setDepth(depth);
+  scene.tweens.add({ targets: ring, radius: size * 0.6, alpha: 0, duration: 620, ease: 'Sine.easeOut', onComplete: () => ring.destroy() });
+  const g = scene.add.image(x, y, 'fx:glow').setTint(0xffe6b0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.1, size * 1.1).setAlpha(0.22).setDepth(depth);
+  scene.tweens.add({ targets: g, alpha: 0, duration: 520, ease: 'Sine.easeOut', onComplete: () => g.destroy() });
 }
 
 /** Makes a container behave like a soft physical button: lift on hover, dip on press, ring on release. */
@@ -56,19 +56,24 @@ export function softPress(c: Phaser.GameObjects.Container, onClick: () => void, 
   const scene = c.scene;
   let down = false;
   const base = c.scale;
-  c.on('pointerover', () => scene.tweens.add({ targets: c, scale: base * lift, duration: 140, ease: 'Sine.easeOut' }));
+  // Slow, sine-eased motion throughout: things settle rather than spring.
+  const to = (scale: number, duration: number) => {
+    scene.tweens.killTweensOf(c);
+    scene.tweens.add({ targets: c, scale, duration, ease: 'Sine.easeInOut' });
+  };
+  c.on('pointerover', () => to(base * lift, 280));
   c.on('pointerout', () => {
     down = false;
-    scene.tweens.add({ targets: c, scale: base, duration: 160, ease: 'Sine.easeOut' });
+    to(base, 320);
   });
   c.on('pointerdown', () => {
     down = true;
-    scene.tweens.add({ targets: c, scale: base * 0.96, duration: 80, ease: 'Sine.easeOut' });
+    to(base * 0.98, 140);
   });
   c.on('pointerup', () => {
     if (!down) return;
     down = false;
-    scene.tweens.add({ targets: c, scale: base * lift, duration: 140, ease: 'Back.easeOut' });
+    to(base * lift, 260);
     const m = c.getWorldTransformMatrix();
     pressFx(scene, m.tx, m.ty, Math.min(220, Math.max(c.width, c.height) * base));
     audio.sfx(sfx);
@@ -296,13 +301,13 @@ export function goTo(scene: Phaser.Scene, key: string, data?: object): void {
   if (scene.data.get('leaving')) return;
   scene.data.set('leaving', true);
   scene.input.enabled = false;
-  scene.cameras.main.fadeOut(260, 8, 8, 10);
+  scene.cameras.main.fadeOut(360, 8, 8, 10);
   scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => scene.scene.start(key, data));
 }
 
 export function fadeIn(scene: Phaser.Scene): void {
   scene.data.set('leaving', false);
-  scene.cameras.main.fadeIn(320, 8, 8, 10);
+  scene.cameras.main.fadeIn(560, 8, 8, 10);
 }
 
 /** Thin gold rule with a centred diamond, used to frame headings. */

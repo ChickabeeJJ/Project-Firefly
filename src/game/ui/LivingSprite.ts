@@ -153,6 +153,8 @@ export interface StagePortrait {
   /** Small reaction when tapped. */
   pose(): void;
   setDepth(d: number): StagePortrait;
+  /** Fades in while sliding `dx` px back to its mark. */
+  driftIn(dx: number, duration: number, delay?: number): StagePortrait;
 }
 
 export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId: string, key: string, proceduralScale: number, paintedHeight: number, maxWidth = paintedHeight * 0.95): StagePortrait {
@@ -167,6 +169,11 @@ export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId:
       pose: () => still.pose(4, 0.006, 200, 140),
       setDepth(d) {
         still.setDepth(d);
+        return api;
+      },
+      driftIn(dx, duration, delay = 0) {
+        still.setAlpha(0).setX(x + dx);
+        scene.tweens.add({ targets: still, alpha: 1, x, duration, delay, ease: 'Sine.easeOut' });
         return api;
       },
     };
@@ -190,6 +197,12 @@ export function stagePortrait(scene: Phaser.Scene, x: number, y: number, charId:
       poster.setDepth(d);
       v.setDepth(d + 0.01);
       hit.setDepth(d + 0.02);
+      return api;
+    },
+    driftIn(dx, duration, delay = 0) {
+      // The loop reveals itself over the poster, so only the poster needs to arrive.
+      poster.setAlpha(0).setX(x + dx);
+      scene.tweens.add({ targets: poster, alpha: 1, x, duration, delay, ease: 'Sine.easeOut' });
       return api;
     },
   };

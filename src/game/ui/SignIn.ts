@@ -31,9 +31,15 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
   const sheet = sheetFor(save, now);
   const fresh = !sheet.days.includes(today);
   const root = scene.add.container(0, 0).setDepth(4000);
+  // Reward slips wait until the sheet is put away, so nothing lands on top of it.
+  const pending: [string, string][] = [];
+  let closed = false;
   const close = () => {
+    if (closed) return;
+    closed = true;
     audio.sfx('back');
-    scene.tweens.add({ targets: root, alpha: 0, duration: 200, onComplete: () => root.destroy() });
+    scene.tweens.add({ targets: root, alpha: 0, y: 12, duration: 240, ease: 'Sine.easeIn', onComplete: () => root.destroy() });
+    for (const [msg, icon] of pending) toast(scene, msg, icon);
     onClose?.();
   };
 
@@ -75,6 +81,7 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
   root.add(scene.add.rectangle(cx + 30, cy + 40, cw - 60, 120, 0x000000, 0.18).setOrigin(0).setStrokeStyle(1, 0xe8dcc0, 0.25));
   root.add(text(scene, cx + 54, cy + 76, 'Today’s Reward', { size: 26, color: CSS.cream }).setOrigin(0, 0.5));
   const tr = dayReward(today);
+  root.add(text(scene, cx + 56, cy + 116, rewardName(tr), { size: 20, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
   root.add(scene.add.image(cx + 410, cy + 98, rewardIcon(tr)).setDisplaySize(86, 86));
   root.add(text(scene, cx + 470, cy + 136, `x${tr.n.toLocaleString('en-US')}`, { size: 20, color: CSS.cream }).setOrigin(1, 0.5));
   const tick = text(scene, cx + 410, cy + 98, '✓', { size: 64, bold: true, color: '#ffffff', shadow: true }).setOrigin(0.5).setAlpha(fresh ? 0 : 0.95);
@@ -83,9 +90,27 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
   root.add(signedText);
   const setSigned = () => signedText.setText(`Days signed in:  ${sheet.days.length}`);
   setSigned();
+  // A thread linking the bonuses, filled as far as the days signed reach.
+  const mxAt = (i: number) => cx + 100 + i * 170;
+  const track = scene.add.graphics();
+  root.add(track);
+  const drawTrack = () => {
+    const n = sheet.days.length;
+    let fx = mxAt(0) - 60;
+    MILESTONES.forEach((m, i) => {
+      const prev = i ? MILESTONES[i - 1].days : 0;
+      const x0 = i ? mxAt(i - 1) : mxAt(0) - 60;
+      if (n >= m.days) fx = mxAt(i);
+      else if (n > prev) fx = Math.max(fx, x0 + ((n - prev) / (m.days - prev)) * (mxAt(i) - x0));
+    });
+    track.clear();
+    track.fillStyle(0xe8dcc0, 0.14).fillRect(mxAt(0) - 60, cy + 306, mxAt(2) - mxAt(0) + 60, 4);
+    track.fillStyle(0xe2be6a, 0.9).fillRect(mxAt(0) - 60, cy + 306, fx - (mxAt(0) - 60), 4);
+  };
+  drawTrack();
   const medals: Phaser.GameObjects.Container[] = [];
   MILESTONES.forEach((m, i) => {
-    const mx = cx + 100 + i * 170;
+    const mx = mxAt(i);
     const my = cy + 308;
     const mc = scene.add.container(mx, my);
     mc.add(text(scene, -38, -62, String(m.days), { size: 32, font: 'display', color: CSS.cream }).setOrigin(0.5));
@@ -108,7 +133,7 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
   markMedals();
 
   // Calendar, Monday first.
-  const gx = px - 60;
+  const gx = px - 96;
   const gy = py - ph / 2 + 64;
   const tw = 104;
   const th = 112;
@@ -133,6 +158,7 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
     const claimed = sheet.days.includes(day);
     const special = r.kind === 'glimmer';
     const t = scene.add.container(x, y);
+    t.add(scene.add.rectangle(3, 4, tw, th, 0x000000, 0.12));
     const fill = past || claimed ? 0x8e94ac : special ? 0xf2d2bc : 0xfbf8f2;
     t.add(scene.add.rectangle(0, 0, tw, th, fill, past || claimed ? 0.8 : 1).setStrokeStyle(1, 0x8a7a60, past || claimed ? 0.2 : 0.35));
     t.add(text(scene, -tw / 2 + 8, -th / 2 + 18, String(day).padStart(2, '0'), { size: 30, font: 'display', color: past || claimed ? '#5a6078' : '#b0a690' }).setOrigin(0, 0.5));
@@ -141,6 +167,9 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
     if (special) t.add(scene.add.image(tw / 2 - 12, -th / 2 + 6, 'icon:star4').setDisplaySize(22, 22).setTint(0xe2be6a));
     if (claimed && day !== today) t.add(stamp(scene, tw, th));
     if (day === today) {
+      const halo = scene.add.rectangle(0, 0, tw + 16, th + 16, 0xe2be6a, 0.25);
+      t.addAt(halo, 0);
+      scene.tweens.add({ targets: halo, alpha: 0.05, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       t.add(scene.add.rectangle(0, 0, tw + 6, th + 6, 0, 0).setStrokeStyle(3, 0xc8a24a, 1));
       if (!fresh) t.add(stamp(scene, tw, th));
       todayTile = t;
@@ -151,20 +180,27 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
   // The hourglass that sits on the corner of the page.
   const hg = scene.textures.exists('hf:ui/motif_hourglass') ? 'hf:ui/motif_hourglass' : null;
   if (hg) {
-    const im = scene.add.image(px + pw / 2 - 20, py + ph / 2 - 60, hg).setDisplaySize(190, 190).setAngle(14);
+    const im = scene.add.image(px + pw / 2 - 30, py + ph / 2 - 70, hg).setDisplaySize(170, 170).setAngle(14).setTint(0xe8dccb).setAlpha(0.9);
     root.add(im);
     scene.tweens.add({ targets: im, angle: 8, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
   }
 
   // Close.
-  const x = text(scene, px + pw / 2 - 40, py - ph / 2 + 40, '✕', { size: 40, color: '#4a4032' }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-  x.on('pointerup', close);
-  root.add(x);
+  // Close: a dark seal set on the page's corner, clear of the calendar.
+  const sx = px + pw / 2 + 6;
+  const sy = py - ph / 2 - 6;
+  const seal = scene.add.container(sx, sy);
+  seal.add(scene.add.circle(2, 3, 32, 0x000000, 0.35));
+  seal.add(scene.add.circle(0, 0, 32, 0x1e1c1a, 1).setStrokeStyle(2, 0xc8a24a, 0.9));
+  seal.add(text(scene, 0, -1, '✕', { size: 28, color: CSS.cream }).setOrigin(0.5));
+  seal.setSize(72, 72).setInteractive({ useHandCursor: true }).on('pointerup', close);
+  root.add(seal);
+  root.add(text(scene, px + 160, py + ph / 2 - 26, 'Tap outside the sheet to close', { size: 18, italic: true, color: '#8a7a60' }).setOrigin(0.5));
   const esc = () => root.active && close();
   scene.input.keyboard?.once('keydown-ESC', esc);
 
-  root.setAlpha(0);
-  scene.tweens.add({ targets: root, alpha: 1, duration: 260 });
+  root.setAlpha(0).setY(18);
+  scene.tweens.add({ targets: root, alpha: 1, y: 0, duration: 420, ease: 'Sine.easeOut' });
 
   // Sign in: today's tile is stamped, the tick lands on the reward, and the slips arrive.
   if (fresh && todayTile) {
@@ -181,10 +217,15 @@ export function openSignIn(scene: Phaser.Scene, onClose?: () => void): void {
       scene.tweens.add({ targets: tick, alpha: 0.95, duration: 300, delay: 300 });
       setSigned();
       markMedals();
+      drawTrack();
       if (res) {
         const pay = (r: Reward) => `+${r.n.toLocaleString('en-US')} ${rewardName(r)}`;
-        toast(scene, `Signed in · day ${sheet.days.length}  ${pay(res.reward)}`, res.reward.kind === 'glimmer' ? 'glimmer' : 'check');
-        res.milestones.forEach((m) => toast(scene, `${sheet.days.length} days signed · ${pay(m)}`, 'glimmer'));
+        // The reward rises off today's tile; the slips follow when the sheet is closed.
+        const rise = text(scene, todayTile.x, todayTile.y - 20, pay(res.reward), { size: 24, bold: true, italic: true, color: '#3f7a4a', shadow: false }).setOrigin(0.5).setAlpha(0);
+        root.add(rise);
+        scene.tweens.add({ targets: rise, y: rise.y - 70, alpha: { from: 1, to: 0 }, duration: 1600, delay: 250, ease: 'Sine.easeOut', onComplete: () => rise.destroy() });
+        pending.push([`Signed in · day ${sheet.days.length}  ${pay(res.reward)}`, res.reward.kind === 'glimmer' ? 'glimmer' : 'check']);
+        res.milestones.forEach((m) => pending.push([`${sheet.days.length} days signed · ${pay(m)}`, 'glimmer']));
       }
     });
   }

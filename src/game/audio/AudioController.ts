@@ -351,13 +351,15 @@ export class AudioController {
         this.osc('sine', 520 * v, t, 0.08, 0.22, 0.003, B, 0, 380);
         break;
       case 'card':
-        this.noise(t, 0.07, 2400 * v, 0.22, B, 'bandpass', 5200);
-        this.osc('triangle', 1320 * v, t, 0.05, 0.06, 0.002, B);
+        // A soft paper whisper: low band noise and a faint, round note (no bright tick).
+        this.noise(t, 0.09, 1500 * v, 0.1, B, 'bandpass', 2600);
+        this.osc('sine', 520 * v, t, 0.14, 0.035, 0.012, B);
         break;
       case 'merge':
-        this.bell(NOTE(88), t, 0.22, B);
-        this.bell(NOTE(95), t + 0.08, 0.2, B);
-        this.noise(t, 0.25, 6000, 0.06, B);
+        // Two warm notes an octave below the old chime, eased in rather than struck.
+        this.osc('sine', NOTE(76), t, 0.7, 0.07, 0.03, B);
+        this.osc('sine', NOTE(83), t + 0.07, 0.7, 0.055, 0.03, B);
+        this.noise(t, 0.3, 2400, 0.025, B, 'bandpass', 3600);
         break;
       case 'cast':
         for (let i = 0; i < 4; i++) this.osc('sine', 600 * (1 + i * 0.5) * v, t + i * 0.02, 0.3, 0.06, 0.02, B, 0, 1400 * (1 + i * 0.5));
@@ -367,8 +369,9 @@ export class AudioController {
         // Silent by design: drop sfx/hit.mp3 in to give attacks an impact sound.
         break;
       case 'crit':
-        // Only a soft chime on crits; drop sfx/crit.mp3 in for an impact.
-        this.bell(NOTE(96), t, 0.1, B);
+        // A muted thud and a low glint; drop sfx/crit.mp3 in for a bigger impact.
+        this.osc('sine', 140 * v, t, 0.18, 0.08, 0.004, B, 0, 70);
+        this.osc('sine', NOTE(79), t + 0.01, 0.45, 0.03, 0.02, B);
         break;
       case 'heal':
         [72, 76, 79, 84].forEach((n, i) => this.osc('sine', NOTE(n), t + i * 0.06, 0.5, 0.12, 0.03, B));
@@ -383,7 +386,7 @@ export class AudioController {
         this.osc('sine', 311, t, 0.4, 0.12, 0.01, B, 0, 200);
         break;
       case 'firefly':
-        this.osc('sine', 2200 + Math.random() * 900, t, 0.12, 0.08, 0.004, B);
+        this.osc('sine', 1100 + Math.random() * 300, t, 0.22, 0.03, 0.025, B);
         break;
       case 'lantern':
         [60, 64, 67, 71, 74].forEach((n, i) => {

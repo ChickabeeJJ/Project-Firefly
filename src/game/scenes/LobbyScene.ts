@@ -97,7 +97,7 @@ export class LobbyScene extends Phaser.Scene {
       ? LOBBY_GREETINGS.rite
       : hour >= 1 && hour < 5 ? LOBBY_GREETINGS.night : lines[lineAt]));
     // First visit of the day: the sign-in sheet opens by itself, as the reference's does.
-    if (!signedToday(save)) this.time.delayedCall(1300, () => openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); }));
+    if (!signedToday(save)) this.time.delayedCall(1300, () => (this.bubble?.destroy(), openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); })));
   }
 
   // ===================================================================== helpers
@@ -182,7 +182,7 @@ export class LobbyScene extends Phaser.Scene {
       ['profile', 'profile', 'Profile', () => openProfile(this)],
       ['gramophone', 'gramophone', 'Music', () => openGramophone(this)],
       ['settings', 'gear', 'Settings', () => this.openSettings()],
-      ['signin', 'calendar', 'Sign-in', () => openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); })],
+      ['signin', 'calendar', 'Sign-in', () => (this.bubble?.destroy(), openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); }))],
     ];
     row.forEach(([art, icon, label, go], i) => {
       const b = this.artButton(84 + i * 100, 196, art, icon, label, go, 66);

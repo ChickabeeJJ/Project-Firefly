@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { dropIn } from '../art/assets';
-import { ensureBg, ensurePortrait } from '../art/registry';
+import { ensureBg, ensurePortrait, verseEmblem } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { chooseAutoAction } from '../battle/autoplay';
 import { describeEffects, describeVerse, STATUS_INFO, TYPE_LABEL } from '../battle/describe';
@@ -476,13 +476,16 @@ export class BattleScene extends Phaser.Scene {
       this.fx.shake(0.006, 260);
     }
     this.showCastBanner(verse.name + (e.rank > 1 ? '  ' + '★'.repeat(e.rank) : ''), describeVerse(verse, e.rank, e.lit), e.finale ? CSS.gold : CSS.goldLight);
-    audio.sfx('cast');
     const mood = MOOD_COLOR[char.mood];
     caster.castPose();
     this.fx.ring(caster.x, caster.y, mood, 320, 600, true);
     this.fx.glowAt(caster.center.x, caster.center.y, mood, 260, 500);
     const hostile = verse.effects.some((fx) => fx.kind === 'damage');
-    if (hostile && e.targetUids.length > 0) {
+    if (e.finale && e.targetUids.length > 0) {
+      // Finales fire a volley of comets bearing the verse's emblem.
+      const tos = e.targetUids.map((uid) => this.views.get(uid)?.center).filter((p): p is Phaser.Math.Vector2 => !!p);
+      await this.fx.finaleVolley(caster.center, tos, mood, verseEmblem(this, verse), hostile);
+    } else if (hostile && e.targetUids.length > 0) {
       const t = this.views.get(e.targetUids[0]);
       if (t) {
         await caster.lunge(t.x, verse.type === 'mass' ? 40 : 80);
@@ -1009,8 +1012,9 @@ export class BattleScene extends Phaser.Scene {
     if (this.engine.readyToResolve) this.queueResolve();
   }
 
-  private undo(): void {
+  private undoAll(): void {
     if (!this.canPlan() || this.tutStep || !this.engine.undo()) return;
+    while (this.engine.undo()) { /* unwind the whole plan */ }
     audio.sfx('back');
     this.rebuildPlan();
   }
@@ -1050,8 +1054,9 @@ export class BattleScene extends Phaser.Scene {
       const f = this.add.image(p.x, p.y, 'card:back').setScale(SLOT_SCALE).setDepth(240).setAlpha(0.62);
       if (bonus) f.setTint(0xe8f8a0);
       f.setInteractive({ useHandCursor: true });
+      // Tapping any filled slot sends every planned Verse back to the hand at once.
       f.on('pointerup', () => {
-        if (k === this.engine.queue.length - 1) this.undo();
+        if (k < this.engine.queue.length) this.undoAll();
       });
       this.slotFrames.push(f);
     }
@@ -1070,9 +1075,10 @@ export class BattleScene extends Phaser.Scene {
       if (k === next && this.canPlan()) this.tweens.add({ targets: f, alpha: 0.6, duration: 700, yoyo: true, repeat: -1 });
     });
     this.slotItems.forEach((it, k) => {
-      const last = k === this.slotItems.length - 1 && this.canPlan() && !this.engine.readyToResolve;
+      // Any planned Verse can be tapped to send the whole plan back, so each shows the return mark.
+      const can = k >= 0 && this.canPlan() && !this.engine.readyToResolve;
       const u = (it as Phaser.GameObjects.Container).getByName?.('undo') as Phaser.GameObjects.Image | null;
-      u?.setVisible(last);
+      u?.setVisible(can);
     });
   }
 

@@ -47,7 +47,8 @@ export class MenuScene extends Phaser.Scene {
     shade.fillRect(0, 0, W, H);
     new Atmosphere(this, { depth: 60, fireflies: 5 });
 
-    stagePortrait(this, 1500, H + 30, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 1040, 900).setDepth(10);
+    // The Luminary drifts in, unhurried, a beat after the room.
+    stagePortrait(this, 1500, H + 30, save.team[0], ensurePortrait(this, save.team[0]), 0.78, 1040, 900).setDepth(10).driftIn(40, 1300, 120);
 
     this.buildHeader();
     this.buildCarousel();
@@ -142,8 +143,8 @@ export class MenuScene extends Phaser.Scene {
     const inn = this.slides[next];
     this.tweens.killTweensOf([out, inn]);
     inn.setX(dir * BANNER_W);
-    this.tweens.add({ targets: out, x: -dir * BANNER_W, duration: 420, ease: 'Cubic.easeInOut' });
-    this.tweens.add({ targets: inn, x: 0, duration: 420, ease: 'Cubic.easeInOut' });
+    this.tweens.add({ targets: out, x: -dir * BANNER_W, alpha: 0.4, duration: 820, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: inn, x: 0, alpha: { from: 0.4, to: 1 }, duration: 820, ease: 'Sine.easeInOut' });
     this.index = next;
     this.dotViews.forEach((d, k) => d.setFillStyle(C.paper, k === next ? 1 : 0.3));
   }
@@ -189,11 +190,11 @@ export class MenuScene extends Phaser.Scene {
           c.add(this.badge);
         }
         c.setSize(tw, th).setInteractive({ useHandCursor: true });
-        c.on('pointerover', () => this.tweens.add({ targets: halo, alpha: 0.35, duration: 180 }));
-        c.on('pointerout', () => this.tweens.add({ targets: halo, alpha: 0, duration: 160 }));
-        softPress(c, go, 'tap', 1.05);
-        c.setAlpha(0).setY(y + 18);
-        this.tweens.add({ targets: c, alpha: 1, y, duration: 320, delay: 120 + i * 40, ease: 'Cubic.easeOut' });
+        c.on('pointerover', () => this.tweens.add({ targets: halo, alpha: 0.26, duration: 360, ease: 'Sine.easeInOut' }));
+        c.on('pointerout', () => this.tweens.add({ targets: halo, alpha: 0, duration: 420, ease: 'Sine.easeInOut' }));
+        softPress(c, go, 'tap', 1.03);
+        c.setAlpha(0).setY(y + 10);
+        this.tweens.add({ targets: c, alpha: 1, y, duration: 760, delay: 180 + i * 55, ease: 'Sine.easeOut' });
         return;
       }
       const g = this.add.graphics();
@@ -216,19 +217,19 @@ export class MenuScene extends Phaser.Scene {
       }
       c.setSize(tw, th).setInteractive({ useHandCursor: true });
       c.on('pointerover', () => {
-        this.tweens.add({ targets: under, width: tw - 60, duration: 180, ease: 'Sine.easeOut' });
-        this.tweens.add({ targets: halo, alpha: 0.32, duration: 180 });
+        this.tweens.add({ targets: under, width: tw - 60, duration: 360, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: halo, alpha: 0.26, duration: 360, ease: 'Sine.easeInOut' });
         ic.setAlpha(1);
       });
       c.on('pointerout', () => {
-        this.tweens.add({ targets: under, width: 0, duration: 160 });
-        this.tweens.add({ targets: halo, alpha: 0.12, duration: 160 });
+        this.tweens.add({ targets: under, width: 0, duration: 380, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: halo, alpha: 0.12, duration: 380, ease: 'Sine.easeInOut' });
         ic.setAlpha(0.88);
       });
       softPress(c, go, 'tap', 1.03);
       // staggered entrance
       c.setAlpha(0).setY(y + 18);
-      this.tweens.add({ targets: c, alpha: 1, y, duration: 320, delay: 120 + i * 40, ease: 'Cubic.easeOut' });
+      this.tweens.add({ targets: c, alpha: 1, y, duration: 760, delay: 180 + i * 55, ease: 'Sine.easeOut' });
     });
     this.refreshBadge();
   }

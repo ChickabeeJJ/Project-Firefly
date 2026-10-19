@@ -62,6 +62,86 @@ export class BattleFx {
     this.scene.tweens.add({ targets: b, alpha: 1, duration: 90, yoyo: true, hold: 120, onComplete: () => b.destroy() });
   }
 
+  /**
+   * Finale volley: light gathers at the caster, then one comet per target arcs across the field —
+   * the verse's painted emblem at its head, a trail of mood-coloured motes and gold glints behind —
+   * and bursts on arrival with a ring, turning rays and embers. Resolves when the last one lands.
+   */
+  async finaleVolley(from: Phaser.Math.Vector2, tos: Phaser.Math.Vector2[], color: number, emblem: string | null, hostile = true): Promise<void> {
+    const sc = this.scene;
+    // Charge: motes spiral in, a ring tightens, the glow swells.
+    const charge = sc.add.image(from.x, from.y, 'fx:glow').setTint(color).setBlendMode(Phaser.BlendModes.ADD).setDepth(57).setDisplaySize(80, 80).setAlpha(0.2);
+    sc.tweens.add({ targets: charge, displayWidth: 320, displayHeight: 320, alpha: 1, duration: 420, ease: 'Sine.easeIn' });
+    const ring = sc.add.image(from.x, from.y, 'fx:ring').setTint(0xfff0c0).setBlendMode(Phaser.BlendModes.ADD).setDepth(57).setDisplaySize(520, 520).setAlpha(0);
+    sc.tweens.add({ targets: ring, displayWidth: 90, displayHeight: 90, alpha: 0.9, duration: 420, ease: 'Cubic.easeIn', onComplete: () => ring.destroy() });
+    for (let i = 0; i < 18; i++) {
+      const a = (i / 18) * Math.PI * 2;
+      const r = 200 + Math.random() * 90;
+      const m = sc.add.image(from.x + Math.cos(a) * r, from.y + Math.sin(a) * r, 'fx:dot').setTint(i % 3 ? color : 0xffe9a8).setBlendMode(Phaser.BlendModes.ADD).setDepth(57).setScale(0.3).setAlpha(0);
+      sc.tweens.add({ targets: m, x: from.x, y: from.y, alpha: 1, scale: 0.12, angle: 180, duration: 380 + Math.random() * 80, ease: 'Cubic.easeIn', onComplete: () => m.destroy() });
+    }
+    await new Promise<void>((r) => sc.time.delayedCall(430, r));
+    sc.tweens.add({ targets: charge, alpha: 0, duration: 300, onComplete: () => charge.destroy() });
+    this.flash(color, 120, 0.18);
+    // Launch.
+    const shots = tos.map((to, i) => new Promise<void>((done) => {
+      sc.time.delayedCall(i * 90, () => {
+        const head = sc.add.container(from.x, from.y).setDepth(58);
+        head.add(sc.add.image(0, 0, 'fx:glow').setTint(color).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(170, 170).setAlpha(0.9));
+        head.add(sc.add.image(0, 0, 'fx:dot').setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(54, 54));
+        if (emblem) {
+          const em = sc.add.image(0, 0, emblem).setDisplaySize(84, 84);
+          head.add(em);
+          sc.tweens.add({ targets: em, angle: 360, duration: 900, repeat: -1 });
+        }
+        head.setScale(0.6);
+        const trail = sc.add.particles(0, 0, 'fx:dot', {
+          lifespan: 420, speed: { min: 10, max: 60 }, scale: { start: 0.5, end: 0 }, alpha: { start: 0.9, end: 0 },
+          frequency: 10, tint: color, blendMode: Phaser.BlendModes.ADD,
+        }).setDepth(57);
+        const glints = sc.add.particles(0, 0, 'fx:spark', {
+          lifespan: 360, speed: { min: 40, max: 140 }, scale: { start: 0.35, end: 0 }, alpha: { start: 1, end: 0 },
+          frequency: 45, tint: 0xffe9a8, rotate: { min: 0, max: 360 }, blendMode: Phaser.BlendModes.ADD,
+        }).setDepth(57);
+        trail.startFollow(head);
+        glints.startFollow(head);
+        // A high arc, each shot a little higher so a volley fans out.
+        const ctrl = new Phaser.Math.Vector2((from.x + to.x) / 2, Math.min(from.y, to.y) - 240 - i * 40);
+        const curve = new Phaser.Curves.QuadraticBezier(from.clone(), ctrl, to.clone());
+        const p = { t: 0 };
+        sc.tweens.add({
+          targets: p, t: 1, duration: 520, ease: 'Sine.easeIn',
+          onUpdate: () => {
+            const pt = curve.getPoint(p.t);
+            head.setPosition(pt.x, pt.y).setScale(0.6 + p.t * 0.5);
+          },
+          onComplete: () => {
+            trail.stop();
+            glints.stop();
+            sc.time.delayedCall(500, () => { trail.destroy(); glints.destroy(); });
+            head.destroy();
+            this.finaleImpact(to.x, to.y, color, hostile);
+            done();
+          },
+        });
+      });
+    }));
+    await Promise.all(shots);
+  }
+
+  private finaleImpact(x: number, y: number, color: number, hostile: boolean): void {
+    const sc = this.scene;
+    this.ring(x, y, 0xfff0c0, 560, 520);
+    this.ring(x, y, color, 380, 640, true);
+    const rays = sc.add.image(x, y, 'fx:rays').setTint(color).setBlendMode(Phaser.BlendModes.ADD).setDepth(55).setDisplaySize(140, 140).setAlpha(0.9);
+    sc.tweens.add({ targets: rays, displayWidth: 520, displayHeight: 520, angle: 40, alpha: 0, duration: 700, ease: 'Cubic.easeOut', onComplete: () => rays.destroy() });
+    this.glowAt(x, y, 0xffffff, 260, 300);
+    this.glowAt(x, y, color, 420, 700);
+    this.burst(x, y, 0xffe9a8, 26);
+    this.rise(x, y, color, 20);
+    if (hostile) this.shake(0.007, 200);
+  }
+
   /** Large italic serif number, gold for critical hits — the reference's signature feedback. */
   number(x: number, y: number, value: number, kind: 'dmg' | 'crit' | 'heal' | 'shield' | 'dot' | 'absorb'): void {
     const style = {

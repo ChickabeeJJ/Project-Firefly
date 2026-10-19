@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import type { VerseDef } from '../data/types';
 import { CHARACTERS, getCharacter } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
 import { dropIn } from './assets';
@@ -100,6 +101,14 @@ const VERSE_OBJECT: Record<string, string> = {
 };
 /** Motifs that read better as one of the painted objects. */
 const MOTIF_OBJECT: Record<string, string> = { crystal: 'crystal', note: 'quill', eye: 'orb' };
+
+/** Texture key of a verse's painted emblem (the object on its card), or null if it has none. */
+export function verseEmblem(scene: Phaser.Scene, v: VerseDef): string | null {
+  const obj = VERSE_OBJECT[v.id] ?? MOTIF_OBJECT[v.art.motif];
+  return (obj ? dropIn(scene, 'ui', `obj_${obj}`) : null)
+    ?? dropIn(scene, 'ui', `motif_${MOTIF_ART[v.art.motif] ?? ''}`)
+    ?? (MOTIF_ART[v.art.motif]?.startsWith('stat_') ? dropIn(scene, 'ui', MOTIF_ART[v.art.motif]) : null);
+}
 
 export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper', 'kit', 'rook', 'nell', 'cassian']);
 
@@ -252,10 +261,7 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const panel = vp ? { img: source(scene, vp), ...size(scene, vp) } : undefined;
     for (const v of [...c.verses, c.finale]) {
       const painted = dropIn(scene, 'cards', v.id);
-      const obj = VERSE_OBJECT[v.id] ?? MOTIF_OBJECT[v.art.motif];
-      const mk = (obj ? dropIn(scene, 'ui', `obj_${obj}`) : null)
-        ?? dropIn(scene, 'ui', `motif_${MOTIF_ART[v.art.motif] ?? ''}`)
-        ?? (MOTIF_ART[v.art.motif]?.startsWith('stat_') ? dropIn(scene, 'ui', MOTIF_ART[v.art.motif]) : null);
+      const mk = verseEmblem(scene, v);
       const motifArt = mk ? { img: source(scene, mk), ...size(scene, mk) } : undefined;
       add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody, panel, motifArt, FACE_POINTS[c.id]));
     }

@@ -28,15 +28,8 @@ const P = (speaker: string, text: string): DialogueLine => ({ speaker, text });
 
 const PROLOGUE: Shot[] = [
   n('Vellmoor. The thirty-first of December, 1929.', 'street', 'warm'),
-  n('A city of gaslight and brass, of theatres and tide-clocks and bells — where every street lamp had a name, and every name a lamp.'),
-  n('That was the custom on Corvid Lane. When a child was born, the family paid the Lamp Board eleven shillings, and a lamp went up in the street with a small brass plate screwed to its post. On the plate, the child’s name.'),
-  n('The children skipped to it on the cobbles, the way children skip to anything that keeps a beat:\n\nOne for the cradle, one for the bride,\none for the old man gone outside —\nCorvid Lane, Corvid Lane,\nevery lamp has got a name.'),
-  n('So the lane was lit by its own people. ADA PELL. THOMAS WHITLOCK. The Fenwick twins, who shared a post and quarrelled over it. When someone died, their lamp was not taken down. It was only left to burn a little longer than the others, as if nobody had yet found the words to tell it.'),
-  n('A hundred and twelve lamps on Corvid Lane. The night postman knew every one of them by name.'),
-  n('None of them was his.'),
-  n('He had been left on the step of the Corvid Lane Post Office in the winter of 1911, in a parcel-basket, unlabelled, with insufficient postage.'),
-  n('The postmistress named him for the lane, and for the crows that bickered in its gutters, and for the evening bell — vespers — that was ringing when she opened the door and found him. She signed for him, she liked to say, because nobody else would.'),
-  n('Corvin Vesper. Eighteen years old. Freckled, underpaid, devoted to the Royal Mail in the way only orphans and dogs are devoted to anything — and, on the last night of the decade, running late.'),
+  n('A city of gaslight and brass, where every lamp on Corvid Lane carried a small brass plate with a child’s name on it. A hundred and twelve lamps. The night postman knew every one by name. None of them was his.'),
+  n('Corvin Vesper: eighteen, a foundling left on the Post Office step in a parcel-basket, devoted to the Royal Mail the way only orphans and dogs are devoted to anything — and, on the last night of the decade, running late.'),
 
   scene('parlour', 'warm'),
   l('Mrs. Hollis', '“Running late” would be generous, Corvin. Your round began at half past nine. It is a quarter to ten, and the Fenwicks’ parcel has been ticking at me for an hour.'),
