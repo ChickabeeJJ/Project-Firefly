@@ -245,6 +245,31 @@ export const BIOS: Record<string, BioSection[]> = {
     { title: 'Red Wax', text: 'Every letter Raphaël carries is sealed in red. A seal is a promise that the words inside belong to someone. The Dimmed, who have no names, find that very hard to bear.' },
     { title: 'Return to Sender', text: 'Some letters are not kind. Raphaël delivers those too, to the dark, unopened. What the Dimmed read in them, nobody knows. They do not come back for a second.' },
   ],
+  cendrine: [
+    { title: 'The Widow of Ash', text: 'Cendrine Valois kept the finest house on the Crescent, and the finest parties: four hundred candles, a string quartet, and nobody sent home before dawn. On the night of the Dimming her house burned with every lamp still lit. She walked out of it untouched, and has worn grey ever since.' },
+    { title: 'What Ash Remembers', text: 'She carries the ash of her house in a locket and lets a pinch of it fall wherever she fights. Ash remembers what it was. The Dimmed, who were once something too, find that unbearable to be reminded of.' },
+    { title: 'The Countess at Rest', text: 'She is never in a hurry. She sits through the worst of it with her chin on her hand, as if waiting for a dull act to end, and when she finally stands the whole street goes quiet.' },
+  ],
+  emile: [
+    { title: 'The Marginalia Reader', text: 'Émile Sauge reads secondhand books for the notes other people left in them: a pencilled heart, a grocery list, an argument with the author three pages long. He has read every book in the Vellmoor lending library, and he knows the city by its handwriting.' },
+    { title: 'Pressed Sage', text: 'He keeps sprigs of sage between the pages, for luck and for the smell. He gives them away to anyone who looks as though they have not slept. Most of the troupe now owns at least one.' },
+    { title: 'Read Aloud', text: 'He believes a sentence read aloud to a frightened room is stronger than one read alone. He has tested this on the Dimmed. The results have been encouraging.' },
+  ],
+  nine: [
+    { title: 'The Sorting Engine', text: 'Clerk No. 9 was built to sort the city’s post: eight clerks before it had retired, so it was given the number and the desk. When the post office went dark, No. 9 kept sorting. Then it began, very carefully, to deliver.' },
+    { title: 'Telegrams', text: 'It prints its replies on a paper ribbon and is extremely proud of its smile, which it taught itself from a postcard. It types URGENT on almost everything. It considers almost everything urgent.' },
+    { title: 'Return Address', text: 'Every letter it carries has a sender, and No. 9 has decided that this makes it responsible for every sender too. It has a long list. The troupe is on it now.' },
+  ],
+  tock: [
+    { title: 'The Walking Hourglass', text: 'Old Tock was the hourglass on the Cathedral Clock’s workbench, used to time the setting of the great springs. The night the clock struck thirteen, it got up and walked. It has been looking for the clockmaker ever since, at a sensible pace.' },
+    { title: 'The Lamp on a Crook', text: 'Tock carries a lantern on a shepherd’s crook, to light the stairs for anyone climbing slower than it. This is nearly everyone.' },
+    { title: 'Turning the Glass', text: 'Tip Tock over and the sand runs the other way. Tock does this for the troupe when a fight goes badly. It never says what it costs, and nobody has dared to ask.' },
+  ],
+  folio: [
+    { title: 'The Ink-Stained Tome', text: 'Folio is a ledger from the Brass Mint’s back office, bound in black calf and brass, that got tired of being written in and decided to do some writing of its own. It carries its own inkwell and its own opinions.' },
+    { title: 'Pressed Flowers', text: 'Somebody once pressed a sprig of wildflowers between its pages. Folio has never let them fall out, and it gets very quiet if anyone asks who.' },
+    { title: 'Errata', text: 'It corrects mistakes. In ledgers, in letters, and lately in the Dimmed, which it considers the largest clerical error the city has ever made.' },
+  ],
   lys: [
     { title: 'The Green Room Herbalist', text: 'Odette Verveine kept the herbs in the Gloaming’s green room — chamomile for stage fright, honey and thyme for tired throats, something stronger for leading men. When the Dimming came, the actors stopped needing her. The city did not.' },
     { title: 'The White Lily', text: 'The lily in her hair is from the opening-night bouquet of an opera that never had a second night. She has pressed it, dried it, and pinned it back every evening since. It is the only thing she keeps for herself.' },
@@ -391,6 +416,41 @@ export const LOBBY_LINES: Record<string, string[]> = {
     'Red wax means the words belong to someone. Remember that, if you ever write to me.',
     'I read none of them. I simply know which ones are heavy.',
     'The dark has a great deal of post waiting. I am working through it alphabetically.',
+  ],
+  cendrine: [
+    'Sit. You are standing as though something is about to happen. Nothing happens until I stand.',
+    'Four hundred candles, every night. I miss the light far less than I miss the noise.',
+    'Grey suits me. It is the only colour that has already been through the fire.',
+    'Do not apologise for the dark. You did not make it. I may yet unmake it.',
+    'Ash remembers. So do I.',
+  ],
+  emile: [
+    'Someone wrote "forgive me" in the margin of page ninety. I have been wondering about them all week.',
+    'Sage? Take it. You look like a person in want of a small green thing.',
+    'Books are only half-written until somebody argues with them in pencil.',
+    'I will read to you, if you like. The dark is always quieter for a story.',
+    'Vellmoor’s handwriting has changed lately. More hurried. More hopeful.',
+  ],
+  nine: [
+    'HELLO. :) YOU HAVE ONE (1) NEW LETTER.',
+    'SORTING... SORTING... YOU ARE FILED UNDER: FRIEND.',
+    'URGENT. URGENT. (THIS ONE IS NOT URGENT. I SIMPLY ENJOY THE WORD.)',
+    'PAPER LOW. MORALE HIGH.',
+    'RETURN ADDRESS CONFIRMED: THE TROUPE. DELIVERY WILL CONTINUE.',
+  ],
+  tock: [
+    'Tick. Tock. Slowly, slowly. The stairs are not going anywhere.',
+    'I timed the springs for forty years. I can time a fight.',
+    'The lamp is for you. I can see in the dark. I am made of it, half the time.',
+    'If the sand runs out, tip me over. It has always worked before.',
+    'The clockmaker will come back. I have checked the time. It is not yet.',
+  ],
+  folio: [
+    'Mind the ink. No, really. Mind it.',
+    'I balanced the Mint’s books for sixty years. Now I would like to unbalance something.',
+    'The flowers? Not your concern. Turn the page.',
+    'Every Dimmed thing is a typo. I am here to correct it.',
+    'Write in me if you must. In pencil. Lightly.',
   ],
   lys: [
     'Stand still. You have the look of someone who has not slept since Tuesday.',

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { clockHandCanvas } from '../art/clockFace';
 import { dropIn } from '../art/assets';
 import { ensureBg } from '../art/registry';
 import { audio } from '../audio/AudioController';
@@ -79,7 +80,8 @@ export class NightScene extends Phaser.Scene {
     if (ornate) this.add.image(cx, cy, ornate).setDisplaySize(440, 440);
     else this.add.circle(cx, cy, 230, 0x2a2016).setStrokeStyle(6, C.gold);
     const best = rec.best;
-    const hand = this.add.rectangle(cx, cy, 9, 132, 0x1c2436).setOrigin(0.5, 1).setStrokeStyle(1.5, 0xd6b264);
+    if (!this.textures.exists('ui:nightHand')) this.textures.addCanvas('ui:nightHand', clockHandCanvas(140, 30));
+    const hand = this.add.image(cx, cy, 'ui:nightHand').setOrigin(0.5, 1);
     const angle = (best / HOURS) * 360;
     hand.setAngle(0);
     this.tweens.add({ targets: hand, angle, duration: 1600, ease: 'Cubic.easeOut', delay: 300 });

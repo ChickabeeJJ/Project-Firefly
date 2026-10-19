@@ -114,7 +114,7 @@ export function isDropIn(key: string): boolean {
  */
 const ART_HEIGHT: Record<string, number> = {
   cassian: 0.84, lazare: 0.84, lys: 0.84, kit: 0.86, nell: 0.86, rook: 0.86, hesper: 0.88, teddy: 0.88, sorrel: 0.9,
-  raphael: 0.84, severin: 0.9,
+  raphael: 0.84, severin: 0.9, emile: 0.9, cendrine: 0.9, nine: 0.74, tock: 0.8, folio: 0.74,
 };
 
 /** Height factor for a character texture key (hf:characters/<id>, hf:battle/<id>, hfp:<id>…). */
