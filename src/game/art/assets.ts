@@ -64,31 +64,66 @@ export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => v
   });
 }
 
+/** Full-size character art that has been asked for, by texture key, while it decodes. */
+const pending = new Map<string, Promise<void>>();
+
+/** Scenes during which background loading holds off, so an upload never hitches a story or a fight. */
+const QUIET_SCENES = ['Cinematic', 'Battle'];
+
+function charEntry(id: string): readonly [string, string] | null {
+  const key = `hf:characters/${id}`;
+  const hit = Object.entries(FILES).find(([p]) => keyFor(p) === key);
+  return hit ? [key, hit[1]] : null;
+}
+
+/** Decodes one image off the main thread, then hands it to the GPU in a single step. */
+function loadOne(game: Phaser.Game, key: string, url: string): Promise<void> {
+  if (game.textures.exists(key)) return Promise.resolve();
+  let p = pending.get(key);
+  if (!p) {
+    p = new Promise<void>((resolve) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = url;
+      img.decode().then(() => {
+        if (!game.textures.exists(key)) game.textures.addImage(key, img);
+      }).catch(() => undefined).finally(() => {
+        pending.delete(key);
+        resolve();
+      });
+    });
+    pending.set(key, p);
+  }
+  return p;
+}
+
+/** Loads these characters' full art now (a story's speakers, a reveal). Resolves when all are in. */
+export function needCharacterArt(game: Phaser.Game, ids: string[]): Promise<void> {
+  return Promise.all(ids.map((id) => {
+    const e = charEntry(id);
+    return e ? loadOne(game, e[0], e[1]) : Promise.resolve();
+  })).then(() => undefined);
+}
+
 /**
  * Loads the remaining full-size character art in the background, `first` ids before the rest,
- * independent of any scene (so changing scenes never cancels it). Resolves when all are in.
+ * independent of any scene (so changing scenes never cancels it). One at a time, decoded off the
+ * main thread, and paused while a story or a battle is playing. Resolves when all are in.
  */
 export function streamCharacterArt(game: Phaser.Game, first: string[] = []): Promise<void> {
   const todo = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
     .filter((e): e is readonly [string, string] => !!e[0] && e[0].startsWith('hf:characters/') && !game.textures.exists(e[0]))
     .sort(([a], [b]) => Number(!first.includes(a.slice(14))) - Number(!first.includes(b.slice(14))));
-  const one = ([key, url]: readonly [string, string]) => new Promise<void>((resolve) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => {
-      if (!game.textures.exists(key)) game.textures.addImage(key, img);
-      resolve();
-    };
-    img.onerror = () => resolve();
-    img.src = url;
-  });
-  // Two at a time keeps the main thread free for the title screen's animation.
-  let i = 0;
-  const worker = async (): Promise<void> => {
-    while (i < todo.length) await one(todo[i++]);
-  };
-  return Promise.all([worker(), worker()]).then(() => undefined);
+  const quiet = () => QUIET_SCENES.some((k) => game.scene.isActive(k));
+  const rest = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  return (async () => {
+    for (const [key, url] of todo) {
+      while (quiet()) await rest(500);
+      await loadOne(game, key, url);
+      await rest(120);
+    }
+  })();
 }
 
 export function dropIn(scene: Phaser.Scene, folder: ArtFolder, id: string): string | null {
