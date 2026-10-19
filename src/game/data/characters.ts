@@ -587,6 +587,88 @@ export const CHARACTERS: CharacterDef[] = [
     quote: 'Chamomile for the nerves, nettle for the Dimmed. Hold still, this will sting rather less than they do.',
   },
   {
+    id: 'severin',
+    name: 'Séverin Boussole',
+    title: 'The Wandering Compass',
+    mood: 'star',
+    rarity: 5,
+    role: 'Guardian',
+    base: { hp: 1300, atk: 112, def: 72 },
+    verses: [
+      {
+        id: 'severin_bearing', name: 'True Bearing', type: 'shield',
+        effects: [
+          { kind: 'shield', target: 'allAllies', power: 0.75 },
+          { kind: 'status', target: 'self', status: 'might', turns: 2 },
+        ],
+        art: { motif: 'telescope', layout: 'rings', portrait: true },
+      },
+      {
+        id: 'severin_case', name: 'Excess Baggage', type: 'attack',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.3 },
+          { kind: 'status', target: 'enemy', status: 'daze', turns: 1, chance: [0.3, 0.45, 0.6] },
+        ],
+        art: { motif: 'shield', layout: 'burst' },
+      },
+    ],
+    finale: {
+      id: 'severin_finale', name: 'Every Road Home', type: 'shield', finale: true,
+      effects: [
+        { kind: 'shield', target: 'allAllies', power: 1.6 },
+        { kind: 'heal', target: 'allAllies', power: 0.6 },
+        { kind: 'status', target: 'allAllies', status: 'might', turns: 2 },
+      ],
+      art: { motif: 'telescope', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccc', hair: '#d4d0ca', hairStyle: 'short', bangs: 'side', eyes: '#b08a48',
+      outfit: 'tailcoat', coat: '#2a3050', shirt: '#ece6da', accent: '#c8a04a', legs: '#ece6da', shoes: '#1a1416',
+    },
+    palette: { primary: '#2a3460', secondary: '#e8dcc0', ink: '#0e1020' },
+    quote: 'I have walked out of every city on the map. This is the first one I have come back to.',
+  },
+  {
+    id: 'raphael',
+    name: 'Raphaël Cachet',
+    title: 'The Unsent Letter',
+    mood: 'moon',
+    rarity: 4,
+    role: 'Hexer',
+    base: { hp: 960, atk: 130, def: 46 },
+    verses: [
+      {
+        id: 'raphael_seal', name: 'Sealed in Wax', type: 'debuff',
+        effects: [
+          { kind: 'damage', target: 'enemy', power: 1.0 },
+          { kind: 'status', target: 'enemy', status: 'weak', turns: 2 },
+        ],
+        art: { motif: 'newspaper', layout: 'split', portrait: true },
+      },
+      {
+        id: 'raphael_postscript', name: 'Postscript', type: 'attack',
+        effects: [{ kind: 'damage', target: 'randomEnemy', power: 0.55, hits: 3 }],
+        art: { motif: 'note', layout: 'spiral' },
+      },
+    ],
+    finale: {
+      id: 'raphael_finale', name: 'Return to Sender', type: 'mass', finale: true,
+      effects: [
+        { kind: 'damage', target: 'allEnemies', power: 1.6 },
+        { kind: 'status', target: 'allEnemies', status: 'frail', turns: 2 },
+      ],
+      art: { motif: 'newspaper', layout: 'rays', portrait: true },
+    },
+    look: {
+      eyeStyle: 'soft', mouth: 'flat',
+      skin: '#f2dccc', hair: '#2a2224', hairStyle: 'long', bangs: 'side', eyes: '#c89a50',
+      outfit: 'robe', coat: '#2a2626', shirt: '#ece6da', accent: '#a8282a', legs: '#ece6da', shoes: '#1a1416',
+    },
+    palette: { primary: '#8a1e24', secondary: '#e8e0d4', ink: '#140c0e' },
+    quote: 'Every letter I carry was written and never sent. I deliver them now, to whatever is left at the address.',
+  },
+  {
     id: 'delphine',
     name: 'Fae Nivelle',
     title: 'The Lantern Wyrm',

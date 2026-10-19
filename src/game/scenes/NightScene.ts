@@ -50,6 +50,9 @@ export class NightScene extends Phaser.Scene {
     this.add.image(W / 2, -80, 'fx:glow').setTint(0xffc078).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(1500, 700).setAlpha(0.16);
     new Atmosphere(this, { depth: 40, fireflies: 7 });
     new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Story', { mode: 'story' }) }).setDepth(90);
+    if (save.night.run && !data.result) {
+      new Button(this, 290, 70, { w: 190, h: 64, label: 'End Run', icon: 'close', style: 'dark', size: 26, sfx: 'back', onClick: () => this.confirmEnd() }).setDepth(90);
+    }
     audio.play('boss');
 
     if (data.result && save.night.run) {
@@ -109,13 +112,13 @@ export class NightScene extends Phaser.Scene {
 
     // The troupe that will climb.
     const team = save.team.filter((id) => save.roster[id]);
-    text(this, px - pw / 2, 880, 'YOUR TROUPE', { size: 20, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5);
+    text(this, px - pw / 2, 876, 'YOUR TROUPE', { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 4 }).setOrigin(0, 0.5);
     team.forEach((id, i) => {
       const x = px - pw / 2 + 30 + i * 96;
       this.add.circle(x + 20, 940, 40, 0x0b0c10, 0.6).setStrokeStyle(1.5, C.gold, 0.6);
       this.add.image(x + 20, 940, `head:${id}`).setDisplaySize(74, 74);
     });
-    text(this, px - pw / 2, 1000, 'Your current team climbs.', { size: 19, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5);
+    text(this, px - pw / 2, 1004, 'Your current team climbs.', { size: 22, italic: true, color: CSS.cream }).setOrigin(0, 0.5);
     new Button(this, px + pw / 2 - 210, 930, {
       w: 420, h: 100, label: 'Begin the Night', sub: 'A fresh clock each time', style: 'amber', onClick: () => {
         startRun(saves.get(), (Date.now() ^ (Math.random() * 1e9)) >>> 0);
@@ -125,7 +128,7 @@ export class NightScene extends Phaser.Scene {
       },
     });
     // Ending badges: earned ones shine; the rest are silhouettes with a hint.
-    text(this, cx, 852, `ENDINGS  ·  ${rec.badges.length} / ${ENDINGS.length}`, { size: 20, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0.5);
+    text(this, cx, 852, `ENDINGS  ·  ${rec.badges.length} / ${ENDINGS.length}`, { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 4 }).setOrigin(0.5);
     ENDINGS.forEach((e, i) => {
       const bx = cx + (i - 2) * 96;
       const got = rec.badges.includes(e.id);
@@ -134,14 +137,14 @@ export class NightScene extends Phaser.Scene {
       if (got) b.add(this.add.image(0, 0, 'fx:glow').setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(110, 110).setAlpha(0.3));
       if (key) {
         const im = this.add.image(0, 0, key).setDisplaySize(84, 84);
-        if (!got) im.setTint(0x5a5662).setAlpha(0.45);
+        if (!got) im.setTint(0x8a8494).setAlpha(0.55);
         b.add(im);
       }
       b.setSize(90, 90).setInteractive({ useHandCursor: true }).on('pointerup', () => toast(this, got ? `${e.name} — earned` : `${e.name}: ${e.hint}`, 'star4'));
     });
     // Milestones.
     const ms = Object.entries(MILESTONES).map(([h, g]) => `${ordinal(+h)} Hour: ${g}${rec.milestones.includes(+h) ? ' ✓' : ''}`).join('   ·   ');
-    text(this, W / 2, H - 40, `First-time bonuses (Glimmer) — ${ms}`, { size: 19, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    text(this, W / 2, H - 46, `First-time bonuses (Glimmer) — ${ms}`, { size: 22, italic: true, color: CSS.cream }).setAlpha(0.85).setOrigin(0.5);
   }
 
   // ================================================================== map
@@ -151,7 +154,7 @@ export class NightScene extends Phaser.Scene {
     const doors = run.pending ? [] : reachable(run);
     const hour = cur?.hour ?? 0;
     text(this, W / 2, 70, 'THE LONG NIGHT', { size: 40, font: 'display', bold: true, color: CSS.goldLight, spacing: 10, shadow: true }).setOrigin(0.5);
-    text(this, W / 2, 118, hour ? `The ${ordinal(hour)} Hour has passed` : 'The first stair waits', { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    text(this, W / 2, 118, hour ? `The ${ordinal(hour)} Hour has passed` : 'The first stair waits', { size: 26, italic: true, color: CSS.cream }).setOrigin(0.5);
 
     // Embers.
     const ember = dropIn(this, 'ui', 'motif_fire');
@@ -193,25 +196,31 @@ export class NightScene extends Phaser.Scene {
     (['skirmish', 'omen', 'sanctuary', 'curio', 'letter', 'boss'] as NodeKind[]).forEach((k, i) => {
       const x = 260 + i * 250;
       const key = dropIn(this, 'ui', KIND[k].icon);
-      if (key) this.add.image(x, 790, key).setDisplaySize(34, 34);
-      text(this, x + 26, 790, KIND[k].name, { size: 19, color: CSS.creamDim }).setOrigin(0, 0.5);
+      if (key) this.add.image(x, 790, key).setDisplaySize(40, 40);
+      text(this, x + 28, 790, KIND[k].name, { size: 22, color: CSS.cream }).setOrigin(0, 0.5);
     });
 
     this.drawTroupe(run);
     this.drawKeepsakes(run);
 
-    const quit = text(this, W - 60, H - 34, 'Abandon the night', { size: 20, italic: true, color: CSS.creamDim }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
-    quit.on('pointerup', () => {
-      if (!quit.getData('armed')) {
-        quit.setData('armed', true).setText('Tap again: end the night here and take what you have earned').setColor('#e8a090');
-        return;
-      }
-      audio.sfx('back');
-      this.finish(false, true);
-    });
-
     if (run.pending?.kind === 'spoils') this.showSpoils(run);
     else if (run.pending?.kind === 'event') this.openEvent(run, run.nodes.find((n) => n.id === (run.pending as { node: string }).node)!);
+  }
+
+  /** Ending a run early keeps what the climb has earned so far. */
+  private confirmEnd(): void {
+    if (this.overlay) return;
+    const run = saves.get().night.run;
+    if (!run) return;
+    const { c, x, y, close } = this.panel(980, 500, 'End the Night?', 'LEAVE THE CLOCK');
+    const hours = Math.max(0, run.path.length);
+    c.add(text(this, x, y - 20, hours ? `The troupe has climbed ${hours} hour${hours === 1 ? '' : 's'}. You keep every reward earned so far; the clock resets for the next night.` : 'Nothing has been climbed yet. The clock resets for the next night.', { size: 25, italic: true, color: CSS.cream, wrap: 800, align: 'center', lineSpacing: 5 }).setOrigin(0.5));
+    c.add(new Button(this, x - 190, y + 140, { w: 320, h: 80, label: 'Keep climbing', style: 'dark', size: 26, sfx: 'back', onClick: close }));
+    c.add(new Button(this, x + 190, y + 140, { w: 320, h: 80, label: 'End the night', style: 'amber', size: 26, onClick: () => {
+      close();
+      audio.sfx('back');
+      this.finish(false, true);
+    } }));
   }
 
   private drawNode(run: NightRun, n: NightNode, open: boolean, visited: boolean, here: boolean): void {
@@ -244,7 +253,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   private drawTroupe(run: NightRun): void {
-    text(this, 90, 860, 'TROUPE', { size: 20, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5);
+    text(this, 90, 860, 'TROUPE', { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 4 }).setOrigin(0, 0.5);
     run.team.forEach((id, i) => {
       const x = 90 + i * 250;
       const y = 950;
@@ -256,14 +265,14 @@ export class NightScene extends Phaser.Scene {
       text(this, x + 94, y - 24, getCharacter(id).name.split(' ')[0], { size: 22, font: 'display', color: fallen ? CSS.muted : CSS.cream }).setOrigin(0, 0.5);
       this.add.rectangle(x + 94, y + 12, 118, 12, 0x000000, 0.7).setOrigin(0, 0.5);
       if (!fallen) this.add.rectangle(x + 95, y + 12, 116 * f, 8, f > 0.5 ? 0x6fbf73 : f > 0.25 ? 0xd8b04a : C.danger).setOrigin(0, 0.5);
-      text(this, x + 94, y + 36, fallen ? 'Fallen' : `${Math.round(f * 100)}%`, { size: 18, italic: !fallen, color: fallen ? '#e8a090' : CSS.creamDim }).setOrigin(0, 0.5);
+      text(this, x + 94, y + 36, fallen ? 'Fallen' : `${Math.round(f * 100)}%`, { size: 21, italic: !fallen, color: fallen ? '#e8a090' : CSS.cream }).setOrigin(0, 0.5);
     });
   }
 
   private drawKeepsakes(run: NightRun): void {
     const x0 = 90 + Math.max(3, run.team.length) * 250 + 30;
-    text(this, x0, 860, `KEEPSAKES  ·  ${run.keepsakes.length}`, { size: 20, font: 'display', bold: true, color: CSS.creamDim, spacing: 4 }).setOrigin(0, 0.5);
-    if (!run.keepsakes.length) text(this, x0, 950, 'Win a fight to choose your first.', { size: 21, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5);
+    text(this, x0, 860, `KEEPSAKES  ·  ${run.keepsakes.length}`, { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 4 }).setOrigin(0, 0.5);
+    if (!run.keepsakes.length) text(this, x0, 950, 'Win a fight to choose your first.', { size: 23, italic: true, color: CSS.cream }).setAlpha(0.85).setOrigin(0, 0.5);
     run.keepsakes.forEach((id, i) => {
       const k = keepsake(id);
       const x = x0 + 40 + (i % 10) * 82;
@@ -308,12 +317,14 @@ export class NightScene extends Phaser.Scene {
   }
 
   /** The hour's little scene, as on a page: the landing, then what waits behind this door. */
-  private tale(c: Phaser.GameObjects.Container, x: number, y: number, n: NightNode): void {
+  private tale(c: Phaser.GameObjects.Container, x: number, y: number, n: NightNode): number {
     const t = text(this, x, y, HOUR_TALES[n.hour - 1], { size: 23, font: 'letter', italic: true, color: CSS.cream, wrap: 1000, align: 'center', lineSpacing: 5 }).setOrigin(0.5);
     c.add(t);
-    c.add(text(this, x, y + t.height / 2 + 26, KIND_TALES[n.kind], { size: 21, italic: true, color: n.kind === 'omen' ? '#e8a090' : CSS.goldLight, wrap: 1000, align: 'center' }).setOrigin(0.5));
+    const k = text(this, x, y + t.height / 2 + 26, KIND_TALES[n.kind], { size: 21, italic: true, color: n.kind === 'omen' ? '#e8a090' : CSS.goldLight, wrap: 1000, align: 'center' }).setOrigin(0.5);
+    c.add(k);
     t.setAlpha(0);
     this.tweens.add({ targets: t, alpha: 1, duration: 900, ease: 'Sine.easeOut' });
+    return k.y + k.height / 2;
   }
 
   private battlePanel(run: NightRun, n: NightNode): void {
@@ -400,8 +411,8 @@ export class NightScene extends Phaser.Scene {
     c.add(this.add.image(0, -88, 'fx:glow').setTint(k.rare ? 0xffd890 : 0xe8dcc0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(240, 200).setAlpha(k.rare ? 0.4 : 0.22));
     if (this.textures.exists(k.icon)) c.add(this.add.image(0, -88, k.icon).setDisplaySize(140, 140));
     if (k.rare) c.add(text(this, 0, -170, 'RARE', { size: 16, font: 'display', bold: true, color: '#ffd890', spacing: 6 }).setOrigin(0.5));
-    c.add(text(this, 0, 18, k.name, { size: 26, font: 'display', bold: true, color: CSS.cream, wrap: 270, align: 'center' }).setOrigin(0.5));
-    c.add(text(this, 0, 98, k.blurb, { size: 21, color: CSS.creamDim, wrap: 260, align: 'center', lineSpacing: 2 }).setOrigin(0.5));
+    c.add(text(this, 0, 14, k.name, { size: 27, font: 'display', bold: true, color: CSS.cream, wrap: 270, align: 'center' }).setOrigin(0.5));
+    c.add(text(this, 0, 46, k.blurb, { size: 21, color: CSS.cream, wrap: 262, align: 'center', lineSpacing: 2 }).setOrigin(0.5, 0).setAlpha(0.88));
     if (price !== undefined) {
       c.add(this.add.rectangle(0, 166, 300, 48, 0xe8dcc0, 0.95));
       c.add(text(this, 0, 166, `${price} Embers`, { size: 24, bold: true, color: CSS.paperText }).setOrigin(0.5));
@@ -459,15 +470,15 @@ export class NightScene extends Phaser.Scene {
   }
 
   private curio(run: NightRun, n: NightNode): void {
-    const { c, x, y, close } = this.panel(1400, 860, 'Curio Cabinet', 'A CLOCKMAKER’S CABINET');
-    c.add(text(this, x, y - 296, HOUR_TALES[n.hour - 1], { size: 21, font: 'letter', italic: true, color: CSS.creamDim, wrap: 1200, align: 'center', lineSpacing: 4 }).setOrigin(0.5));
+    const { c, x, y, close } = this.panel(1480, 940, 'Curio Cabinet', 'A CLOCKMAKER’S CABINET');
+    const below = this.tale(c, x, y - 270, n);
     const rng = new Rng(run.seed ^ (n.hour * 104729));
     const stock = [...draftKeepsakes(run, rng, 2), ...draftKeepsakes(run, rng, 1, true)].filter((v, i, a) => a.indexOf(v) === i);
-    const embers = text(this, x, y - 230, `You carry ${run.embers} Embers`, { size: 24, italic: true, color: CSS.creamDim }).setOrigin(0.5);
+    const embers = text(this, x, Math.max(y - 172, below + 30), `You carry ${run.embers} Embers`, { size: 26, bold: true, color: CSS.goldLight }).setOrigin(0.5);
     c.add(embers);
     stock.forEach((id, i) => {
       const price = keepsake(id).rare ? CURIO.rareKeepsake : CURIO.keepsake;
-      const card = this.keepsakeCard(x - 440 + i * 330, y + 30, id, price);
+      const card = this.keepsakeCard(x + (i - 1.5) * 340, y + 60, id, price);
       softPress(card, () => {
         if (card.getData('sold')) return;
         if (run.embers < price) {
@@ -485,15 +496,20 @@ export class NightScene extends Phaser.Scene {
       c.add(card);
     });
     // Mending at the bench.
-    const mend = this.add.container(x + 540, y + 30);
-    mend.add(this.add.rectangle(0, 0, 260, 380, 0x15131a, 0.9).setStrokeStyle(1.5, C.gold, 0.55));
+    const mend = this.add.container(x + (stock.length - 1.5) * 340, y + 60);
+    const mg = this.add.graphics();
+    mg.fillGradientStyle(0x2a2420, 0x2a2420, 0x110f0d, 0x110f0d, 1).fillRect(-150, -190, 300, 380);
+    mg.lineStyle(1.5, C.gold, 0.55).strokeRect(-150, -190, 300, 380);
+    mg.lineStyle(1, C.gold, 0.25).strokeRect(-140, -180, 280, 360);
+    mend.add(mg);
+    mend.add(this.add.image(0, -88, 'fx:glow').setTint(0x9ad0ff).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(240, 200).setAlpha(0.22));
     const pot = dropIn(this, 'ui', 'obj_potion');
-    if (pot) mend.add(this.add.image(0, -90, pot).setDisplaySize(130, 130));
-    mend.add(text(this, 0, 20, 'Mend', { size: 30, font: 'display', bold: true, color: CSS.cream }).setOrigin(0.5));
-    mend.add(text(this, 0, 80, 'The troupe heals 30%', { size: 21, color: CSS.creamDim, wrap: 220, align: 'center' }).setOrigin(0.5));
-    mend.add(this.add.rectangle(0, 166, 260, 48, 0xe8dcc0, 0.95));
+    if (pot) mend.add(this.add.image(0, -88, pot).setDisplaySize(140, 140));
+    mend.add(text(this, 0, 14, 'Mend', { size: 27, font: 'display', bold: true, color: CSS.cream }).setOrigin(0.5));
+    mend.add(text(this, 0, 46, 'The troupe heals 30%.', { size: 21, color: CSS.cream, wrap: 262, align: 'center' }).setOrigin(0.5, 0).setAlpha(0.88));
+    mend.add(this.add.rectangle(0, 166, 300, 48, 0xe8dcc0, 0.95));
     mend.add(text(this, 0, 166, `${CURIO.mend} Embers`, { size: 24, bold: true, color: CSS.paperText }).setOrigin(0.5));
-    mend.setSize(260, 380).setInteractive({ useHandCursor: true });
+    mend.setSize(300, 380).setInteractive({ useHandCursor: true });
     softPress(mend, () => {
       if (run.embers < CURIO.mend) {
         audio.sfx('deny');
@@ -506,7 +522,7 @@ export class NightScene extends Phaser.Scene {
       embers.setText(`You carry ${run.embers} Embers`);
     }, 'tap', 1.03);
     c.add(mend);
-    c.add(new Button(this, x, y + 330, { w: 300, h: 70, label: 'Leave', style: 'amber', size: 28, onClick: () => {
+    c.add(new Button(this, x, y + 362, { w: 300, h: 74, label: 'Leave', style: 'amber', size: 28, onClick: () => {
       close();
       this.done(run);
     } }));
@@ -521,8 +537,9 @@ export class NightScene extends Phaser.Scene {
     const y = H / 2 - 40;
     c.add(this.add.nineslice(x, y, 'ui:paper', undefined, 1100, 640, 16, 16, 16, 16));
     c.add(text(this, x, y - 260, l.title, { size: 40, font: 'letter', italic: true, color: CSS.paperText }).setOrigin(0.5));
-    c.add(text(this, x, y - 100, l.text, { size: 27, font: 'letter', color: '#3a2e20', wrap: 920, lineSpacing: 8, align: 'left' }).setOrigin(0.5));
-    c.add(text(this, x + 440, y + 100, l.sign, { size: 24, font: 'letter', italic: true, color: CSS.paperSub }).setOrigin(1, 0.5));
+    const body = text(this, x, y - 40, l.text, { size: 28, font: 'letter', color: '#3a2e20', wrap: 920, lineSpacing: 8, align: 'left' }).setOrigin(0.5);
+    c.add(body);
+    c.add(text(this, x + 460, Math.min(y + 128, body.y + body.height / 2 + 34), l.sign, { size: 25, font: 'letter', italic: true, color: CSS.paperSub }).setOrigin(1, 0.5));
     l.choices.forEach((ch, i) => {
       const bx = x + (i === 0 ? -250 : 250);
       c.add(new Button(this, bx, y + 200, { w: 460, h: 84, label: ch.label, sub: ch.effect, style: i === 0 ? 'amber' : 'dark', size: 26, onClick: () => {
