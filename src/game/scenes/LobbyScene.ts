@@ -167,8 +167,19 @@ export class LobbyScene extends Phaser.Scene {
       { x: 384, y: 196, w: 110, h: 108, side: 'right', msg: 'Sign in each day for rewards, with bonuses at 7, 15 and 25 days. That is the whole parlour — good luck, Lamplighter.' },
     ];
     const root = this.add.container(0, 0).setDepth(3000);
-    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x050608, 0.45).setInteractive();
-    root.add(veil);
+    // The dark falls everywhere except the stop being shown, which stays fully lit.
+    const veil = this.add.graphics();
+    const catcher = this.add.zone(W / 2, H / 2, W, H).setInteractive();
+    root.add([veil, catcher]);
+    const shade = (r: { x: number; y: number; w: number; h: number }) => {
+      const pad = 14;
+      const x0 = r.x - r.w / 2 - pad;
+      const x1 = r.x + r.w / 2 + pad;
+      const y0 = r.y - r.h / 2 - pad;
+      const y1 = r.y + r.h / 2 + pad;
+      veil.clear().fillStyle(0x050608, 0.66);
+      veil.fillRect(0, 0, W, y0).fillRect(0, y1, W, H - y1).fillRect(0, y0, x0, y1 - y0).fillRect(x1, y0, W - x1, y1 - y0);
+    };
     let i = -1;
     let stopC: Phaser.GameObjects.Container | undefined;
     const end = () => {
@@ -182,6 +193,7 @@ export class LobbyScene extends Phaser.Scene {
         return;
       }
       const st = stops[i];
+      shade(st);
       const c = this.add.container(0, 0);
       // Outline with corner brackets around the stop.
       const ring = this.add.container(st.x, st.y);
@@ -217,17 +229,22 @@ export class LobbyScene extends Phaser.Scene {
       root.add(c);
       stopC = c;
     };
-    veil.on('pointerup', () => {
+    catcher.on('pointerup', () => {
       audio.sfx('tap');
       next();
     });
-    const skip = text(this, W - 60, H - 40, 'Skip tour', { size: 22, italic: true, color: CSS.creamDim }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
+    // Skip is always in reach, top centre, clear of every stop.
+    const skip = this.add.container(W / 2, 54);
+    skip.add(this.add.rectangle(0, 0, 230, 58, 0x0b0c10, 0.85).setStrokeStyle(1.5, C.gold, 0.8));
+    skip.add(text(this, 0, 0, 'Skip tour  ✕', { size: 24, font: 'display', bold: true, color: CSS.cream, spacing: 2 }).setOrigin(0.5));
+    skip.setSize(230, 58).setInteractive({ useHandCursor: true });
     skip.on('pointerup', (_p: Phaser.Input.Pointer, _x: number, _y: number, e: Phaser.Types.Input.EventData) => {
       e.stopPropagation();
       audio.sfx('back');
       end();
     });
     root.add(skip);
+    this.input.keyboard?.once('keydown-ESC', () => root.active && end());
     root.setAlpha(0);
     this.tweens.add({ targets: root, alpha: 1, duration: 300 });
     this.bubble?.destroy();

@@ -3,6 +3,7 @@ import { STAGES } from '../data/stages';
 import { MAX_RESONANCE } from '../battle/rules';
 import type { SignInRecord } from '../systems/signin';
 import { THEMES } from '../config/theme';
+import { freshNight, type NightRecord, sanitizeNight } from '../systems/longnight';
 import { fromLegacyLevel, type ItemId, ITEM_ORDER, levelCap, maxInsight } from '../systems/growth';
 
 export const SAVE_VERSION = 2;
@@ -56,6 +57,8 @@ export interface SaveData {
   history: RiteRecord[];
   /** This month's daily sign-in sheet. */
   signIn: SignInRecord;
+  /** The Long Night: the run in progress and the records. */
+  night: NightRecord;
 }
 
 export interface RiteRecord {
@@ -88,6 +91,7 @@ export function freshSave(): SaveData {
     savedAt: 0,
     history: [],
     signIn: { month: '', days: [], milestones: [] },
+    night: freshNight(),
   };
 }
 
@@ -179,6 +183,7 @@ export function sanitizeSave(raw: unknown): SaveData {
       })
       : [],
     signIn: sanitizeSignIn(r.signIn),
+    night: sanitizeNight(r.night),
   };
 }
 

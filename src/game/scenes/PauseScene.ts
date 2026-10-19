@@ -58,17 +58,21 @@ export class PauseScene extends Phaser.Scene {
     if (inBattle) {
       new Button(this, x, cy, { w: 440, h: 84, label: 'Resume', style: 'amber', onClick: () => this.close() });
       cy += 104;
+      // A Long Night fight cannot be retried; retreating gives up the hour (and ends the run).
+      const night = (this.scene.get('Battle') as BattleScene).night;
       new Button(this, x, cy, {
-        w: 440, h: 76, label: 'Retry Stage', style: 'cream', onClick: () => {
+        w: 440, h: 76, label: night ? 'Retry (not in the Long Night)' : 'Retry Stage', style: 'cream', size: night ? 22 : 30, onClick: () => {
+          if (night) return;
           this.scene.stop('Battle');
           this.scene.start('Battle', { stageId: this.data_.stageId });
         },
-      });
+      }).setAlpha(night ? 0.5 : 1);
       cy += 96;
       new Button(this, x, cy, {
-        w: 440, h: 76, label: 'Retreat', style: 'cream', sfx: 'back', onClick: () => {
+        w: 440, h: 76, label: night ? 'Retreat (ends the night)' : 'Retreat', style: 'cream', sfx: 'back', size: night ? 24 : 30, onClick: () => {
           this.scene.stop('Battle');
-          this.scene.start('Story', { stageId: this.data_.stageId });
+          if (night) this.scene.start('Night', { result: { won: false, hp: {} } });
+          else this.scene.start('Story', { stageId: this.data_.stageId });
         },
       });
       cy += 110;
