@@ -141,3 +141,55 @@ export function clockHandCanvas(len: number, w: number, color = '#1c2436', count
   ctx.stroke();
   return canvas;
 }
+
+/**
+ * Breguet-style hand for the ornate dials: a blued-steel blade with a gilt edge, pointing up, pivot
+ * at (w/2, len). 'hour' carries an open moon ring, 'minute' a small lozenge, 'second' a counterweight.
+ */
+export function vintageHandCanvas(kind: 'hour' | 'minute' | 'second', len: number): HTMLCanvasElement {
+  const tail = kind === 'second' ? len * 0.26 : len * 0.12;
+  const w = kind === 'second' ? 22 : 34;
+  const { canvas, ctx } = makeCanvas(w, Math.ceil(len + tail));
+  const cx = w / 2;
+  const steel = ctx.createLinearGradient(0, 0, w, 0);
+  steel.addColorStop(0, '#0e1420');
+  steel.addColorStop(0.5, '#34466a');
+  steel.addColorStop(1, '#0e1420');
+  ctx.fillStyle = steel;
+  ctx.strokeStyle = '#d6b264';
+  ctx.lineWidth = 1.2;
+  ctx.lineJoin = 'round';
+  const blade = (pts: [number, number][]) => {
+    ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(cx + x, y) : ctx.moveTo(cx + x, y)));
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  };
+  if (kind === 'second') {
+    ctx.fillStyle = '#7a1e1e';
+    blade([[0, 0], [1.6, len * 0.2], [1.8, len + tail * 0.4], [-1.8, len + tail * 0.4], [-1.6, len * 0.2]]);
+    ctx.beginPath();
+    ctx.arc(cx, len + tail * 0.7, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    return canvas;
+  }
+  const ringY = kind === 'hour' ? len * 0.3 : len * 0.2;
+  const ringR = kind === 'hour' ? 9 : 5;
+  // Tip, ring (or lozenge), then the stem widening to the boss.
+  blade([[0, 0], [3.2, ringY - ringR - 6], [1.6, ringY - ringR], [-1.6, ringY - ringR], [-3.2, ringY - ringR - 6]]);
+  if (kind === 'hour') {
+    ctx.beginPath();
+    ctx.arc(cx, ringY, ringR + 3.5, 0, Math.PI * 2);
+    ctx.arc(cx, ringY, ringR - 1, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
+    ctx.beginPath();
+    ctx.arc(cx, ringY, ringR + 3.5, 0, Math.PI * 2);
+    ctx.stroke();
+  } else {
+    blade([[0, ringY - 9], [6, ringY], [0, ringY + 9], [-6, ringY]]);
+  }
+  blade([[-2, ringY + ringR], [2, ringY + ringR], [4.5, len * 0.92], [4.5, len + tail], [-4.5, len + tail], [-4.5, len * 0.92]]);
+  return canvas;
+}

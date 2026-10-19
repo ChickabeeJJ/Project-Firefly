@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ensureBg, ensurePortrait } from '../art/registry';
+import { ART_FACES_LEFT, ensureBg, ensurePortrait } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { CHARACTERS } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
@@ -65,7 +65,8 @@ export class CinematicScene extends Phaser.Scene {
   private ending = false;
   private bells = 0;
   private seg = -1;
-  private cast: { who: string; side: 'L' | 'R'; obj: LivingSprite | Phaser.GameObjects.Image }[] = [];
+  private cast: { who: string; side: 'L' | 'R'; obj: LivingSprite | Phaser.GameObjects.Image; spoke: number }[] = [];
+  private lineNo = 0;
   private nextMark!: Phaser.GameObjects.Text;
   private auto = false;
   private asking = false;
@@ -309,10 +310,15 @@ export class CinematicScene extends Phaser.Scene {
     return { name: who, key: '', enemy: false };
   }
 
+  /** The speaker is lit and leans in a touch; the listener stays on stage, dimmed. */
   private dimCast(all: boolean, except?: string): void {
     for (const c of this.cast) {
       const on = !all && c.who === except;
-      this.tweens.add({ targets: c.obj, alpha: on ? 1 : all ? 0.0 : 0.45, duration: 260 });
+      if (on) c.spoke = ++this.lineNo;
+      const base = Math.abs(c.obj.getData('scale') ?? c.obj.scaleY);
+      const flip = Math.sign(c.obj.scaleX) || 1;
+      this.tweens.add({ targets: c.obj, alpha: on ? 1 : all ? 0 : 0.62, scaleX: flip * base * (on ? 1.02 : 1), scaleY: base * (on ? 1.02 : 1), duration: 260 });
+      (c.obj as Phaser.GameObjects.Image).setTint?.(on ? 0xffffff : 0x8a8794);
     }
   }
 
@@ -337,30 +343,41 @@ export class CinematicScene extends Phaser.Scene {
     this.type(body, str, 2);
   }
 
-  /** One speaker at a time, centre stage; a new speaker cross-fades in over the last. */
+  /**
+   * Two-handed staging: the first speaker takes the left, whoever answers takes the right, and they
+   * turn to face each other. A third voice replaces whoever has been quiet longest, on that side.
+   */
   private enter(who: string, key: string, enemy: boolean): void {
     if (this.cast.some((c) => c.who === who)) return;
-    for (const old of this.cast) {
-      const o = old.obj;
-      this.tweens.add({ targets: o, alpha: 0, duration: 380, onComplete: () => o.destroy() });
+    let side: 'L' | 'R' = 'L';
+    if (this.cast.length === 1) side = this.cast[0].side === 'L' ? 'R' : 'L';
+    else if (this.cast.length >= 2) {
+      const quiet = this.cast.reduce((a, b) => (a.spoke <= b.spoke ? a : b));
+      side = quiet.side;
+      const o = quiet.obj;
+      this.tweens.add({ targets: o, alpha: 0, x: o.x + (side === 'L' ? -60 : 60), duration: 380, onComplete: () => o.destroy() });
+      this.cast = this.cast.filter((c) => c !== quiet);
     }
-    this.cast = [];
-    const x = W / 2 + 40;
+    const x = side === 'L' ? W * 0.3 : W * 0.7;
     let obj: LivingSprite | Phaser.GameObjects.Image;
     if (enemy) {
-      const glow = this.add.image(x, H / 2, 'fx:glow').setTint(0x6a2a8a).setDisplaySize(1000, 900).setAlpha(0.4).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
+      const glow = this.add.image(x, H / 2, 'fx:glow').setTint(0x6a2a8a).setDisplaySize(900, 820).setAlpha(0.4).setDepth(9).setBlendMode(Phaser.BlendModes.ADD);
       const img = this.add.image(x, H - 120, key).setOrigin(0.5, 1).setDepth(10);
-      img.setScale(Math.min(760 / img.height, 760 / img.width));
+      img.setScale(Math.min(700 / img.height, 680 / img.width));
       this.tweens.add({ targets: glow, alpha: 0.2, duration: 1600, yoyo: true, repeat: -1 });
       img.once(Phaser.GameObjects.Events.DESTROY, () => glow.destroy());
       obj = img;
     } else {
       // Waist-up framing: tall portrait, feet below the frame edge.
-      obj = livingPortrait(this, x, H + 220, key, 0.82, 1180, 1100).setDepth(10);
+      obj = livingPortrait(this, x, H + 160, key, 0.82, 1180, 900).setDepth(10);
     }
-    obj.setAlpha(0).setY(obj.y + 12);
-    this.tweens.add({ targets: obj, alpha: 1, y: obj.y - 12, duration: 460, ease: 'Sine.easeOut' });
-    this.cast.push({ who, side: 'L', obj });
+    obj.setData('scale', Math.abs(obj.scaleY));
+    // Face the middle of the stage: painted art looks right unless listed as facing left.
+    const looksLeft = enemy || ART_FACES_LEFT.has(who); // the Dimmed are painted facing the troupe (left)
+    if ((side === 'L') === looksLeft) obj.scaleX = -obj.scaleX;
+    obj.setAlpha(0).setX(x + (side === 'L' ? -50 : 50));
+    this.tweens.add({ targets: obj, alpha: 1, x, duration: 460, ease: 'Sine.easeOut' });
+    this.cast.push({ who, side, obj, spoke: 0 });
   }
 
   /** Segmented clock stamp in the corner, the way the reference opens a scene. */

@@ -88,8 +88,9 @@ describe('lantern rite', () => {
     const res = performRite(save, 20000, new Rng(5))!;
     const five = res.filter((r) => r.rarity === 5).length / res.length;
     const four = res.filter((r) => r.rarity === 4).length / res.length;
-    expect(five).toBeGreaterThan(0.035);
-    expect(five).toBeLessThan(0.07);
+    // 1% base with a hard pity at 70 lands near 2% overall.
+    expect(five).toBeGreaterThan(0.014);
+    expect(five).toBeLessThan(0.027);
     expect(four).toBeGreaterThan(0.21);
     expect(four).toBeLessThan(0.27);
   });
@@ -177,5 +178,24 @@ describe('trials and banners', () => {
     expect(featured / fives).toBeGreaterThan(0.4);
     expect(save.history.length).toBe(100);
     expect(sanitizeSave(JSON.parse(JSON.stringify(save))).history.length).toBe(100);
+  });
+});
+
+describe('daily sign-in', () => {
+  it('pays once a day, pays milestones once, and starts a new sheet each month', async () => {
+    const { signIn, signedToday } = await import('../src/game/systems/signin');
+    const save = freshSave();
+    const d = (day: number, month = 9) => new Date(2026, month, day, 12);
+    expect(signIn(save, d(1))).not.toBeNull();
+    expect(signIn(save, d(1))).toBeNull();
+    expect(signedToday(save, d(1))).toBe(true);
+    const g = save.glimmer;
+    for (let day = 2; day <= 7; day++) signIn(save, d(day));
+    expect(save.signIn.days.length).toBe(7);
+    expect(save.signIn.milestones).toEqual([7]);
+    expect(save.glimmer).toBe(g + 60 + 60); // day 7's Glimmer and the 7-day bonus
+    signIn(save, d(1, 10));
+    expect(save.signIn.days).toEqual([1]);
+    expect(save.signIn.milestones).toEqual([]);
   });
 });

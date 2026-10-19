@@ -6,9 +6,9 @@ import type { SaveData } from '../persistence/schema';
 
 export const RITE = {
   cost: 160,
-  rates: { 5: 0.04, 4: 0.24 } as Record<5 | 4, number>,
+  rates: { 5: 0.01, 4: 0.24 } as Record<5 | 4, number>,
   /** A ★5 is guaranteed on this light if none came before. */
-  pity: 40,
+  pity: 70,
   dupeRefund: 60,
 };
 

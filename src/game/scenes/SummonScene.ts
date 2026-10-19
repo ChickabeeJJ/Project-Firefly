@@ -99,11 +99,13 @@ export class SummonScene extends Phaser.Scene {
       goTo(this, 'Lobby');
     });
     ui.add([back, home, this.add.rectangle(170, 64, 14, 14, 0xe8dcc0, 0.9)]);
-    const pill = this.add.container(W - 260, 60);
-    pill.add(this.add.rectangle(0, 0, 360, 52, 0x0b0c10, 0.55).setStrokeStyle(1, 0xe8dcc0, 0.35));
-    pill.add(this.add.image(-150, -2, 'icon:glimmer').setDisplaySize(54, 54));
-    pill.add(text(this, 40, 0, save.glimmer.toLocaleString('en-US'), { size: 28, bold: true, color: CSS.cream }).setOrigin(0.5));
-    const plus = this.add.image(150, 0, 'icon:plus').setDisplaySize(26, 26).setInteractive({ useHandCursor: true });
+    // Compact currency strip: icon, count set right against the + (as the lobby strip does).
+    const pill = this.add.container(W - 200, 60);
+    pill.add(this.add.rectangle(0, 0, 260, 52, 0x0b0c10, 0.55).setStrokeStyle(1, 0xe8dcc0, 0.35));
+    pill.add(this.add.image(-102, -2, 'icon:glimmer').setDisplaySize(50, 50));
+    pill.add(text(this, 76, 0, save.glimmer.toLocaleString('en-US'), { size: 28, bold: true, color: CSS.cream }).setOrigin(1, 0.5));
+    pill.add(this.add.rectangle(88, 0, 1, 30, 0xe8dcc0, 0.3));
+    const plus = this.add.image(108, 0, 'icon:plus').setDisplaySize(26, 26).setInteractive({ useHandCursor: true });
     plus.on('pointerup', () => goTo(this, 'Shop'));
     pill.add(plus);
     ui.add(pill);
@@ -205,7 +207,7 @@ export class SummonScene extends Phaser.Scene {
     c.add(thumb);
     c.add(this.add.rectangle(0, 0, w, h, 0x000000, on ? 0.05 : 0.45).setStrokeStyle(1, 0xe8dcc0, on ? 0.8 : 0.3));
     const tag = text(this, -w / 2 + 8, -h / 2 + 18, b.tag, { size: 22, color: '#fff4e4' }).setOrigin(0, 0.5);
-    c.add(this.add.rectangle(-w / 2, -h / 2 + 18, tag.width + 18, 30, b.featured ? 0xc8501e : 0x3a6a4a, 0.92).setOrigin(0, 0.5));
+    c.add(this.add.rectangle(-w / 2, -h / 2 + 18, tag.width + 18, 30, b.featured ? 0x3f7a4a : 0x3a4f6a, 0.92).setOrigin(0, 0.5));
     c.add(tag);
     c.add(text(this, -w / 2 + 8, h / 2 - 20, b.name, { size: 21, color: CSS.cream, shadow: true }).setOrigin(0, 0.5));
     if (on) c.add(this.add.rectangle(0, h / 2 + 10, w, 4, C.gold, 0.9));
@@ -223,7 +225,7 @@ export class SummonScene extends Phaser.Scene {
     const w = 420;
     const h = 84;
     const g = this.add.graphics();
-    if (primary) g.fillGradientStyle(0xe0763a, 0xd2602a, 0xb84a1e, 0xb84a1e, 1).fillRect(-w / 2, -h / 2, w, h);
+    if (primary) g.fillGradientStyle(0x62a066, 0x58945d, 0x3c6e45, 0x3c6e45, 1).fillRect(-w / 2, -h / 2, w, h);
     else g.fillStyle(0xf6f0e4, 1).fillRect(-w / 2, -h / 2, w, h);
     g.lineStyle(1.5, primary ? 0xffc89a : 0xc8b890, 0.9).strokeRect(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8);
     c.add(g);

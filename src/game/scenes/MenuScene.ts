@@ -7,7 +7,7 @@ import { CHAPTERS, STAGES } from '../data/stages';
 import { C, CSS, H, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel } from '../systems/achievements';
-import { Atmosphere, fadeIn, goTo, softPress, text } from '../ui/kit';
+import { Atmosphere, fadeIn, goTo, iconPlinth, softPress, text } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
@@ -180,8 +180,10 @@ export class MenuScene extends Phaser.Scene {
         // Painted button with its name set beneath in the book face.
         const halo = this.add.image(0, -16, 'fx:glow').setTint(0xffd49a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 160).setAlpha(0);
         const im = this.add.image(0, -16, art).setDisplaySize(th - 22, th - 22);
+        // Every icon's art stands on the same baseline (150/360 below centre), so one plinth fits all.
+        const plinth = iconPlinth(this, 0, -16 + ((th - 22) * 150) / 360, 116);
         const lb = text(this, 0, th / 2 - 8, label, { size: 21, italic: true, color: CSS.cream, shadow: true }).setOrigin(0.5);
-        c.add([halo, im, lb]);
+        c.add([halo, plinth, im, lb]);
         if (icon === 'trophy') {
           this.badge = this.add.circle(tw / 2 - 26, -th / 2 + 14, 9, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
           c.add(this.badge);

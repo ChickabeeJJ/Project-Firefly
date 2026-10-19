@@ -6,6 +6,7 @@ import { STAGES } from '../data/stages';
 import { C, CSS, H, MOOD_CSS, MOOD_NAME, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { ACHIEVEMENTS, achievementState, claimAchievement, playerLevel, totalStars } from '../systems/achievements';
+import { ITEM_ORDER, ITEMS } from '../systems/growth';
 import { Button, ornament, scrollable, text, toast } from './kit';
 
 // Modal info panels opened from the lobby and its options menu. Each is a self-contained
@@ -240,9 +241,13 @@ export function openGramophone(scene: Phaser.Scene): void {
 // ===================================================================== Profile
 
 export function openProfile(scene: Phaser.Scene): void {
-  const { c } = modal(scene, 'LAMPLIGHTER', 1000, 760);
+  const { c } = modal(scene, 'LAMPLIGHTER', 1500, 800);
   const s = saves.get();
-  c.add(text(scene, W / 2, H / 2 - 380 + 152, `Lv ${playerLevel(s)}  ·  ID ${s.playerId}`, { size: 28, color: CSS.creamDim }).setOrigin(0.5));
+  const top = H / 2 - 400;
+  c.add(text(scene, W / 2, top + 150, `Lv ${playerLevel(s)}  ·  ID ${s.playerId}`, { size: 28, color: CSS.creamDim }).setOrigin(0.5));
+  // Left: the record.
+  const lx = W / 2 - 690;
+  c.add(text(scene, lx, top + 214, 'RECORD', { size: 22, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0, 0.5));
   const stats: [string, string][] = [
     ['Stages cleared', `${Object.keys(s.stars).length} / ${STAGES.length}`],
     ['Stars earned', `${totalStars(s)} / ${STAGES.length * 3}`],
@@ -250,12 +255,27 @@ export function openProfile(scene: Phaser.Scene): void {
     ['Lantern Rites', `${s.totalPulls}`],
     ['Dimmed recorded', `${s.seen.length} / ${ENEMIES.length}`],
     ['Achievements', `${s.claimed.length} / ${ACHIEVEMENTS.length}`],
-    ['Glimmer', s.glimmer.toLocaleString('en-US')],
   ];
   stats.forEach(([k, v], i) => {
-    const y = H / 2 - 380 + 222 + i * 62;
-    c.add(text(scene, W / 2 - 380, y, k, { size: 28, color: CSS.cream }).setOrigin(0, 0.5));
-    c.add(text(scene, W / 2 + 380, y, v, { size: 28, bold: true, color: CSS.goldLight }).setOrigin(1, 0.5));
-    if (i < stats.length - 1) c.add(scene.add.rectangle(W / 2, y + 32, 760, 1, C.gold, 0.2));
+    const y = top + 272 + i * 66;
+    c.add(text(scene, lx, y, k, { size: 27, color: CSS.cream }).setOrigin(0, 0.5));
+    c.add(text(scene, lx + 600, y, v, { size: 27, bold: true, color: CSS.goldLight }).setOrigin(1, 0.5));
+    if (i < stats.length - 1) c.add(scene.add.rectangle(lx + 300, y + 33, 600, 1, C.gold, 0.2));
+  });
+  c.add(scene.add.rectangle(W / 2 - 30, top + 470, 1, 520, C.gold, 0.3));
+  // Right: the wallet — Glimmer and every material, as tiles.
+  const rx = W / 2 + 30;
+  c.add(text(scene, rx, top + 214, 'RESOURCES', { size: 22, font: 'display', bold: true, color: CSS.goldLight, spacing: 6 }).setOrigin(0, 0.5));
+  const wallet: [string, string, number][] = [['icon:glimmer', 'Glimmer', s.glimmer], ...ITEM_ORDER.map((id) => [`item:${id}`, ITEMS[id].name, s.items[id] ?? 0] as [string, string, number])];
+  const tw = 318;
+  const th = 118;
+  wallet.forEach(([icon, name, n], i) => {
+    const x = rx + (i % 2) * (tw + 22);
+    const y = top + 250 + Math.floor(i / 2) * (th + 14);
+    c.add(scene.add.rectangle(x, y, tw, th, 0x0b0c10, 0.45).setOrigin(0).setStrokeStyle(1, 0xe8dcc0, 0.25));
+    c.add(scene.add.image(x + 18, y + 22, 'fx:glow').setOrigin(0).setDisplaySize(80, 80).setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.12));
+    c.add(scene.add.image(x + 58, y + th / 2, icon).setDisplaySize(78, 78));
+    c.add(text(scene, x + 110, y + 40, name, { size: 21, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
+    c.add(text(scene, x + 110, y + 78, n.toLocaleString('en-US'), { size: 32, bold: true, color: CSS.cream }).setOrigin(0, 0.5));
   });
 }

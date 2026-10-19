@@ -10,8 +10,10 @@ import { saves } from '../persistence/SaveService';
 import { claimableCount, playerLevel, totalStars } from '../systems/achievements';
 import { frontierStage } from '../systems/progression';
 import { RITE } from '../systems/gacha';
-import { Atmosphere, fadeIn, goTo, softPress, text, toast } from '../ui/kit';
+import { Atmosphere, fadeIn, goTo, iconPlinth, softPress, text, toast } from '../ui/kit';
 import { stagePortrait } from '../ui/LivingSprite';
+import { openSignIn } from '../ui/SignIn';
+import { signedToday } from '../systems/signin';
 import { LOBBY_GREETINGS, LOBBY_LINES } from '../data/story';
 import { openAchievements, openAtlas, openGramophone, openNotice, openProfile } from '../ui/Panels';
 
@@ -41,6 +43,7 @@ export class LobbyScene extends Phaser.Scene {
   private hands: Phaser.GameObjects.Image[] = [];
   /** Set while the midnight chime holds the hands on the thirteenth mark. */
   private striking = false;
+  private signDot?: Phaser.GameObjects.Arc;
   private struckOn = '';
   private clockTime!: Phaser.GameObjects.Text;
   private clockDate!: Phaser.GameObjects.Text;
@@ -93,6 +96,8 @@ export class LobbyScene extends Phaser.Scene {
     this.time.delayedCall(900, () => this.say(save.totalPulls === 0 && save.glimmer >= RITE.cost * 10
       ? LOBBY_GREETINGS.rite
       : hour >= 1 && hour < 5 ? LOBBY_GREETINGS.night : lines[lineAt]));
+    // First visit of the day: the sign-in sheet opens by itself, as the reference's does.
+    if (!signedToday(save)) this.time.delayedCall(1300, () => openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); }));
   }
 
   // ===================================================================== helpers
@@ -123,7 +128,7 @@ export class LobbyScene extends Phaser.Scene {
     const c = this.add.container(x, y);
     const glow = this.add.image(0, -size * 0.08, 'fx:glow').setTint(0xffd27a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(size * 1.3, size * 1.1).setAlpha(0);
     const img = this.add.image(0, label ? -8 : 0, `menu:${art}`).setDisplaySize(size, size);
-    c.add([glow, img]);
+    c.add([glow, iconPlinth(this, 0, img.y + (size * 150) / 360, size * 0.86), img]);
     if (label) {
       // A small engraved caption on a soft dark band, so it reads over any backdrop.
       const cap = text(this, 0, size / 2 + 2, label, { size: 15, font: 'display', color: CSS.cream, spacing: 2, shadow: true }).setOrigin(0.5);
@@ -140,6 +145,10 @@ export class LobbyScene extends Phaser.Scene {
     softPress(c, onClick, 'tap', 1.06);
     this.ui.add(c);
     return c;
+  }
+
+  private refreshSignDot(): void {
+    this.signDot?.setVisible(!signedToday(saves.get()));
   }
 
   private refreshDots(): void {
@@ -173,8 +182,16 @@ export class LobbyScene extends Phaser.Scene {
       ['profile', 'profile', 'Profile', () => openProfile(this)],
       ['gramophone', 'gramophone', 'Music', () => openGramophone(this)],
       ['settings', 'gear', 'Settings', () => this.openSettings()],
+      ['signin', 'calendar', 'Sign-in', () => openSignIn(this, () => { this.refreshSignDot(); this.refreshDots(); })],
     ];
-    row.forEach(([art, icon, label, go], i) => this.artButton(84 + i * 100, 196, art, icon, label, go, 66));
+    row.forEach(([art, icon, label, go], i) => {
+      const b = this.artButton(84 + i * 100, 196, art, icon, label, go, 66);
+      if (art === 'signin') {
+        this.signDot = this.add.circle(24, -30, 8, C.danger).setStrokeStyle(2, 0xffffff, 0.9);
+        b.add(this.signDot);
+        this.refreshSignDot();
+      }
+    });
   }
 
   private buildLeftColumn(): void {
@@ -283,7 +300,16 @@ export class LobbyScene extends Phaser.Scene {
     const tile = (tx: number, icon: string, label: string, sub: string, go: () => void) => {
       const c = this.add.container(tx, 528);
       c.add(this.add.rectangle(0, 0, tw, 118, 0x0b0c10, 0.5).setStrokeStyle(1.5, 0xe8dcc0, 0.55));
-      c.add(this.add.image(tw / 2 - 52, -6, `icon:${icon}`).setDisplaySize(78, 78).setAlpha(0.28));
+      const art = ({ story: 'menu:story', roster: 'menu:troupe' } as Record<string, string>)[icon];
+      if (art && this.textures.exists(art)) {
+        // The painted emblem, warmly lit, set into the tile's right-hand side like the Rite lantern.
+        c.add(this.add.image(tw / 2 - 46, -8, 'fx:glow').setTint(0xffe2a0).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(140, 110).setAlpha(0.14));
+        const em = this.add.image(tw / 2 - 46, -12, art).setDisplaySize(84, 84);
+        c.add(em);
+        this.tweens.add({ targets: em, angle: { from: -2, to: 2 }, y: -15, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      } else {
+        c.add(this.add.image(tw / 2 - 52, -6, `icon:${icon}`).setDisplaySize(78, 78).setAlpha(0.28));
+      }
       c.add(text(this, -tw / 2 + 18, 18, label, { size: 30, font: 'display', bold: true, color: CSS.cream, shadow: true }).setOrigin(0, 0.5));
       c.add(text(this, -tw / 2 + 20, -30, sub, { size: 17, italic: true, color: CSS.creamDim }).setOrigin(0, 0.5));
       c.setSize(tw, 118).setInteractive({ useHandCursor: true });
@@ -337,7 +363,7 @@ export class LobbyScene extends Phaser.Scene {
     // Three clean lines on the left (chapter · title · next stage); the stub holds only an arrow.
     const room = w - stub - 50;
     const lx = -w / 2 + 26;
-    const k = fit(text(this, lx, -32, head, { size: 15, font: 'display', bold: true, color: CSS.amber, spacing: 2 }).setOrigin(0, 0.5), room);
+    const k = fit(text(this, lx, -32, head, { size: 15, font: 'display', bold: true, color: '#3f7a4a', spacing: 2 }).setOrigin(0, 0.5), room);
     const t = fit(text(this, lx, 2, 'Enter the Stage', { size: 34, font: 'display', bold: true, color: CSS.paperText }).setOrigin(0, 0.5), room);
     const st = fit(text(this, lx, 36, sub, { size: 18, italic: true, color: CSS.paperSub }).setOrigin(0, 0.5), room);
     const enter = this.add.circle(w / 2 - stub / 2, 0, 30, 0x2a241c, 0.9);
@@ -460,11 +486,13 @@ export class LobbyScene extends Phaser.Scene {
     const bx = right ? this.face.x + 90 : this.face.x - 90 - w;
     const by = Phaser.Math.Clamp(this.face.y - h - 20, 40, H - h - 40);
     const c = this.add.container(bx, by).setDepth(80);
-    c.add([this.add.nineslice(0, 0, 'ui:paperPlain', undefined, w, h, 12, 12, 12, 12).setOrigin(0), t.setPosition(22, 15)]);
-    // Tail points back down towards the mouth.
-    const tx = right ? 0 : w;
-    const dir = right ? -1 : 1;
-    c.add(this.add.triangle(tx, h - 14, 0, 0, 0, 22, dir * 34, 30, C.paper).setOrigin(0, 0));
+    // Body and tail are one outline, so the tail grows out of the bubble's side towards the mouth.
+    const pts = speechOutline(w, h, right);
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.28).fillPoints(pts.map((p) => new Phaser.Math.Vector2(p.x + 3, p.y + 5)), true);
+    g.fillStyle(C.paper, 1).fillPoints(pts, true);
+    g.lineStyle(2, C.paperLine, 1).strokePoints(pts, true, true);
+    c.add([g, t.setPosition(22, 15)]);
     c.setAlpha(0);
     this.tweens.add({ targets: c, alpha: 1, duration: 220, yoyo: true, hold: 4200, onComplete: () => c.destroy() });
     this.bubble = c;
@@ -474,4 +502,32 @@ export class LobbyScene extends Phaser.Scene {
     this.scene.launch('Pause', { mode: 'settings', from: 'Lobby' });
     this.scene.pause();
   }
+}
+
+/** Rounded speech bubble with its tail on the left (or right) side, near the bottom, as one closed path. */
+function speechOutline(w: number, h: number, tailLeft: boolean): Phaser.Math.Vector2[] {
+  const r = 12;
+  const pts: Phaser.Math.Vector2[] = [];
+  const arc = (cx: number, cy: number, a0: number) => {
+    for (let k = 0; k <= 5; k++) {
+      const a = a0 + (k / 5) * (Math.PI / 2);
+      pts.push(new Phaser.Math.Vector2(cx + Math.cos(a) * r, cy + Math.sin(a) * r));
+    }
+  };
+  const v = (x: number, y: number) => pts.push(new Phaser.Math.Vector2(x, y));
+  arc(r, r, Math.PI); // top-left
+  arc(w - r, r, -Math.PI / 2); // top-right
+  if (!tailLeft) {
+    v(w, h - 46);
+    v(w + 30, h + 6);
+    v(w, h - 20);
+  }
+  arc(w - r, h - r, 0); // bottom-right
+  arc(r, h - r, Math.PI / 2); // bottom-left
+  if (tailLeft) {
+    v(0, h - 20);
+    v(-30, h + 6);
+    v(0, h - 46);
+  }
+  return pts;
 }

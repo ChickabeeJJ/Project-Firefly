@@ -42,6 +42,30 @@ const game = new Phaser.Game({
   scene: [BootScene, LobbyScene, MenuScene, CinematicScene, ShopScene, StoryScene, FormationScene, BattleScene, PauseScene, ResultScene, SummonScene, RosterScene],
 });
 
+// When the screen is wider (or taller) than 16:9, paint the bars with a blurred snapshot of the scene.
+const backdrop = document.getElementById('backdrop');
+let snapTimer = 0;
+const refreshBackdrop = () => {
+  const r = innerWidth / innerHeight;
+  if (!backdrop || Math.abs(r - W / H) < 0.04) return;
+  window.clearTimeout(snapTimer);
+  snapTimer = window.setTimeout(() => {
+    game.renderer.snapshot((img) => {
+      const c = document.createElement('canvas');
+      c.width = 192;
+      c.height = 108;
+      c.getContext('2d')!.drawImage(img as HTMLImageElement, 0, 0, 192, 108);
+      backdrop.style.backgroundImage = `url(${c.toDataURL('image/jpeg', 0.7)})`;
+    });
+  }, 900);
+};
+game.events.once(Phaser.Core.Events.READY, () => {
+  for (const s of game.scene.scenes) s.events.on(Phaser.Scenes.Events.CREATE, refreshBackdrop);
+});
+window.addEventListener('resize', refreshBackdrop);
+// Overlays come and go within a scene, so re-take the echo now and then (cheap: a 192 px copy).
+window.setInterval(refreshBackdrop, 12000);
+
 if (import.meta.env.DEV) {
   (window as unknown as { __game: Phaser.Game }).__game = game;
 }

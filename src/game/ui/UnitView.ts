@@ -32,6 +32,7 @@ export class UnitView {
   private intentChip?: Phaser.GameObjects.Container;
   private reticle?: Phaser.GameObjects.Image;
   private bob: Phaser.Tweens.Tween;
+  private menace?: Phaser.Time.TimerEvent;
   readonly height: number;
   readonly flyer: boolean;
   /** Formation position (the root may be offset while animating). */
@@ -57,7 +58,10 @@ export class UnitView {
     } else {
       // Ground units breathe and sway; painted art gets a little more motion than the chibis.
       const painted = !!(isEnemy ? dropIn(scene, 'enemies', unit.defId) : dropIn(scene, 'battle', unit.defId) ?? dropIn(scene, 'characters', unit.defId));
-      const ls = new LivingSprite(scene, 0, 4, key, { sway: painted ? 3 : 2, breathe: 0.004, speed: isEnemy ? 0.8 : 1 });
+      // The Dimmed never quite hold still: a ripple through the body and a slow float.
+      const ls = new LivingSprite(scene, 0, 4, key, isEnemy
+        ? { sway: painted ? 6 : 3, breathe: 0.009, speed: 0.9, writhe: painted ? 5 : 2, hover: unit.boss ? 8 : 5 }
+        : { sway: painted ? 3 : 2, breathe: 0.004, speed: 1 });
       ls.setScale(layout.scale);
       this.sprite = ls;
       this.hit = ls.hit;
@@ -95,6 +99,24 @@ export class UnitView {
       y: this.sprite.y - (this.flyer ? 16 : 2),
       duration: this.flyer ? 1300 : 1700 + Math.random() * 500,
       yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: Math.random() * 600,
+    });
+    if (isEnemy) this.scheduleMenace();
+  }
+
+  /** Every few seconds an enemy lurches, rears or shudders, so the field never looks frozen. */
+  private scheduleMenace(): void {
+    this.menace = this.scene.time.delayedCall(2600 + Math.random() * 3400, () => {
+      if (!this.root.active || !this.unit.alive) return;
+      const roll = Math.random();
+      if (this.sprite instanceof LivingSprite && roll < 0.4) {
+        this.sprite.pose(-(10 + Math.random() * 12), 0.02, 220, 260); // lurch towards the troupe
+      } else if (this.sprite instanceof LivingSprite && roll < 0.7) {
+        this.sprite.pose(8, -0.025, 260, 300); // rear back
+      } else {
+        const x = this.root.x;
+        this.scene.tweens.add({ targets: this.root, x: x + 4, duration: 45, yoyo: true, repeat: 3, onComplete: () => this.root.setX(x) });
+      }
+      this.scheduleMenace();
     });
   }
 
@@ -155,7 +177,8 @@ export class UnitView {
     const w = intent.preview > 0 ? 150 : 96;
     const bg = this.scene.add.nineslice(0, 0, 'ui:dark', undefined, w, 64, 10, 10, 10, 10);
     if (intent.finale) bg.setTint(0xff8a7a);
-    const ic = this.scene.add.image(-w / 2 + 32, 0, `icon:${intent.kind}`).setDisplaySize(42, 42);
+    const painted = this.scene.textures.exists(`intent:${intent.kind}`);
+    const ic = this.scene.add.image(-w / 2 + 32, 0, painted ? `intent:${intent.kind}` : `icon:${intent.kind}`).setDisplaySize(painted ? 48 : 42, painted ? 48 : 42);
     c.add([bg, ic]);
     if (intent.preview > 0) {
       c.add(text(this.scene, -w / 2 + 58, 0, String(intent.preview), { size: 28, bold: true, italic: true, color: intent.finale ? '#ffb0a0' : CSS.cream }).setOrigin(0, 0.5));
@@ -200,11 +223,22 @@ export class UnitView {
   lunge(toward: number, distance = 70): Promise<void> {
     return new Promise((resolve) => {
       const dir = Math.sign(toward - this.root.x) || 1;
-      if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * 26, -0.01, 140, 120);
-      this.scene.tweens.add({
-        targets: this.root, x: this.root.x + dir * distance, duration: 140, yoyo: true, hold: 120, ease: 'Cubic.easeOut',
-        onYoyo: () => resolve(),
-      });
+      // Start from the home mark even if an idle shudder was mid-way.
+      this.scene.tweens.killTweensOf(this.root);
+      this.root.setAlpha(1).setX(this.homeX);
+      const x0 = this.homeX;
+      const strike = () => {
+        if (this.sprite instanceof LivingSprite) this.sprite.pose(dir * 26, -0.01, 140, 120);
+        this.scene.tweens.add({
+          targets: this.root, x: x0 + dir * distance, duration: 140, yoyo: true, hold: 120, ease: 'Cubic.easeOut',
+          onYoyo: () => resolve(),
+        });
+      };
+      if (this.unit.side !== 'enemy') return strike();
+      // Enemies wind up first: recoil and swell, then spring.
+      distance *= 1.3;
+      if (this.sprite instanceof LivingSprite) this.sprite.pose(-dir * 18, 0.03, 120, 60);
+      this.scene.tweens.add({ targets: this.root, x: x0 - dir * 22, duration: 130, ease: 'Sine.easeOut', onComplete: strike });
     });
   }
 
@@ -217,6 +251,7 @@ export class UnitView {
 
   die(): Promise<void> {
     this.bob.stop();
+    this.menace?.remove();
     this.setIntent(null);
     this.setTargeted(false);
     return new Promise((resolve) => {
@@ -249,6 +284,7 @@ export class UnitView {
 
   destroy(): void {
     this.bob.stop();
+    this.menace?.remove();
     this.intentChip?.destroy();
     this.reticle?.destroy();
     this.hud.destroy();

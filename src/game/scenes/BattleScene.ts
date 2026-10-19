@@ -243,15 +243,16 @@ export class BattleScene extends Phaser.Scene {
     if (painted) icon.setScale(150 / icon.height);
     else icon.setDisplaySize(104, 104);
     c.add([this.lanternGlow, icon]);
-    // Title, a row of firefly sockets, and the count, stacked tight beside the lantern.
-    c.add(text(this, 64, -34, 'LANTERN', { size: 24, font: 'display', bold: true, color: CSS.cream, spacing: 3 }).setOrigin(0, 0.5));
+    // Title, a row of firefly sockets, and the count, hung from the top of the lantern.
+    const top = painted ? -10 - icon.displayHeight / 2 : -52;
+    c.add(text(this, 64, top - 2, 'LANTERN', { size: 24, font: 'display', bold: true, color: CSS.cream, spacing: 3 }).setOrigin(0, 0));
     for (let i = 0; i < LANTERN.capacity; i++) {
-      c.add(this.add.circle(80 + i * 34, 2, 11, 0x0b0c10, 0.45).setStrokeStyle(1, 0xe8dcc0, 0.35));
-      const p = this.add.image(80 + i * 34, 2, 'fx:firefly').setScale(0.6);
+      c.add(this.add.circle(80 + i * 34, top + 50, 11, 0x0b0c10, 0.45).setStrokeStyle(1, 0xe8dcc0, 0.35));
+      const p = this.add.image(80 + i * 34, top + 50, 'fx:firefly').setScale(0.6);
       this.lanternPips.push(p);
       c.add(p);
     }
-    this.lanternLabel = text(this, 64, 36, '', { size: 21, italic: true, color: CSS.firefly }).setOrigin(0, 0.5);
+    this.lanternLabel = text(this, 64, top + 84, '', { size: 21, italic: true, color: CSS.firefly }).setOrigin(0, 0.5);
     c.add(this.lanternLabel);
     this.add.zone(c.x + 100, c.y, 330, 170).setDepth(302).setInteractive({ useHandCursor: true }).on('pointerup', () => this.tapLantern());
     this.lantern = c;
@@ -812,6 +813,7 @@ export class BattleScene extends Phaser.Scene {
     v.setInteractive({ useHandCursor: true, draggable: true });
     v.on('pointerdown', () => {
       v.setData('dragged', false);
+      v.setData('downAt', this.time.now);
       if (this.canPlan()) this.showTooltip(v);
     });
     v.on('pointerover', () => {
@@ -828,9 +830,11 @@ export class BattleScene extends Phaser.Scene {
       this.tweens.add({ targets: v, x: v.homeX, y: v.homeY + (this.busy ? HAND_DIP : 0), scale: HAND_SCALE, duration: 140 });
       this.hideTooltip();
     });
-    v.on('pointerup', () => {
+    v.on('pointerup', (p: Phaser.Input.Pointer) => {
       if (v.getData('dragged')) return;
       this.hideTooltip();
+      // On touch screens a long press is for reading the card, not casting it.
+      if (p.wasTouch && this.time.now - (v.getData('downAt') ?? 0) > 450) return;
       this.tapCard(v.cid);
     });
     v.on('dragstart', () => {

@@ -1,6 +1,7 @@
 import { CHARACTERS, STARTER_TEAM } from '../data/characters';
 import { STAGES } from '../data/stages';
 import { MAX_RESONANCE } from '../battle/rules';
+import type { SignInRecord } from '../systems/signin';
 import { fromLegacyLevel, type ItemId, ITEM_ORDER, levelCap, maxInsight } from '../systems/growth';
 
 export const SAVE_VERSION = 2;
@@ -47,6 +48,8 @@ export interface SaveData {
   savedAt: number;
   /** Recent Lantern Rite results, newest first (Record screen). */
   history: RiteRecord[];
+  /** This month's daily sign-in sheet. */
+  signIn: SignInRecord;
 }
 
 export interface RiteRecord {
@@ -78,6 +81,7 @@ export function freshSave(): SaveData {
     items: { ...STARTING_ITEMS },
     savedAt: 0,
     history: [],
+    signIn: { month: '', days: [], milestones: [] },
   };
 }
 
@@ -165,5 +169,16 @@ export function sanitizeSave(raw: unknown): SaveData {
           : [];
       })
       : [],
+    signIn: sanitizeSignIn(r.signIn),
+  };
+}
+
+function sanitizeSignIn(raw: unknown): SignInRecord {
+  const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const ints = (v: unknown, max: number) => (Array.isArray(v) ? [...new Set((v as unknown[]).filter((n): n is number => Number.isInteger(n) && (n as number) >= 1 && (n as number) <= max))] : []);
+  return {
+    month: typeof o.month === 'string' && /^\d{4}-\d{2}$/.test(o.month) ? o.month : '',
+    days: ints(o.days, 31),
+    milestones: ints(o.milestones, 31),
   };
 }

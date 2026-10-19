@@ -217,19 +217,34 @@ export class DiamondButton extends Phaser.GameObjects.Container {
 }
 
 /** Small cream notice that slides in at the top right (like the reference's toasts). */
+/**
+ * Notice slip in the top-right corner, stacked like letters on a hall table: a parchment card
+ * with a sealed-wax medallion for its icon. Several stack downwards and each slides away alone.
+ */
 export function toast(scene: Phaser.Scene, message: string, iconKey = 'star4'): void {
-  const existing = scene.children.list.filter((o) => o.getData && o.getData('toast')).length;
-  const y = 150 + existing * 74;
-  const c = scene.add.container(W + 10, y).setDepth(5000).setData('toast', true);
-  const label = text(scene, 0, 0, message, { size: 26, color: CSS.paperText });
-  const w = Math.max(320, label.width + 110);
-  const bg = scene.add.nineslice(-w / 2, 0, 'ui:paperPlain', undefined, w, 62, 12, 12, 12, 12);
-  const ic = scene.add.image(-w + 40, 0, `icon:${iconKey}`).setDisplaySize(36, 36);
-  label.setOrigin(0, 0.5).setPosition(-w + 70, 0);
-  c.add([bg, ic, label]);
-  scene.tweens.add({ targets: c, x: W - 24, duration: 260, ease: 'Cubic.easeOut' });
+  const used = new Set(scene.children.list.filter((o) => o.getData && o.getData('toast')).map((o) => o.getData('slot') as number));
+  let slot = 0;
+  while (used.has(slot)) slot++;
+  const w = 430;
+  const label = text(scene, 0, 0, message, { size: 23, color: CSS.paperText, wrap: w - 128, lineSpacing: 2 });
+  const h = Math.max(86, label.height + 34);
+  const y = 118 + slot * 112;
+  const c = scene.add.container(W + w, y).setDepth(5000).setData('toast', true).setData('slot', slot);
+  const g = scene.add.graphics();
+  g.fillStyle(0x000000, 0.3).fillRect(-w + 5, -h / 2 + 6, w, h);
+  g.fillGradientStyle(0xfaf3ea, 0xfaf3ea, 0xeadfcd, 0xeadfcd, 1).fillRect(-w, -h / 2, w, h);
+  g.fillStyle(0x7a2a24, 0.85).fillRect(-w, -h / 2, 5, h);
+  g.lineStyle(1, 0xb9a888, 0.9).strokeRect(-w, -h / 2, w, h);
+  const bx = -w + 50;
+  g.fillStyle(0xf4e9dc, 1).fillCircle(bx, 0, 30);
+  g.lineStyle(2.5, 0x7a2a24, 0.95).strokeCircle(bx, 0, 30);
+  g.lineStyle(1, 0x7a2a24, 0.4).strokeCircle(bx, 0, 24);
+  const ic = scene.add.image(bx, 0, `icon:${iconKey}`).setDisplaySize(36, 36);
+  label.setOrigin(0, 0.5).setPosition(-w + 96, 0);
+  c.add([g, ic, label]);
+  scene.tweens.add({ targets: c, x: W - 22 - (slot % 2) * 18, duration: 320, ease: 'Back.easeOut' });
   scene.tweens.add({
-    targets: c, x: W + w + 20, alpha: 0, delay: 2200, duration: 300, ease: 'Cubic.easeIn',
+    targets: c, x: W + w + 20, alpha: 0, delay: 3200, duration: 320, ease: 'Cubic.easeIn',
     onComplete: () => c.destroy(),
   });
 }
@@ -371,4 +386,14 @@ export function scrollable(scene: Phaser.Scene, content: Phaser.GameObjects.Cont
     wasDrag: () => scene.time.now - lastDrag < 80 || moved > 12,
     visible: (worldY: number) => worldY > area.y && worldY < area.bottom,
   };
+}
+
+/** The shared plinth every painted menu icon stands on: a soft floor shadow and a thin gilt ring. */
+export function iconPlinth(scene: Phaser.Scene, x: number, y: number, w: number): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  g.fillStyle(0x000000, 0.42).fillEllipse(x, y + 2, w * 0.92, w * 0.17);
+  g.fillStyle(0xe2be6a, 0.1).fillEllipse(x, y, w, w * 0.2);
+  g.lineStyle(1.5, 0xe2be6a, 0.55).strokeEllipse(x, y, w, w * 0.2);
+  g.lineStyle(1, 0xf3dc9c, 0.25).strokeEllipse(x, y - 1, w * 0.7, w * 0.13);
+  return g;
 }

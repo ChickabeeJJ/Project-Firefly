@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { vintageHandCanvas } from '../art/clockFace';
 import { ensureBg } from '../art/registry';
 import { dropIn } from '../art/assets';
 import { audio } from '../audio/AudioController';
@@ -115,7 +116,7 @@ export class StoryScene extends Phaser.Scene {
       }).setOrigin(0.5, 0));
       if (cleared) {
         for (let k = 0; k < 3; k++) {
-          tl.add(this.add.image(x + (k - 1) * 30, y - size - 26, 'icon:star4').setDisplaySize(26, 26).setTint(k < save.stars[s.id] ? 0xf26b3a : 0x3a3a42));
+          tl.add(this.add.image(x + (k - 1) * 30, y - size - 26, 'icon:star4').setDisplaySize(26, 26).setTint(k < save.stars[s.id] ? 0x9fd27a : 0x3a3a42));
         }
       }
       if (sel) {
@@ -152,7 +153,7 @@ export class StoryScene extends Phaser.Scene {
     c.add(this.add.image(0, 0, key));
     const ink = '#2a1d10';
     const sepia = '#6a5034';
-    const rust = '#9a4a22';
+    const rust = '#3f6a44';
     const stub = 230;
     const lx = -w / 2 + 52;
 
@@ -223,7 +224,7 @@ export class StoryScene extends Phaser.Scene {
     perf.fillStyle(0x5a4026, 0.55);
     for (let y = -h / 2 + 22; y < h / 2 - 16; y += 12) perf.fillCircle(w / 2 - stub - 14, y, 2);
     c.add(perf);
-    c.add(this.add.rectangle(sx, 0, stub - 30, h - 56, 0x9a3a1a, 0.92).setStrokeStyle(1.5, 0x5a1e0a, 0.9));
+    c.add(this.add.rectangle(sx, 0, stub - 30, h - 56, 0x3c6e45, 0.92).setStrokeStyle(1.5, 0x1e3a24, 0.9));
     c.add(this.add.rectangle(sx, 0, stub - 46, h - 72).setStrokeStyle(1, 0xf2d8b0, 0.5));
     c.add(text(this, sx, -86, 'ADMIT ONE', { size: 16, font: 'display', color: '#f6e6c8', spacing: 4 }).setOrigin(0.5));
     c.add(text(this, sx, -10, 'Begin', { size: 46, font: 'display', bold: true, color: '#fff4e4' }).setOrigin(0.5));
@@ -334,7 +335,7 @@ export class StoryScene extends Phaser.Scene {
     tabs.forEach(([m, label, icon, art], i) => {
       const x = (i - 1) * 190;
       const on = m === this.mode;
-      const col = light ? (on ? '#c8501e' : '#5a4a36') : on ? CSS.amber : CSS.cream;
+      const col = light ? (on ? '#3f7a4a' : '#5a4a36') : on ? CSS.amber : CSS.cream;
       const t = this.add.container(x, 0);
       const painted = dropIn(this, 'ui', `motif_${art}`);
       if (painted) {
@@ -366,10 +367,12 @@ export class StoryScene extends Phaser.Scene {
     text(this, W - 70, 70, this.mode === 'resource' ? 'SUPPLIES' : 'KINDLING', { size: 40, font: 'display', bold: true, color: '#3a342c', spacing: 10 }).setOrigin(1, 0.5);
     text(this, W - 70, 116, this.mode === 'resource' ? 'Wick Dust and Brass Sovereigns, for levelling up' : 'Materials for Kindling your Luminaries', { size: 22, italic: true, color: '#6a6458' }).setOrigin(1, 0.5);
     const fams = TRIAL_FAMILIES.filter((f) => f.mode === this.mode);
-    const gap = fams.length > 2 ? 450 : 640;
+    const gap = fams.length > 2 ? 460 : 660;
+    const sc = fams.length > 2 ? 0.78 : 1.05;
     fams.forEach((f, i) => {
-      const x = W / 2 + (i - (fams.length - 1) / 2) * gap;
-      const card = this.trialCard(f, x, 470, fams.length > 2 ? 0.86 : 1.05);
+      // The card's visual centre sits ~43 px right of its origin (dial to the right of the photo).
+      const x = W / 2 + (i - (fams.length - 1) / 2) * gap - 43 * sc;
+      const card = this.trialCard(f, x, 470, sc);
       card.setAlpha(0).setY(530);
       this.tweens.add({ targets: card, alpha: 1, y: 500, duration: 500, delay: i * 90, ease: 'Cubic.easeOut' });
     });
@@ -384,24 +387,49 @@ export class StoryScene extends Phaser.Scene {
     const open = trialUnlocked(save, levels[0]);
     const done = levels.filter((t) => trialCleared(save, t)).length;
     const c = this.add.container(x, y).setScale(s);
-    // A brass thirteen-hour clock face behind the photo; its hand sweeps while the trial is open.
-    const dial = this.add.graphics();
-    dial.fillStyle(0x2a2016, 1).fillCircle(0, 0, 190);
-    dial.fillStyle(0xd8c49a, 1).fillCircle(0, 0, 176);
-    dial.lineStyle(3, 0x8a6c40, 1).strokeCircle(0, 0, 176).strokeCircle(0, 0, 150);
-    for (let k = 0; k < 13; k++) {
-      const an = (k / 13) * Math.PI * 2 - Math.PI / 2;
-      dial.lineStyle(k === 12 ? 6 : 3, k === 12 ? 0x8a2a2a : 0x3a2a18, 1).lineBetween(Math.cos(an) * 152, Math.sin(an) * 152, Math.cos(an) * 172, Math.sin(an) * 172);
+    // The ornate tower clock behind the photo, keeping real time with hand-made Breguet hands.
+    // (A locked trial's clock stands still at the thirteenth hour.)
+    const ornate = dropIn(this, 'ui', 'clock_ornate');
+    const R = 130; // radius of the numeral ring at this size
+    const ox = 150; // dial centre: up and right, clear of the photo
+    const oy = -60;
+    if (ornate) {
+      c.add(this.add.image(ox, oy, ornate).setDisplaySize(R / 0.33, R / 0.33).setTint(open ? 0xffffff : 0x9a948a));
+    } else {
+      const dial = this.add.graphics();
+      dial.fillStyle(0x2a2016, 1).fillCircle(0, 0, 190);
+      dial.fillStyle(0xd8c49a, 1).fillCircle(0, 0, 176);
+      dial.setPosition(ox, oy);
+      c.add(dial);
     }
-    dial.setPosition(120, 10);
-    c.add(dial);
-    const hand = this.add.graphics();
-    hand.fillStyle(0x2a2016, 1).fillRect(-4, -140, 8, 150).fillCircle(0, 0, 12);
-    hand.setPosition(120, 10);
-    c.add(hand);
-    if (open) this.tweens.add({ targets: hand, angle: 360, duration: 13000, repeat: -1 });
+    if (!this.textures.exists('ui:vHour')) {
+      this.textures.addCanvas('ui:vHour', vintageHandCanvas('hour', 74));
+      this.textures.addCanvas('ui:vMin', vintageHandCanvas('minute', 106));
+      this.textures.addCanvas('ui:vSec', vintageHandCanvas('second', 112));
+    }
+    const mk = (key: string, len: number) => {
+      const t = this.textures.get(key).getSourceImage();
+      return this.add.image(ox, oy - 3, key).setOrigin(0.5, len / t.height);
+    };
+    const hands = [mk('ui:vHour', 74), mk('ui:vMin', 106), mk('ui:vSec', 112)];
+    c.add(hands);
+    c.add(this.add.circle(ox, oy - 3, 7, 0xd6b264).setStrokeStyle(2, 0x3a2410));
+    const setTime = () => {
+      if (!open) {
+        hands.forEach((h) => h.setAngle(15));
+        return;
+      }
+      const d = new Date();
+      const sec = d.getSeconds();
+      const min = d.getMinutes() + sec / 60;
+      hands[0].setAngle(((d.getHours() % 12) + min / 60) * 30);
+      hands[1].setAngle(min * 6);
+      hands[2].setAngle(sec * 6);
+    };
+    setTime();
+    if (open) this.time.addEvent({ delay: 1000, loop: true, callback: setTime });
     // The photograph.
-    const photo = this.add.container(-40, 20).setAngle(-2.5);
+    const photo = this.add.container(-60, 50).setAngle(-2.5);
     photo.add(this.add.rectangle(4, 8, 400, 320, 0x000000, 0.25));
     photo.add(this.add.rectangle(0, 0, 400, 320, 0xf6f2ea));
     const img = this.add.image(0, 10, ensureBg(this, f.bg));
@@ -414,20 +442,20 @@ export class StoryScene extends Phaser.Scene {
     photo.add(code);
     c.add(photo);
     // Title on a typed paper label, pinned askew across the photo's lower edge (no outlines).
-    const label = this.add.container(-40, 214).setAngle(-1.5);
+    const label = this.add.container(-60, 244).setAngle(-1.5);
     const nm = text(this, 0, -12, f.name, { size: 36, font: 'display', bold: true, color: '#241a0e' }).setOrigin(0.5);
     const sub = text(this, 0, 22, open ? `Cleared ${done} / ${levels.length}` : `Opens after Story ${levels[0].requires}`, { size: 19, italic: true, color: open ? '#5a4632' : '#8a3a2a' }).setOrigin(0.5);
     const lw = Math.max(nm.width, sub.width) + 56;
     label.add(this.add.rectangle(3, 4, lw, 82, 0x000000, 0.18));
     label.add(this.add.rectangle(0, 0, lw, 82, 0xf2e8d0).setStrokeStyle(1, 0x8a6a3a, 0.5));
     label.add(this.add.rectangle(0, 2, lw - 24, 1, 0x8a6a3a, 0.4));
-    label.add(this.add.circle(-lw / 2 + 14, -26, 5, 0x9a3a1a));
+    label.add(this.add.circle(-lw / 2 + 14, -26, 5, 0x3c6e45));
     label.add([nm, sub]);
     c.add(label);
     // Item medallion.
-    c.add(this.add.circle(186, 70, 62, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));
-    c.add(this.add.image(186, 70, `item:${f.item}`).setDisplaySize(100, 100));
-    if (!open) c.add(this.add.image(-40, 30, 'icon:lock').setDisplaySize(70, 70).setTint(0xf6f2ea));
+    c.add(this.add.circle(262, 100, 56, 0x1a1a1e, 0.95).setStrokeStyle(3, 0xc8a24a, 0.9));
+    c.add(this.add.image(262, 100, `item:${f.item}`).setDisplaySize(90, 90));
+    if (!open) c.add(this.add.image(-60, 60, 'icon:lock').setDisplaySize(70, 70).setTint(0xf6f2ea));
     c.setSize(520, 460).setInteractive({ useHandCursor: true });
     softPress(c, () => {
       if (!open) {
@@ -482,7 +510,7 @@ export class StoryScene extends Phaser.Scene {
     const rec = fromLegacyLevel(sel.level, 4);
     const rl = text(this, px - 520, 262, 'Recommended:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5);
     d.add(rl);
-    d.add(text(this, px - 520 + rl.width + 12, 262, `${insightLabel(rec.insight)} Level ${rec.level}`, { size: 24, color: '#f26b3a' }).setOrigin(0, 0.5));
+    d.add(text(this, px - 520 + rl.width + 12, 262, `${insightLabel(rec.insight)} Level ${rec.level}`, { size: 24, color: '#9fd27a' }).setOrigin(0, 0.5));
     d.add(text(this, px - 520, 300, f.blurb, { size: 24, color: CSS.cream, wrap: 520, lineSpacing: 4 }));
     d.add(text(this, px - 520, 470, 'Rewards:', { size: 24, color: CSS.creamDim }).setOrigin(0, 0.5));
     const first = !trialCleared(save, sel);

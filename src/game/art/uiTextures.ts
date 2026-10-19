@@ -462,7 +462,7 @@ export function uiTextureSpecs(): TexSpec[] {
     { key: 'ui:paper', canvas: framed(paper(640, 640, '#f2ead8', '#e2d6bd', 4), rgba('#9a8660', 0.6), 7) },
     { key: 'ui:paperPlain', canvas: paper(640, 640, '#f2ead8', '#e2d6bd', 9) },
     { key: 'ui:dark', canvas: darkPanel() },
-    { key: 'ui:btnAmber', canvas: button('#d9763c', '#b4542a', rgba('#ffe2c0', 0.55)) },
+    { key: 'ui:btnAmber', canvas: button('#5e9a63', '#3c6e45', rgba('#e4ffd8', 0.5)) },
     { key: 'ui:btnCream', canvas: button('#f4ecda', '#dccfb2', rgba('#7a6a4a', 0.5)) },
     { key: 'ui:btnDark', canvas: button('#2a2d33', '#1a1c20', rgba('#e2be6a', 0.45)) },
     { key: 'ui:btnGold', canvas: button('#e9c876', '#b08a3a', rgba('#fff3d0', 0.7)) },

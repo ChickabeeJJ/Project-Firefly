@@ -107,7 +107,7 @@ export class CardView extends Phaser.GameObjects.Container {
   refresh(): void {
     this.stars.forEach((s, i) => {
       const on = this.card.finale || i < this.card.rank;
-      s.setTint(this.card.finale ? 0xf6d27a : on ? 0xf0a24a : 0x4a4650).setAlpha(on ? 1 : 0.7);
+      s.setTint(this.card.finale ? 0xf6d27a : on ? 0xc8e47a : 0x4a4650).setAlpha(on ? 1 : 0.7);
     });
     this.litGlow.setVisible(this.card.lit);
     this.fly.setVisible(this.card.lit);

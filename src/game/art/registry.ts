@@ -36,6 +36,39 @@ function add(scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement): void 
   if (!scene.textures.exists(key)) scene.textures.addCanvas(key, canvas);
 }
 
+/** 128 px intent badge: one painted icon, two crossed swords for a mass attack, a dimmed lantern for a snuff. */
+function intentCanvas(scene: Phaser.Scene, key: string, kind: string): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(128, 128);
+  const s = size(scene, key);
+  const k = 112 / Math.max(s.w, s.h);
+  const w = s.w * k;
+  const h = s.h * k;
+  ctx.imageSmoothingQuality = 'high';
+  if (kind === 'mass') {
+    for (const dir of [-1, 1]) {
+      ctx.save();
+      ctx.translate(64, 64);
+      ctx.scale(dir * 0.86, 0.86);
+      ctx.drawImage(source(scene, key), -w / 2, -h / 2, w, h);
+      ctx.restore();
+    }
+  } else {
+    if (kind === 'snuff') ctx.filter = 'grayscale(0.85) brightness(0.6)';
+    ctx.drawImage(source(scene, key), 64 - w / 2, 64 - h / 2, w, h);
+  }
+  return canvas;
+}
+
+/** A 360 px object re-set like the menu icons: about 290 px tall, standing on the shared baseline. */
+function onBaseline(scene: Phaser.Scene, key: string): HTMLCanvasElement {
+  const { canvas, ctx } = makeCanvas(300, 300);
+  const s = size(scene, key);
+  const k = (0.8 * 300) / Math.max(s.w, s.h);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source(scene, key), 150 - (s.w * k) / 2, 275 - s.h * k, s.w * k, s.h * k);
+  return canvas;
+}
+
 function source(scene: Phaser.Scene, key: string): CanvasImageSource {
   return scene.textures.get(key).getSourceImage() as CanvasImageSource;
 }
@@ -59,6 +92,14 @@ const MOTIF_ART: Record<string, string> = {
   eye: 'orb', crystal: 'orb', meteor: 'fire', telescope: 'compass', wings: 'dove', metronome: 'metronome', rain: 'umbrella',
   camera: 'key', shield: 'stat_def', fist: 'stat_atk', glove: 'stat_atk',
 };
+
+/** Verses whose emblem is a specific painted object (ui/obj_*) rather than their motif's. */
+const VERSE_OBJECT: Record<string, string> = {
+  percival_front: 'lily', percival_finale: 'lily', cassian_wind: 'watch', cassian_finale: 'watch',
+  rook_haymaker: 'letters', rook_onetwo: 'scales', evangeline_noblesse: 'cage',
+};
+/** Motifs that read better as one of the painted objects. */
+const MOTIF_OBJECT: Record<string, string> = { crystal: 'crystal', note: 'quill', eye: 'orb' };
 
 export const ART_FACES_LEFT = new Set(['bastian', 'ichabod', 'hesper', 'kit', 'rook', 'nell', 'cassian']);
 
@@ -181,6 +222,12 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const painted = dropIn(scene, 'ui', `icon_${name}`) ?? dropIn(scene, 'ui', `status_${name}`);
     add(scene, `icon:${name}`, painted ? fitHeight(scene, painted, 128) : iconCanvas(name, ICON_COLORS[name]));
   }
+  // Enemy intent chips use painted icons: the stat set, the status set and a snuffed lantern.
+  const INTENT_ART: Record<string, string> = { attack: 'stat_atk', mass: 'stat_atk', shield: 'stat_def', heal: 'stat_hp', buff: 'status_might', debuff: 'status_frail', snuff: 'motif_lantern' };
+  for (const [kind, id] of Object.entries(INTENT_ART)) {
+    const art = dropIn(scene, 'ui', id);
+    if (art) add(scene, `intent:${kind}`, intentCanvas(scene, art, kind));
+  }
   for (const [k, id] of [['HP', 'hp'], ['ATK', 'atk'], ['DEF', 'def']] as const) {
     const art = dropIn(scene, 'ui', `stat_${id}`);
     if (art) add(scene, `stat:${k}`, fitHeight(scene, art, 96));
@@ -189,6 +236,9 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const k = dropIn(scene, 'ui', `menu_${id}`);
     if (k) add(scene, `menu:${id}`, fitHeight(scene, k, 300));
   }
+  // Sign-in sheet: the pocket watch, set on the same baseline as the painted menu icons.
+  const watch = dropIn(scene, 'ui', 'obj_watch');
+  if (watch) add(scene, 'menu:signin', onBaseline(scene, watch));
   for (const id of ITEM_ICON_IDS) add(scene, `item:${id}`, dropIn(scene, 'ui', `item_${id}`) ? fitHeight(scene, dropIn(scene, 'ui', `item_${id}`)!, 128) : itemIconCanvas(id));
   for (const c of CHARACTERS) {
     const battle = dropIn(scene, 'battle', c.id) ?? dropIn(scene, 'characters', c.id);
@@ -202,7 +252,10 @@ export function registerBaseArt(scene: Phaser.Scene): void {
     const panel = vp ? { img: source(scene, vp), ...size(scene, vp) } : undefined;
     for (const v of [...c.verses, c.finale]) {
       const painted = dropIn(scene, 'cards', v.id);
-      const mk = dropIn(scene, 'ui', `motif_${MOTIF_ART[v.art.motif] ?? ''}`) ?? (MOTIF_ART[v.art.motif]?.startsWith('stat_') ? dropIn(scene, 'ui', MOTIF_ART[v.art.motif]) : null);
+      const obj = VERSE_OBJECT[v.id] ?? MOTIF_OBJECT[v.art.motif];
+      const mk = (obj ? dropIn(scene, 'ui', `obj_${obj}`) : null)
+        ?? dropIn(scene, 'ui', `motif_${MOTIF_ART[v.art.motif] ?? ''}`)
+        ?? (MOTIF_ART[v.art.motif]?.startsWith('stat_') ? dropIn(scene, 'ui', MOTIF_ART[v.art.motif]) : null);
       const motifArt = mk ? { img: source(scene, mk), ...size(scene, mk) } : undefined;
       add(scene, `card:${v.id}`, painted ? cardCanvasFromImage(scene, painted) : verseArtCanvas(c, v, paintedBody, panel, motifArt, FACE_POINTS[c.id]));
     }

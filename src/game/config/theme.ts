@@ -20,9 +20,9 @@ export const C = {
   paper: 0xefe6d2,
   paperShade: 0xd8cab0,
   paperLine: 0xb9a888,
-  // Interaction accent (lantern amber) and rewards (gold)
-  amber: 0xc9652f,
-  amberLight: 0xe58a4c,
+  // Interaction accent (lamp-glass green; the names predate the change) and rewards (gold)
+  amber: 0x4f8a58,
+  amberLight: 0x78b27a,
   gold: 0xe2be6a,
   goldDeep: 0xb08a3a,
   // Signature: firefly light
@@ -51,8 +51,8 @@ export const CSS = {
   paperSub: '#6b5f4c',
   cream: '#f3ead6',
   creamDim: '#c9bda4',
-  amber: '#c9652f',
-  amberLight: '#e58a4c',
+  amber: '#8cc884',
+  amberLight: '#a8dc9a',
   gold: '#e2be6a',
   goldLight: '#f3dc9c',
   firefly: '#dcef72',

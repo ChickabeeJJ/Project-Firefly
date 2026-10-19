@@ -20,6 +20,10 @@ export interface LivingOpts {
   speed?: number;
   /** Spine points (more = smoother bends). */
   strips?: number;
+  /** A travelling ripple up the body, in texture px (ghostly, uneasy things). */
+  writhe?: number;
+  /** Slow float off the ground, in texture px. */
+  hover?: number;
 }
 
 const smooth = (a: number, b: number, x: number) => {
@@ -45,7 +49,7 @@ export class LivingSprite extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, x: number, y: number, key: string, opts: LivingOpts = {}) {
     super(scene, x, y);
-    this.o = { strips: 28, sway: 3, flutter: 0, breathe: 0.0035, speed: 1, ...opts };
+    this.o = { strips: 28, sway: 3, flutter: 0, breathe: 0.0035, speed: 1, writhe: 0, hover: 0, ...opts };
     const frame = scene.textures.getFrame(key);
     this.texW = frame.width;
     this.texH = frame.height;
@@ -79,11 +83,13 @@ export class LivingSprite extends Phaser.GameObjects.Container {
     const sway = (Math.sin(t * 0.9) * 0.65 + Math.sin(t * 0.37 + 1.3) * 0.35) * this.o.sway;
     const n = this.spine.length;
     const H = this.texH;
+    const lift = this.o.hover * (Math.sin(t * 1.15 + 0.6) * 0.5 + 0.5);
     for (let i = 0; i < n; i++) {
       const u = 1 - i / (n - 1); // height above the feet, 0..1
       const rise = breath * this.o.breathe * H * smooth(0.3, 0.75, u);
-      this.spine[i].x = sway * u * u + this.lean * Math.pow(u, 1.6);
-      this.spine[i].y = -u * H * (1 + this.squash) - rise;
+      const ripple = this.o.writhe * Math.sin(t * 2.3 - u * 5.5) * (0.35 + 0.65 * u);
+      this.spine[i].x = sway * u * u + this.lean * Math.pow(u, 1.6) + ripple;
+      this.spine[i].y = -u * H * (1 + this.squash) - rise - lift;
     }
     this.rope.setDirty();
   }

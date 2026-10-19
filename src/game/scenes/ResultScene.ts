@@ -64,7 +64,7 @@ export class ResultScene extends Phaser.Scene {
       const yy = y + i * 58;
       this.add.rectangle(rx, yy, 680, 50, 0xffffff, 0.04).setDepth(60);
       text(this, rx - 320, yy, r.label, { size: 28, color: r.ok ? CSS.cream : CSS.muted }).setOrigin(0, 0.5).setDepth(61);
-      const st = this.add.image(rx + 310, yy, 'icon:star4').setDisplaySize(40, 40).setTint(r.ok ? 0xf26b3a : 0x4a4a52).setDepth(61).setScale(0);
+      const st = this.add.image(rx + 310, yy, 'icon:star4').setDisplaySize(40, 40).setTint(r.ok ? 0x9fd27a : 0x4a4a52).setDepth(61).setScale(0);
       this.time.delayedCall(700 + i * 260, () => {
         this.tweens.add({ targets: st, scale: 40 / 96, duration: 300, ease: 'Back.easeOut' });
         if (r.ok) audio.sfx('reveal3');
