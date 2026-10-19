@@ -3,13 +3,14 @@ import { clockHandCanvas } from '../art/clockFace';
 import { dropIn } from '../art/assets';
 import { ensureBg } from '../art/registry';
 import { audio } from '../audio/AudioController';
-import { getCharacter } from '../data/characters';
+import { CHARACTERS, getCharacter } from '../data/characters';
 import { getEnemy } from '../data/enemies';
-import { C, CSS, H, W } from '../config/theme';
+import { C, CSS, H, RARITY_COLOR, RARITY_CSS, W } from '../config/theme';
 import { saves } from '../persistence/SaveService';
 import { Rng } from '../battle/rng';
 import { formatQty, type ItemId } from '../systems/growth';
 import {
+  nightTeam,
   afterBattle, aliveTeam, CURIO, ENDINGS, ending, HOUR_TALES, KIND_TALES, currentNode, draftKeepsakes, endRun, HOURS, keepsake, letter, MILESTONES, type NightNode,
   type NightRun, type NodeKind, omen, ordinal, reachable, runRewards, startRun, stageFor,
 } from '../systems/longnight';
@@ -52,7 +53,7 @@ export class NightScene extends Phaser.Scene {
     new Atmosphere(this, { depth: 40, fireflies: 7 });
     new Button(this, 110, 70, { w: 150, h: 64, label: 'Back', icon: 'back', style: 'dark', size: 26, sfx: 'back', onClick: () => goTo(this, 'Story', { mode: 'story' }) }).setDepth(90);
     if (save.night.run && !data.result) {
-      new Button(this, 290, 70, { w: 190, h: 64, label: 'End Run', icon: 'close', style: 'dark', size: 26, sfx: 'back', onClick: () => this.confirmEnd() }).setDepth(90);
+      new Button(this, 302, 70, { w: 180, h: 64, label: 'End Run', icon: 'close', iconSize: 22, style: 'dark', size: 24, sfx: 'back', onClick: () => this.confirmEnd() }).setDepth(90);
     }
     audio.play('boss');
 
@@ -113,14 +114,14 @@ export class NightScene extends Phaser.Scene {
     text(this, px, py + ph / 2 - 52, `At dawn: ${r.glimmer} Glimmer · ${formatQty(r.items.dust ?? 0)} Wick Dust · ${formatQty(r.items.sovereign ?? 0)} Sovereigns · materials`, { size: 20, italic: true, color: CSS.paperSub }).setOrigin(0.5);
 
     // The troupe that will climb.
-    const team = save.team.filter((id) => save.roster[id]);
+    const team = nightTeam(save);
     text(this, px - pw / 2, 876, 'YOUR TROUPE', { size: 22, font: 'display', bold: true, color: CSS.cream, spacing: 4 }).setOrigin(0, 0.5);
     team.forEach((id, i) => {
       const x = px - pw / 2 + 30 + i * 96;
       this.add.circle(x + 20, 940, 40, 0x0b0c10, 0.6).setStrokeStyle(1.5, C.gold, 0.6);
       this.add.image(x + 20, 940, `head:${id}`).setDisplaySize(74, 74);
     });
-    text(this, px - pw / 2, 1004, 'Your current team climbs.', { size: 22, italic: true, color: CSS.cream }).setOrigin(0, 0.5);
+    new Button(this, px - pw / 2 + 30 + 3 * 96 + 60, 940, { w: 130, h: 56, label: 'Change', style: 'dark', size: 22, onClick: () => this.pickTroupe() });
     new Button(this, px + pw / 2 - 210, 930, {
       w: 420, h: 100, label: 'Begin the Night', sub: 'A fresh clock each time', style: 'amber', onClick: () => {
         startRun(saves.get(), (Date.now() ^ (Math.random() * 1e9)) >>> 0);
@@ -207,6 +208,87 @@ export class NightScene extends Phaser.Scene {
 
     if (run.pending?.kind === 'spoils') this.showSpoils(run);
     else if (run.pending?.kind === 'event') this.openEvent(run, run.nodes.find((n) => n.id === (run.pending as { node: string }).node)!);
+  }
+
+  /** Choose who climbs: three slots above, every Luminary you own below. */
+  private pickTroupe(): void {
+    if (this.overlay) return;
+    const save = saves.get();
+    let pick = [...nightTeam(save)];
+    const { c, x, y, close } = this.panel(1560, 940, 'Choose Your Troupe', 'WHO CLIMBS TONIGHT');
+    const owned = CHARACTERS.filter((ch) => save.roster[ch.id])
+      .sort((a, b) => b.rarity - a.rarity || save.roster[b.id].level - save.roster[a.id].level || a.name.localeCompare(b.name));
+    const body = this.add.container(0, 0);
+    c.add(body);
+    const draw = () => {
+      body.removeAll(true);
+      // Slots.
+      for (let i = 0; i < 3; i++) {
+        const sx = x + (i - 1) * 300;
+        const sy = y - 252;
+        const id = pick[i];
+        body.add(this.add.rectangle(sx, sy, 280, 120, 0x0b0c10, 0.75).setStrokeStyle(1.5, C.gold, id ? 0.9 : 0.35));
+        body.add(text(this, sx - 124, sy - 44, `${i + 1}`, { size: 20, font: 'display', bold: true, color: CSS.goldLight }).setOrigin(0.5));
+        if (id) {
+          const ch = getCharacter(id);
+          body.add(this.add.circle(sx - 70, sy, 44, 0x15131a).setStrokeStyle(2, RARITY_COLOR[ch.rarity as 3 | 4 | 5], 0.9));
+          body.add(this.add.image(sx - 70, sy, `head:${id}`).setDisplaySize(84, 84));
+          body.add(text(this, sx - 14, sy - 14, ch.name.split(' ')[0], { size: 22, font: 'display', bold: true, color: CSS.cream }).setOrigin(0, 0.5));
+          body.add(text(this, sx - 14, sy + 18, `Lv ${save.roster[id].level} · ${ch.role}`, { size: 17, color: CSS.creamDim }).setOrigin(0, 0.5));
+        } else {
+          body.add(text(this, sx, sy, 'Empty', { size: 20, italic: true, color: CSS.creamDim }).setOrigin(0.5).setAlpha(0.7));
+        }
+      }
+      // Every Luminary you own.
+      const per = 9;
+      const tw = 150;
+      const th = 150;
+      owned.forEach((ch, i) => {
+        const col = i % per;
+        const row = Math.floor(i / per);
+        const tx = x + (col - (per - 1) / 2) * (tw + 8);
+        const ty = y - 98 + row * (th + 10);
+        const slot = pick.indexOf(ch.id);
+        const on = slot >= 0;
+        const t = this.add.container(tx, ty);
+        t.add(this.add.rectangle(0, 0, tw, th, on ? 0x2a2418 : 0x121116, 0.92).setStrokeStyle(on ? 3 : 1.2, on ? C.gold : RARITY_COLOR[ch.rarity as 3 | 4 | 5], on ? 1 : 0.5));
+        t.add(this.add.image(0, -18, `head:${ch.id}`).setDisplaySize(92, 92).setAlpha(on || pick.length < 3 ? 1 : 0.5));
+        t.add(text(this, 0, 42, ch.name.split(' ')[0], { size: 19, font: 'display', bold: true, color: on ? CSS.goldLight : CSS.cream }).setOrigin(0.5));
+        t.add(text(this, 0, 63, `${'★'.repeat(ch.rarity)}  Lv ${save.roster[ch.id].level}`, { size: 14, color: RARITY_CSS[ch.rarity as 3 | 4 | 5] }).setOrigin(0.5));
+        if (on) {
+          t.add(this.add.circle(tw / 2 - 20, -th / 2 + 20, 15, C.gold));
+          t.add(text(this, tw / 2 - 20, -th / 2 + 20, `${slot + 1}`, { size: 18, bold: true, color: '#1a1208' }).setOrigin(0.5));
+        }
+        t.setSize(tw, th).setInteractive({ useHandCursor: true });
+        softPress(t, () => {
+          if (on) pick = pick.filter((p) => p !== ch.id);
+          else if (pick.length < 3) pick.push(ch.id);
+          else {
+            audio.sfx('deny');
+            toast(this, 'Three Luminaries climb at most. Tap one to send it home.', 'star4');
+            return;
+          }
+          audio.sfx('tap');
+          draw();
+        }, 'tap', 1.04);
+        body.add(t);
+      });
+      confirm.setAlpha(pick.length ? 1 : 0.5);
+    };
+    const confirm = new Button(this, x + 190, y + 382, { w: 320, h: 76, label: 'Confirm', style: 'amber', size: 28, onClick: () => {
+      if (!pick.length) return;
+      saves.get().night.team = pick;
+      saves.commit();
+      close();
+      this.time.delayedCall(200, () => this.scene.restart({}));
+    } });
+    c.add(new Button(this, x - 190, y + 382, { w: 260, h: 70, label: 'Clear', style: 'dark', size: 24, sfx: 'back', onClick: () => {
+      pick = [];
+      draw();
+    } }));
+    c.add(confirm);
+    c.add(new Button(this, x + 780 - 54, y - 470 + 54, { w: 60, h: 60, label: '', icon: 'close', style: 'dark', sfx: 'back', onClick: close }));
+    draw();
   }
 
   /** Ending a run early keeps what the climb has earned so far. */

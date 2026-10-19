@@ -94,6 +94,8 @@ export interface ButtonOpts {
   style?: ButtonStyle;
   size?: number;
   icon?: string;
+  /** Icon size beside a label (default 44). */
+  iconSize?: number;
   sub?: string;
   sfx?: Sfx;
   /** Label typeface: 'display' (engraved capitals, default) or 'body' (book serif, tighter). */
@@ -115,15 +117,15 @@ export class Button extends Phaser.GameObjects.Container {
     this.bg = scene.add.nineslice(0, 0, BTN_TEX[style], undefined, o.w, o.h, 16, 16, 16, 16);
     this.add(this.bg);
     const iconOnly = !!o.icon && !o.label;
-    const iconW = o.icon && !iconOnly ? 44 : 0;
+    const iconW = o.icon && !iconOnly ? (o.iconSize ?? 44) : 0;
     const ly = o.sub ? -10 : 0;
     const body = o.font === 'body';
     this.label = text(scene, iconW / 2, ly, o.label, { size: o.size ?? 32, font: body ? 'body' : 'display', bold: !body, italic: body, color: BTN_TEXT[style], spacing: body ? 0 : 1 }).setOrigin(0.5);
     this.add(this.label);
     if (o.icon) {
       // Icon-only buttons (✕, back) sit dead centre; otherwise the icon leads the label.
-      const isz = iconOnly ? Math.min(o.w, o.h) * 0.56 : 44;
-      const ic = scene.add.image(iconOnly ? 0 : this.label.x - this.label.width / 2 - 28, ly, `icon:${o.icon}`).setDisplaySize(isz, isz);
+      const isz = iconOnly ? Math.min(o.w, o.h) * 0.56 : (o.iconSize ?? 44);
+      const ic = scene.add.image(iconOnly ? 0 : this.label.x - this.label.width / 2 - isz / 2 - 6, ly, `icon:${o.icon}`).setDisplaySize(isz, isz);
       this.add(ic);
     }
     if (o.sub) {
