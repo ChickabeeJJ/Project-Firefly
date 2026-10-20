@@ -228,7 +228,7 @@ export function toast(scene: Phaser.Scene, message: string, iconKey = 'star4'): 
   const w = 430;
   const label = text(scene, 0, 0, message, { size: 23, color: CSS.paperText, wrap: w - 128, lineSpacing: 2 });
   const h = Math.max(86, label.height + 34);
-  const y = 118 + slot * 112;
+  const y = 196 + slot * 112; // below the currency pills and top-right buttons
   const c = scene.add.container(W + w, y).setDepth(5000).setData('toast', true).setData('slot', slot);
   const g = scene.add.graphics();
   g.fillStyle(0x000000, 0.3).fillRect(-w + 5, -h / 2 + 6, w, h);

@@ -4,12 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>Project Firefly</title>
+    <link rel="icon" href="data:," />
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0d0f12; overflow: hidden; }
       body { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
       #game { position: fixed; inset: 0; }
-      /* Wide phones: the 16:9 stage is framed by a soft, blurred echo of the current screen. */
-      #backdrop { position: fixed; inset: -40px; background: #0d0f12 center / cover no-repeat;
+      /* Wide phones and tablets: the 16:9 stage is framed by a soft, blurred copy of the loading painting. */
+      #backdrop { position: fixed; inset: -40px; background: #0d0f12 url('boot.jpg') center / cover no-repeat;
         filter: blur(20px) brightness(0.62) saturate(0.95); transition: background-image 0.6s; }
       #rotate { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center;
         background: #0d0f12; color: #e8dcc0; font-family: Georgia, serif; font-size: 18px; padding: 24px; z-index: 10; }
