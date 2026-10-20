@@ -1355,20 +1355,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** The rectangle a tutorial step wants the player to look at or tap. */
-  private tutFocus(step: TutStep): { x: number; y: number; w: number; h: number } | null {
+  private tutFocus(step: TutStep): { x: number; y: number; w: number; h: number; card?: CardView } | null {
     if (step.focus) return step.focus(this);
     if (step.card) {
       const card = this.engine.hand.find((c) => step.card!(c) && this.handOrder.includes(c.cid));
       const v = card && this.cards.get(card.cid);
-      return v ? { x: v.homeX, y: v.homeY - 30, w: CARD_DW + 22, h: CARD_DH + 22 } : null;
+      return v ? { x: v.homeX, y: v.homeY, w: CARD_DW, h: CARD_DH, card: v } : null;
     }
     if (step.lantern) return { x: this.lantern.x + 100, y: this.lantern.y, w: 340, h: 190 };
     return null;
   }
 
   /** Pulsing gilt outline with corner brackets around what to tap, so the guide is unmistakable. */
-  private focusRing(r: { x: number; y: number; w: number; h: number }): Phaser.GameObjects.Container {
+  private focusRing(r: { x: number; y: number; w: number; h: number; card?: CardView }): Phaser.GameObjects.Container {
     const c = this.add.container(r.x, r.y);
+    if (r.card) return this.cardRing(c, r.card);
     const g = this.add.graphics();
     const hw = r.w / 2;
     const hh = r.h / 2;
@@ -1387,6 +1388,39 @@ export class BattleScene extends Phaser.Scene {
     }
     c.add(g);
     this.tweens.add({ targets: c, scale: { from: 1, to: 1.04 }, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    return c;
+  }
+
+  /**
+   * A card's guide traces the card itself: its own glow, a gilt line on its edge and brackets on
+   * its corners, riding along when it lifts under the pointer. It pulses in brightness, not size.
+   */
+  private cardRing(c: Phaser.GameObjects.Container, v: CardView): Phaser.GameObjects.Container {
+    const glow = this.add.image(0, 0, 'card:auraLit').setScale(HAND_SCALE).setBlendMode(Phaser.BlendModes.ADD).setTint(0xffe7a8);
+    const g = this.add.graphics();
+    const hw = CARD_DW / 2;
+    const hh = CARD_DH / 2;
+    g.lineStyle(3, 0xffe7a8, 1).strokeRect(-hw, -hh, CARD_DW, CARD_DH);
+    const L = 26;
+    g.lineStyle(5, 0xfff0c0, 1);
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const cx = sx * (hw + 7);
+      const cy = sy * (hh + 7);
+      g.beginPath();
+      g.moveTo(cx, cy - sy * L);
+      g.lineTo(cx, cy);
+      g.lineTo(cx - sx * L, cy);
+      g.strokePath();
+    }
+    c.add([glow, g]);
+    const follow = () => {
+      if (!c.active || !v.active) return;
+      c.setPosition(v.x, v.y).setScale(v.scaleX / HAND_SCALE);
+    };
+    this.events.on(Phaser.Scenes.Events.POST_UPDATE, follow);
+    c.once(Phaser.GameObjects.Events.DESTROY, () => this.events.off(Phaser.Scenes.Events.POST_UPDATE, follow));
+    this.tweens.add({ targets: glow, alpha: { from: 1, to: 0.35 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: g, alpha: { from: 1, to: 0.7 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     return c;
   }
 

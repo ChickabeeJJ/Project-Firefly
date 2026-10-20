@@ -153,7 +153,8 @@ export class RosterScene extends Phaser.Scene {
     const o = save.roster[c.id];
     const st = allyStats(c.base, effectiveLevel(o), o.resonance);
 
-    p.add(livingPortrait(this, 930, H + 30, ensurePortrait(this, c.id), 0.9, 1080, 1180));
+    // Capped in width so wide art (cloaks, tomes, machines) never spreads over the stats or the verse column.
+    p.add(livingPortrait(this, 930, H + 30, ensurePortrait(this, c.id), 0.9, 1080, 780));
 
     // ---- left: identity + stats
     const lx = 70;
