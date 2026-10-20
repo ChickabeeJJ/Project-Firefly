@@ -47,7 +47,8 @@ export function dropInUrl(folder: ArtFolder, id: string): string | null {
  * the rest stream in afterwards (streamCharacterArt) while the player is on the title screen.
  */
 export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => void, keepCharacters?: string[]): Promise<void> {
-  const deferred = (key: string) => keepCharacters !== undefined && key.startsWith('hf:characters/') && !keepCharacters.includes(key.slice(14));
+  const deferred = (key: string) => LAZY_UI.test(key)
+    || (key.startsWith('hf:characters/') && (keepCharacters ? !keepCharacters.includes(key.slice(14)) : LOW_MEMORY));
   const entries = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
     .filter((e): e is readonly [string, string] => !!e[0] && !scene.textures.exists(e[0]) && !deferred(e[0]));
@@ -64,14 +65,27 @@ export function loadDropInArt(scene: Phaser.Scene, onProgress?: (p: number) => v
   });
 }
 
+/**
+ * Phones and tablets (iPad Safari above all) close a tab that holds too much decoded art, so on
+ * them full character art is only ever loaded when it is about to be shown, and let go after.
+ */
+export const LOW_MEMORY: boolean = (() => {
+  if (typeof navigator === 'undefined') return false;
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  return ios || /Android/i.test(navigator.userAgent) || (mem !== undefined && mem <= 4);
+})();
+
+/** Big, rarely shown screens (a character page's backdrop, a Finale's banner): loaded when wanted. */
+const LAZY_UI = /^hf:ui\/(charbg|finale)_/;
+
 /** Full-size character art that has been asked for, by texture key, while it decodes. */
 const pending = new Map<string, Promise<void>>();
 
 /** Scenes during which background loading holds off, so an upload never hitches a story or a fight. */
 const QUIET_SCENES = ['Cinematic', 'Battle'];
 
-function charEntry(id: string): readonly [string, string] | null {
-  const key = `hf:characters/${id}`;
+function entryFor(key: string): readonly [string, string] | null {
   const hit = Object.entries(FILES).find(([p]) => keyFor(p) === key);
   return hit ? [key, hit[1]] : null;
 }
@@ -99,10 +113,27 @@ function loadOne(game: Phaser.Game, key: string, url: string): Promise<void> {
 
 /** Loads these characters' full art now (a story's speakers, a reveal). Resolves when all are in. */
 export function needCharacterArt(game: Phaser.Game, ids: string[]): Promise<void> {
-  return Promise.all(ids.map((id) => {
-    const e = charEntry(id);
+  return needArt(game, ids.map((id) => `hf:characters/${id}`));
+}
+
+/** Loads any drop-in textures by key ("hf:ui/charbg_tide") that are not in yet. */
+export function needArt(game: Phaser.Game, keys: string[]): Promise<void> {
+  return Promise.all(keys.map((key) => {
+    const e = entryFor(key);
     return e ? loadOne(game, e[0], e[1]) : Promise.resolve();
   })).then(() => undefined);
+}
+
+/**
+ * On low-memory devices, lets go of full character art and the big lazy screens that are not in
+ * use. Call from a hub scene's create, when nothing from the previous scene is still drawn.
+ */
+export function trimArt(game: Phaser.Game, keepCharacters: string[]): void {
+  if (!LOW_MEMORY) return;
+  for (const key of game.textures.getTextureKeys()) {
+    const char = key.startsWith('hf:characters/') && !keepCharacters.includes(key.slice(14));
+    if (char || LAZY_UI.test(key)) game.textures.remove(key);
+  }
 }
 
 /**
@@ -111,6 +142,8 @@ export function needCharacterArt(game: Phaser.Game, ids: string[]): Promise<void
  * main thread, and paused while a story or a battle is playing. Resolves when all are in.
  */
 export function streamCharacterArt(game: Phaser.Game, first: string[] = []): Promise<void> {
+  // Low-memory devices never hold everyone at once: art is fetched when it is about to be shown.
+  if (LOW_MEMORY) return Promise.resolve();
   const todo = Object.entries(FILES)
     .map(([path, url]) => [keyFor(path), url] as const)
     .filter((e): e is readonly [string, string] => !!e[0] && e[0].startsWith('hf:characters/') && !game.textures.exists(e[0]))

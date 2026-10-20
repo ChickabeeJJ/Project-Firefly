@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropIn } from '../art/assets';
+import { dropIn, needArt } from '../art/assets';
 import { FACE_POINTS, ensureBg, ensurePortrait, verseEmblem } from '../art/registry';
 import { aliveTeam, currentNode, omen, runMods, stageFor } from '../systems/longnight';
 import { audio } from '../audio/AudioController';
@@ -8,7 +8,7 @@ import { describeEffects, describeVerse, STATUS_INFO, TYPE_LABEL } from '../batt
 import { BattleEngine, type BattleScript } from '../battle/engine';
 import { LANTERN } from '../battle/rules';
 import type { BattleEvent, Card, MergeStep } from '../battle/types';
-import { findVerse } from '../data/characters';
+import { CHARACTERS, findVerse } from '../data/characters';
 import { getEnemy } from '../data/enemies';
 import { getStage } from '../data/stages';
 import type { StageDef, StatusId } from '../data/types';
@@ -17,7 +17,7 @@ import { saves } from '../persistence/SaveService';
 import { effectiveLevel, insightLabel } from '../systems/growth';
 import { platform } from '../platform/PlatformAdapter';
 import { applyBattleResult } from '../systems/progression';
-import { BattleFx, FINALE_BANNER } from '../ui/BattleFx';
+import { BattleFx, FINALE_BANNER, finaleBannerFor } from '../ui/BattleFx';
 import { CARD_DH, CARD_DW, CardView, HAND_SCALE } from '../ui/CardView';
 import { Atmosphere, DiamondButton, fadeIn, goTo, text, toast } from '../ui/kit';
 import { UnitView } from '../ui/UnitView';
@@ -159,6 +159,12 @@ export class BattleScene extends Phaser.Scene {
     // The script needs the starter trio, so the guided battle always fields them.
     const team = guided ? ['wren', 'odile', 'bastian'] : run ? aliveTeam(run) : save.team;
     this.tutSteps = guided ? this.buildTutorial() : null;
+    // The troupe's full art and Finale banners, for the cut-ins (fetched now if not already in).
+    void needArt(this.game, team.flatMap((id) => {
+      const ch = CHARACTERS.find((c) => c.id === id);
+      const banner = FINALE_BANNER[id] ?? (ch ? finaleBannerFor(Phaser.Display.Color.HexStringToColor(ch.palette.primary).color) : 'gilt');
+      return [`hf:characters/${id}`, `hf:ui/finale_${banner}`];
+    }));
     this.engine = new BattleEngine({
       stage: this.stage,
       team: team.map((id) => {

@@ -7,6 +7,7 @@ import '@fontsource/spectral/latin-700.css';
 import '@fontsource/spectral/latin-700-italic.css';
 import '@fontsource/im-fell-english/latin-400.css';
 import '@fontsource/im-fell-english/latin-400-italic.css';
+import { LOW_MEMORY } from './game/art/assets';
 import { H, W } from './game/config/theme';
 import { audio } from './game/audio/AudioController';
 import { BootScene } from './game/scenes/BootScene';
@@ -35,7 +36,8 @@ const game = new Phaser.Game({
   height: H,
   backgroundColor: '#0c0e11',
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
-  render: { antialias: true, pixelArt: false, roundPixels: false, powerPreference: 'high-performance' },
+  // Phones and tablets skip the multisampled framebuffer: a lot of GPU memory for little visible gain in 2D.
+  render: { antialias: true, antialiasGL: !LOW_MEMORY, pixelArt: false, roundPixels: false, powerPreference: 'high-performance' },
   input: { activePointers: 2 },
   // Real-time pacing on slow devices: no start-up delta clamp, tolerate frames up to 333 ms.
   fps: { target: 60, min: 3, panicMax: 0 },

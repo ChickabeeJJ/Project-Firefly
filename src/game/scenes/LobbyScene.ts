@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { dropIn } from '../art/assets';
+import { dropIn, trimArt } from '../art/assets';
 import { ensureBg, ensurePortrait, FACE_POINTS } from '../art/registry';
 import { clockFaceCanvas, clockHandCanvas } from '../art/clockFace';
 import { audio } from '../audio/AudioController';
@@ -58,6 +58,8 @@ export class LobbyScene extends Phaser.Scene {
     this.bubble = undefined;
     this.hidden = false;
     const save = saves.get();
+    // The lobby is the hub: on phones and tablets, let go of art the last screens no longer need.
+    trimArt(this.game, save.team);
     this.add.image(W / 2, H / 2, ensureBg(this, 'parlour')).setDisplaySize(W, H);
     new Atmosphere(this, { depth: 60, fireflies: 7 });
 

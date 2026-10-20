@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { fitPortrait, needCharacterArt } from '../art/assets';
+import { dropIn, fitPortrait, needCharacterArt } from '../art/assets';
 import { ensureBg, ensurePortrait, FACE_POINTS } from '../art/registry';
 import { audio } from '../audio/AudioController';
 import { Rng } from '../battle/rng';
@@ -46,6 +46,13 @@ export class SummonScene extends Phaser.Scene {
     new Atmosphere(this, { depth: 30, fireflies: 10, dust: false });
     this.buildBanner();
     audio.play('rite');
+    // Featured art may not be in yet on a phone or tablet: fetch it, then redraw the banner once.
+    const featured = getBanner(this.bannerId).featured;
+    if (featured && !dropIn(this, 'characters', featured)) {
+      void needCharacterArt(this.game, [featured]).then(() => {
+        if (this.scene.isActive() && this.stage === 'banner' && dropIn(this, 'characters', featured)) this.scene.restart({ banner: this.bannerId });
+      });
+    }
   }
 
   // ------------------------------------------------------------------ banner
