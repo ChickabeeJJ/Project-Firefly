@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { PCARD_H, PCARD_W } from '../art/cardArt';
 import { elementPanel, ensureBg, ensurePortrait, panelFor } from '../art/registry';
-import { dropIn } from '../art/assets';
+import { dropIn, needArt } from '../art/assets';
 import { audio } from '../audio/AudioController';
 import { describeVerse, TYPE_LABEL } from '../battle/describe';
 import { MAX_RESONANCE } from '../battle/rules';
@@ -108,7 +108,8 @@ export class RosterScene extends Phaser.Scene {
         card.on('pointerup', () => {
           if (scroll.wasDrag()) return;
           audio.sfx('tap');
-          this.openCharacter(c.id);
+          // The page's full art and backdrop load when it opens (a moment, the first time).
+          void needArt(this.game, [`hf:characters/${c.id}`, `hf:ui/charbg_${panelFor(c.id)}`]).then(() => this.scene.isActive() && this.openCharacter(c.id));
         });
       }
     });

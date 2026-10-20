@@ -18,25 +18,11 @@ async function loadFonts(): Promise<void> {
   ]);
 }
 
-/** Lore cards shown while loading, in the manner of the reference's loading screens. */
-const LORE: { title: string; text: string }[] = [
-  { title: 'Project Firefly', text: 'A secret scheme pencilled on the back of an envelope no one has opened: every time somebody is forgotten, a firefly goes up. Catch them all, and keep them safe until the morning can find them.' },
-  { title: 'The Thirteenth Stroke', text: 'At midnight on the last night of 1929 the Cathedral Clock struck twelve, and then once more. There is no thirteenth hour. That night, Vellmoor found one.' },
-  { title: 'The Dimming', text: 'What the fog swallows, the world forgets: faces, names, whole streets. Even the letters people wrote to one another fade to blank paper.' },
-  { title: 'Luminaries', text: 'A few people remembered too fiercely to be forgotten. Their memories still glow — enough to light a lantern, or to burn a hole in the dark.' },
-  { title: 'Corvid Lane', text: 'Every street lamp in Vellmoor had a name, and every name had a lamp. On Corvid Lane the crows still fly their old postal routes, carrying letters no one remembers sending.' },
-  { title: 'The Lighthouse', text: 'Out on the breakwater the old lighthouse still burns. Since midnight its beam has turned around. It shines darkness out to sea, and the tide has not come in.' },
-  { title: 'Wick Dust', text: 'Ash from a wick that burned through the Dimming still remembers being light. Feed it to a Luminary and they grow brighter.' },
-];
 
-const VERSION = 'Project Firefly · V1.0';
 
 /** Startup: loading screen over the painted lighthouse, then a title card that waits for a tap. */
 export class BootScene extends Phaser.Scene {
-  private bar?: Phaser.GameObjects.Rectangle;
-  private barGlow?: Phaser.GameObjects.Image;
-  private status?: Phaser.GameObjects.Text;
-  private lore: Phaser.GameObjects.GameObject[] = [];
+  private backdrop?: Phaser.GameObjects.Image;
 
   constructor() {
     super('Boot');
@@ -52,12 +38,6 @@ export class BootScene extends Phaser.Scene {
     platform.loadingStart();
     await loadFonts();
     this.buildLoading();
-    // The page's copy of the painting stays until the game's has faded in over it: one loading screen.
-    const boot = document.getElementById('boot');
-    if (boot) {
-      this.time.delayedCall(900, () => (boot.style.opacity = '0'));
-      this.time.delayedCall(1600, () => boot.remove());
-    }
 
     const t0 = performance.now();
     // The lobby's leader loads now at full size; the rest of the troupe streams in after.
@@ -94,6 +74,7 @@ export class BootScene extends Phaser.Scene {
     const params = new URLSearchParams(location.search);
     const devScene = import.meta.env.DEV ? params.get('scene') : null;
     if (devScene) {
+      this.dropLoadingScreen();
       this.scene.start(devScene, { stageId: params.get('stage') ?? '1-1' });
       return;
     }
@@ -106,37 +87,29 @@ export class BootScene extends Phaser.Scene {
     return img;
   }
 
+  /**
+   * The loading screen itself is the page's own markup (index.html #boot), on screen from the very
+   * first paint; the game only feeds its progress line. Underneath, the same painting waits for
+   * the title card.
+   */
   private buildLoading(): void {
     this.cameras.main.setBackgroundColor('#06070a');
-    if (this.textures.exists('hf:bg/loading')) {
-      const bg = this.cover('hf:bg/loading').setAlpha(0);
-      const s = bg.scale;
-      this.tweens.add({ targets: bg, alpha: 1, duration: 900 });
-      this.tweens.add({ targets: bg, scale: s * 1.06, duration: 30000, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 });
-    }
-    // Bottom fade for the lore text, as in the reference.
-    const g = this.add.graphics();
-    g.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.88, 0.88);
-    g.fillRect(0, H - 420, W, 420);
-    text(this, 34, 26, VERSION, { size: 20, color: CSS.creamDim }).setAlpha(0.7);
-    const lore = LORE[Math.floor(Math.random() * LORE.length)];
-    const t = text(this, 120, H - 270, lore.title, { size: 40, color: CSS.cream, spacing: 1, shadow: true });
-    const rl = this.add.rectangle(120, H - 222, Math.max(420, t.width + 60), 1, 0xe8dcc0, 0.45).setOrigin(0, 0.5);
-    const lt = text(this, 120, H - 200, lore.text, { size: 26, color: CSS.cream, wrap: 1400, lineSpacing: 6, shadow: true }).setAlpha(0.92);
-    this.lore = [t, rl, lt];
-    // Thin progress line across the bottom, with a soft glowing head.
-    this.add.rectangle(0, H - 70, W, 2, 0xe8dcc0, 0.18).setOrigin(0, 0.5);
-    this.bar = this.add.rectangle(0, H - 70, 1, 2, 0xf2e2c0, 0.95).setOrigin(0, 0.5);
-    this.barGlow = this.add.image(0, H - 70, 'fx:glow').setTint(0xffe6b0).setDisplaySize(60, 18).setAlpha(0.8);
-    if (!this.textures.exists('fx:glow')) this.barGlow.setVisible(false);
-    this.status = text(this, W / 2, H - 38, 'Trimming the wicks · please wait …', { size: 20, color: CSS.creamDim }).setOrigin(0.5);
+    if (this.textures.exists('hf:bg/loading')) this.backdrop = this.cover('hf:bg/loading');
   }
 
   private progress(p: number, msg?: string): void {
-    const w = Math.max(1, W * p);
-    if (this.bar) this.tweens.add({ targets: this.bar, width: w, duration: 220, ease: 'Sine.easeOut' });
-    if (this.barGlow) this.tweens.add({ targets: this.barGlow, x: w, duration: 220, ease: 'Sine.easeOut' });
-    if (msg) this.status?.setText(msg);
+    const bar = document.querySelector<HTMLElement>('#boot .bar i');
+    if (bar) bar.style.width = `${Math.round(Math.max(0, Math.min(1, p)) * 100)}%`;
+    const status = document.querySelector<HTMLElement>('#boot .status');
+    if (msg && status) status.textContent = msg;
+  }
+
+  /** Fades the page's loading screen away, revealing the game beneath it. */
+  private dropLoadingScreen(): void {
+    const boot = document.getElementById('boot');
+    if (!boot) return;
+    boot.style.opacity = '0';
+    window.setTimeout(() => boot.remove(), 700);
   }
 
   /** Title card: the game's name over the backdrop; the first tap also unlocks audio. */
@@ -150,7 +123,11 @@ export class BootScene extends Phaser.Scene {
     const tag = text(this, W / 2, H / 2 + 80, 'Vellmoor · the night without end', { size: 26, italic: true, color: CSS.creamDim }).setOrigin(0.5);
     const start = text(this, W / 2, H - 150, 'S T A R T', { size: 30, font: 'display', color: CSS.cream, spacing: 6, shadow: true }).setOrigin(0.5);
     ui.add([veil, glow, name, sub, rule, tag, start]);
-    this.tweens.add({ targets: [this.bar, this.barGlow, this.status, ...this.lore], alpha: 0, duration: 500 });
+    this.dropLoadingScreen();
+    if (this.backdrop) {
+      const s = this.backdrop.scale;
+      this.tweens.add({ targets: this.backdrop, scale: s * 1.06, duration: 30000, ease: 'Sine.easeInOut', yoyo: true, repeat: -1 });
+    }
     this.tweens.add({ targets: ui, alpha: 1, duration: 1100, ease: 'Sine.easeOut' });
     this.tweens.add({ targets: rule, scaleX: 1, duration: 1200, delay: 400, ease: 'Cubic.easeOut' });
     this.tweens.add({ targets: start, alpha: 0.35, duration: 1300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 1200 });
